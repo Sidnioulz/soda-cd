@@ -142,31 +142,30 @@ QVector<btVector3> Simulation::getEntitiesPositions() const
 
 void Simulation::computeClusterAssignments(const QVector<btVector3> &points)
 {
+#ifndef NDEBUG
+	QElapsedTimer t;
+	t.start();
+	qDebug("Clustering algorithm started.");
+#endif
+
     QVector<btVector3> centroids(numWorlds);
     for(int i=0; i<centroids.size(); ++i)
         centroids[i] = btVector3(rand() % (int)sceneSize.x() - sceneSize.x() / 2,
                                  rand() % (int)sceneSize.y(),
                                  rand() % (int)sceneSize.z() - sceneSize.z() / 2);
 
-    // Call EKMeans on the created objects
-#ifndef NDEBUG
-    QElapsedTimer t;
-    t.start();
-    qDebug("EKMeans started.");
-#endif
-
+	// Call EKMeans on the created objects
     Clustering::EKMeans ekm(centroids, points);
     ekm.setEqual(true);
     ekm.run();
 
-#ifndef NDEBUG
-    qDebug() << "EKMeans finished in " << t.elapsed() << "ms.";
-#endif
-
     QVector<int> assignments = ekm.getAssignments();
-
     for(int i=0; i<assignments.size(); ++i)
         entitiesWithAssignments[i].second = assignments[i];
+
+#ifndef NDEBUG
+	qDebug() << "Clustering finished in " << t.elapsed() << "ms.";
+#endif
 }
 
 int Simulation::getBestTerritoryResolution() const
@@ -179,8 +178,9 @@ void Simulation::setupLocalGrids(const int &resolution, const QVector<btVector3>
 #ifndef NDEBUG
     QElapsedTimer t;
     t.start();
-    qDebug("EKMeans started.");
+	qDebug("LocalGrid setup started.");
 #endif
+
     // This vector contains a pair of coordinates used to define the rectangles within which each cluster exists
     QVector<QPair<btVector3, btVector3> > territoryBoundaries(numWorlds,
                 QPair<btVector3, btVector3>(sceneSize, btVector3(0, 0, 0) - sceneSize));
@@ -192,26 +192,21 @@ void Simulation::setupLocalGrids(const int &resolution, const QVector<btVector3>
         QPair <btVector3, btVector3> &boundaries = territoryBoundaries[entitiesWithAssignments[i].second];
         boundaries.first.setMin(points[i]);
         boundaries.second.setMax(points[i]);
-//        territoryBoundaries[id] = boundaries;
     }
 
     // Go through each cluster boundaries to create appropriate local grids
-    // Create physics worlds and attach their buffers at the same time, now that the grids can be created
     for(int i=0; i<numWorlds; ++i)
     {
         try
         {
-
-
-
             btVector3 minCoord = grid->toCellCoordinates(resolution, territoryBoundaries[i].first);
             btVector3 maxCoord = grid->toCellCoordinates(resolution, territoryBoundaries[i].second);
 
-//            qDebug() << "######" << i;
+//            qDebug() << "LocalGrid " << i << "has coordinates:";
 //            qDebug() << minCoord.x() << minCoord.y() << minCoord.z();
 //            qDebug() << maxCoord.x() << maxCoord.y() << maxCoord.z();
 
-            //FIXME: compute margin using Ceil(Ceil(nbCells/nbProbs) / 20) to have margin >5% of surface on each side?
+			//FIXME: compute margin using Ceil(Ceil(nbCells/nbProbs) / 20) to have margin >5% of surface on each side?
             //NOTE: Exemple 64Cells, 8Procs, margin=1, Grid=8x8x8, with margin 9x9x9 - Overhead is 36x8 + 100x2, with originally 512 cells, which means 48.8% overhead
 //            margin[LocalGrid::Left] =  margin[LocalGrid::Right] = qCeil((float)qCeil((float)grid->getNbCells().x() / numWorlds) / 10);
 //            margin[LocalGrid::Top] =  margin[LocalGrid::Bottom] = qCeil((float)qCeil((float)grid->getNbCells().y() / numWorlds) / 10);
@@ -225,13 +220,13 @@ void Simulation::setupLocalGrids(const int &resolution, const QVector<btVector3>
         }
     }
 #ifndef NDEBUG
-    qDebug() << "Local grids created in " << t.elapsed() << "ms.";
+	qDebug() << "LocalGrids created in " << t.elapsed() << "ms.";
 #endif
 }
 
 QVector<int> Simulation::computeMargin(const int &resolution, const btVector3 &minCoord, const btVector3 &maxCoord) const
 {
-    //Consider scene borders when computing a margin!
+	//NOTE: Consider scene borders when computing a margin!
     return QVector<int>(6, 0);
 }
 
@@ -263,7 +258,7 @@ void Simulation::_setCellOwner(const QMap<short, int> &cellOwnerCounter, QVector
     // Else, notify all PhysicsWorlds which one the Cell was assigned to
     else
         for(int w=0; w<numWorlds; ++w)
-            notifyCellAssignment(grids[w], currentCoords, cellEnts, worlds[maxIndex]->getId());
+			notifyCellAssignment(grids[w], currentCoords, worlds[maxIndex]->getId(), &cellEnts);
 }
 
 btVector3 Simulation::_nextOrderedCellCoords(const btVector3 &current)
@@ -307,7 +302,6 @@ QVector<btVector3> Simulation::computeCellOwnersAndLocateEmptyCells(const int &r
     {
         obEntityWrapper *obEnt = entitiesWithAssignments[i].first;
         const btVector3 &coords = grid->toCellCoordinates(resolution, obEnt->getCenteredPosition());
-
 
         qDebug() << "Coordinates " << coords.x() << coords.y() << coords.z();
 
@@ -365,36 +359,66 @@ void Simulation::assignSurroundedCellsToOwners(QVector<btVector3> &emptyCells)
         {
             int index = emptyCells.indexOf(emptyAssigned[j]);
             if(index != -1)
-                emptyCells.remove(index);
+			{
+				emptyCells.remove(index);
+				for(int w=0; w<numWorlds; ++w)
+					notifyCellAssignment(grids[w], emptyAssigned[j], i);
+			}
+			else
+			{
+				qWarning() << "assignSurroundedCellsToOwners() assigned to grid" << i << "the Cell"
+						<< emptyAssigned[j].x() << emptyAssigned[j].y() << emptyAssigned[j].z()
+						<< "while it was apparently not empty.";
+			}
         }
     }
 }
 
-void Simulation::notifyCellAssignment(LocalGrid *local, const btVector3 &coords, const QVector<obEntityWrapper *> &entities, const short &owner)
+void Simulation::assignEmptyCells(const int &resolution, const QVector<btVector3> &emptyCells)
+{
+	QVector<btVector3> points;
+	QVector<btVector3> centroids;
+
+	// Include all empty Cells in the set of points
+	for(int i=0; i<emptyCells.size(); ++i)
+		points.append(grid->toCenteredWorldCoordinates(resolution, emptyCells[i]));
+
+	// Set the centroids to the middle of each array
+	for(int i=0; i<numWorlds; ++i)
+		centroids.append(grids[i]->getCenteredPosition());
+
+	// Run EKMeans
+	Clustering::EKMeans emptyCellsEKM(centroids, points);
+	emptyCellsEKM.setFixedCentroids(true);
+	emptyCellsEKM.run();
+
+	// Now extend grids for them to can include all their newly assigned Cells
+	QVector<int> assignments = emptyCellsEKM.getAssignments();
+	extendLocalGrids(resolution, points, assignments);
+
+	// Finally, notify Cell assignments to all LocalGrids
+	for(int i=0; i<assignments.size(); ++i)
+		for(int w=0; w<numWorlds; ++w)
+			notifyCellAssignment(grids[w], emptyCells[i], worlds[assignments[i]]->getId());
+}
+
+void Simulation::notifyCellAssignment(LocalGrid *local, const btVector3 &coords, const short &owner, const QVector<obEntityWrapper *> *entities)
 {
     local->setCellOwnedBy(coords, owner);
 
-    if(local->getOwnerId() == owner)
+	if(entities && local->getOwnerId() == owner)
     {
-        for(int i=0; i<entities.size(); ++i)
-            local->addEntity(entities[i]);
+		for(int i=0; i<entities->size(); ++i)
+			local->addEntity(entities->operator [](i)); //TODO: check that there are no duplicates?
     }
 }
-
-void Simulation::notifyCellAssignment(LocalGrid *local, const btVector3 &coords, const short &owner)
-{
-    local->setCellOwnedBy(coords, owner);
-}
-
-
-
 
 void Simulation::extendLocalGrids(const int &resolution, const QVector<btVector3> &points,const QVector<int> &assignments)
 {
 #ifndef NDEBUG
     QElapsedTimer t;
     t.start();
-    qDebug("EKMeans started.");
+	qDebug("LocalGrid extension started.");
 #endif
     // This vector contains a pair of coordinates used to define the rectangles within which each cluster exists
     QVector<QPair<btVector3, btVector3> > territoryBoundaries(numWorlds,
@@ -417,7 +441,7 @@ void Simulation::extendLocalGrids(const int &resolution, const QVector<btVector3
             btVector3 minCoord = grid->toCellCoordinates(resolution, territoryBoundaries[i].first);
             btVector3 maxCoord = grid->toCellCoordinates(resolution, territoryBoundaries[i].second);
 
-            qDebug() << "####e#" << i;
+			qDebug() << "LocalGrid " << i << " being extended to:";
             qDebug() << minCoord.x() << minCoord.y() << minCoord.z();
             qDebug() << maxCoord.x() << maxCoord.y() << maxCoord.z();
 
@@ -430,39 +454,9 @@ void Simulation::extendLocalGrids(const int &resolution, const QVector<btVector3
         }
     }
 #ifndef NDEBUG
-    qDebug() << "Local grids created in " << t.elapsed() << "ms.";
+	qDebug() << "Local grids extended in " << t.elapsed() << "ms.";
 #endif
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void Simulation::_init()
 {
@@ -493,66 +487,10 @@ void Simulation::_init()
     // Make sure that whenever a Cell is surrounded by Cells from the same LocalGrid, that LocalGrid owns it
     assignSurroundedCellsToOwners(emptyCells);
 
+	// Assign the Cells that are still empty, using a Clustering algorithm
+	assignEmptyCells(resolution, emptyCells);
 
-
-
-
-
-    //#################################################################################################################
-    // code below is dirty
-
-
-    for(int i=0; i<grids.size(); ++i)
-    {
-        // Call the algorithm that will identify such empty Cells and own them
-        QVector<btVector3> emptyAssigned = grids[i]->resolveEmptyCellOwnerships();
-
-//      // Remove these now assigned Cells from the list of empty Cells
-        for(int j=0; j<emptyAssigned.size(); ++j)
-        {
-            int index = emptyCells.indexOf(emptyAssigned[j]);
-            if(index != -1)
-                emptyCells.remove(index);
-        }
-    }
-
-
-    //TODO assign empty cells with cluster algorithm
-
-    QVector<btVector3> points2;
-    QVector<btVector3> centroids;
-    points2.clear();
-    for(int i=0; i<emptyCells.size(); ++i)
-        points2.append(grid->toCenteredWorldCoordinates(grid->getBestTerritoryResolution(), emptyCells[i]));
-
-    // Set the centroids to the middle of each array
-    for(int i=0; i<numWorlds; ++i)
-    {
-        centroids.append(grids[i]->getCenteredPosition());
-    }
-
-
-    // Run EKMeans
-    Clustering::EKMeans ekm2(centroids, points2);
-    ekm2.setFixedCentroids(true);
-    ekm2.run();
-
-    // Set the Cells' owners to the clusters that were assigned to them
-    QVector<int> assignments = ekm2.getAssignments();
-
-
-    extendLocalGrids(resolution, points2, assignments);
-
-    for(int i=0; i<assignments.size(); ++i)
-    {
-        const btVector3 &cellCoords = emptyCells[i];
-        const short &newOwner = worlds[assignments[i]]->getId();
-
-        for(int w=0; w<numWorlds; ++w)
-            notifyCellAssignment(grids[w], cellCoords, newOwner);
-    }
-
-    // Assign LocalGrids to their respective PhysicsWorlds
+	// Assign LocalGrids to their respective PhysicsWorlds, and setup LocalGrid borders if wanted
     for(int i=0; i<numWorlds; ++i)
     {
         worlds[i]->assignLocalGrid(grids[i]);
@@ -560,4 +498,3 @@ void Simulation::_init()
         worlds[i]->setupLocalGridBorders();
     }
 }
-

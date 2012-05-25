@@ -83,7 +83,17 @@ public:
 	  */
 	virtual void stop();
 
-    /*!
+	/*!
+	 * \brief Returns the CircularTransformBufferInterfaces defined in this Simulation.
+	 * \return a copy of the CircularTransformBufferInterface vector of this Simulation
+	 */
+	inline QVector<CircularTransformBufferInterface *> getBufferInterfaces() const
+	{
+		return bufferInterfaces;
+	}
+
+protected:
+	/*!
      * \brief Setups the Ogre 3D environment in which the Simulation will occur (terrain, sky, fog, lights).
      */
     virtual void setupBasic3DEnvironment() = 0;
@@ -94,97 +104,172 @@ public:
      */
     virtual void setupBasicPhysicsEnvironment(PhysicsWorld *world) = 0;
 
-
-
-
-    // Create the CTB Interface
-    //d Create buffers, have them watched by the interface
-    //e Create physics worlds
+	/*!
+	 * \brief Creates the CircularTransformBufferInterfaces that will be used in the Simulation.
+	 *
+	 * \note Called by the constructor.
+	 */
     virtual void createBufferInterfaces();
+
+	/*!
+	 * \brief Creates the PhysicsWorlds that will be used in the Simulation.
+	 *
+	 * \note Called by the constructor.
+	 */
     virtual void createPhysicsWorlds();
 
-    virtual void loadEntities() = 0;    //pre f/g, fills this->entities
+	/*!
+	  * \brief Loads the entities that will be simulated. Must be defined by inheriting classes.
+	  */
+	virtual void loadEntities() = 0;
 
-    //f Compute data for GridInformation (size ratio)
-    //h Create GridInformation // unlink getGrid from static and link it to Simulation
+	/*!
+	  * \brief Computes the parameters that will be needed to compute Grid cell sizes and depth.
+	  */
     virtual void setupGridInformation();
 
-    //g Get objects positions from the Simulation object (random placement in RandomCubeSimulation or read from Parser)
+	/*!
+	  * \brief Retrieves the centered positions of all simulated entities. Necessary for the interface to Clustering algorithms.
+	  * \return a vector containing the centered positions of all obEntityWrapper instances
+	  *
+	  * \note The position at index i corresponds to the entity at the same index i in entitiesWithAssignments.
+	  */
     virtual QVector<btVector3> getEntitiesPositions() const;
 
-
-    //i Launch EKMeans on the list of centered positions (with random centroids in the space)
-//    QVector<Ogre::Vector3> points;//(entities.size());
-//    QVector<Ogre::Vector3> centroids;//(scene.size());
+	/*!
+	  * \brief Computes assignments into as many clusters as there are worlds, for a given set of points.
+	  * \param points the points that must be assigned a cluster
+	  *
+	  * This function computes clusters (as many as there are PhysicsWorlds in this Simulation), using the
+	  * defined Clustering algorithm of the Simulation. This clustering algorithm regroups points by
+	  * geographic proximity, into contiguous sets.
+	  */
     virtual void computeClusterAssignments(const QVector<btVector3> &points);
 
-    //j Get best LocalGrid resolution
+	/*!
+	  * \brief Returns the most appropriate GridInformation resolution at which LocalGrids should be defined.
+	  * \return the best resolution at which LocalGrids should be defined
+	  */
     virtual int getBestTerritoryResolution() const;
 
-    //k Compute territory boundaries from EKMeans clusters
-    //l Create empty LocalGrids
+	/*!
+	  * \brief Creates LocalGrids and fills them with the entities that were assigned to their world's id.
+	  * \param resolution the resolution at which LocalGrids should be created
+	  * \param points the positions of the entities
+	  *
+	  * This function first computes the areas, in Cell coordinates, that entirely cover each cluster that
+	  * was computed in computeClusterAssignments(), using points and entitiesWithAssignments. Then, it
+	  * creates the LocalGrids, giving them an owner Id. The LocalGrids are assigned later to their PhysicsWorld.
+	  */
     virtual void setupLocalGrids(const int &resolution, const QVector<btVector3> &points);
 
 
-    //m Compute ideal margin for all LocalGrids (based on grid size)
+	/*!
+	  * \brief Computes the margin that should be given to a LocalGrid.
+	  * \param resolution the resolution of the LocalGrid
+	  * \param minCoord the Cell coordinates of its lower-left-back corner
+	  * \param maxCoord the Cell coordinates of its top-right-front corner
+	  * \return a vector containing margins for all six directions
+	  *
+	  * \warning This function is not implemented yet and returns a zero margin.
+	  */
     virtual QVector<int> computeMargin(const int &resolution, const btVector3 &minCoord, const btVector3 &maxCoord) const;
 
-    //n Sort entities per Cell coordinates
+	/*!
+	  * \brief Sorts the entitiesWithAssignments vector by Cell coordinates.
+	  * \param resolution the resolution at which entities should be sorted
+	  *
+	  * This function sorts the entitiesWithAssignments vector by Cell coordinates,
+	  * using the lessThan class. The entities vector can then be browsed Cell
+	  * by Cell at this resolution.
+	  */
     virtual void sortEntitiesPerCellCoordinates(const int &resolution);
 
+	/*!
+	  * \brief Browses entitiesWithAssignments to find the best owner for each entity-containing Cell, and updates LocalGrids.
+	  * \param resolution the resolution at which LocalGrids have been defined
+	  * \return a list of Cells that are empty and were not assigned
+	  */
     virtual QVector<btVector3> computeCellOwnersAndLocateEmptyCells(const int &resolution);
 
-    virtual void assignSurroundedCellsToOwners(QVector<btVector3> &emptyCells);
+	/*!
+	  * \brief Tells each LocalGrid to assign to self the Cells that are surrounded by already owned Cells.
+	  * \param emptyCells a list of coordinates of Cells that are still unassigned
+	  */
+	virtual void assignSurroundedCellsToOwners(QVector<btVector3> &emptyCells);
 
-    virtual void notifyCellAssignment(LocalGrid *local, const btVector3 &coords, const QVector<obEntityWrapper *> &entities, const short &owner);
-    virtual void notifyCellAssignment(LocalGrid *local, const btVector3 &coords, const short &owner);
+	/*!
+	  * \brief Uses a clustering algorithm to assign every unassigned empty Cell to a LocalGrid.
+	  * \param resolution the resolution at which LocalGrids have been defined
+	  * \param emptyCells a list of coordinates of Cells that are still unassigned
+	  */
+	virtual void assignEmptyCells(const int &resolution, const QVector<btVector3> &emptyCells);
 
-    void extendLocalGrids(const int &resolution, const QVector<btVector3> &points,const QVector<int> &assignments);
+	/*!
+	  * \brief Notifies a LocalGrid about the fact that a Cell is owned by another one.
+	  * \param local the LocalGrid to notify
+	  * \param coords the coordinates of the Cell
+	  * \param owner the id of the LocalGrid to which this Cell was assigned
+	  * \param entities the entities whose coordinates are in the given Cell, if any
+	  */
+	virtual void notifyCellAssignment(LocalGrid *local, const btVector3 &coords, const short &owner, const QVector<obEntityWrapper *> *entities = 0);
 
-    //q Cleanup holes in all LocalGrids
-    //r Use Kmeans to assign global empty Cells (using a bitmap to find them? or browsing thru entities?)
-    //s Expand LocalGrids to scene borders
+	/*!
+	  * \brief Extends LocalGrids in order for them to be able to contain all the points assigned to them in the parameters.
+	  * \param resolution the resolution of the LocalGrids
+	  * \param points the positions of points assigned to them
+	  * \param assignments the assignments of points to each grid
+	  */
+	void extendLocalGrids(const int &resolution, const QVector<btVector3> &points, const QVector<int> &assignments);
 
-    //# at this point, all physics worlds have their objects with their grids, global scene is covered by all grids
-    //# now we need to start the simulations.
+	/*!
+	 * \brief Initializes the Simulation so that it can be started.
+	 */
+	virtual void _init();
 
-    //#t onOgreReady function(3D World manager)
-    //u Create 3D objects of all entities
-    //v Start simulation.
-
-    /*!
-     * \brief Returns the CircularTransformBufferInterfaces defined in this Simulation.
-     * \return a copy of the CircularTransformBufferInterface vector of this Simulation
-     */
-    inline QVector<CircularTransformBufferInterface *> getBufferInterfaces() const
-    {
-        return bufferInterfaces;
-    }
-
-protected:
-    /*!
-     * \brief Initializes the Simulation so that it can be started.
-     */
-    virtual void _init();
-
-
+private:
+	/*!
+	  * \brief Computes the owner of a given Cell based on the entities it contains.
+	  * \param cellOwnerCounter the number of entities owned for each PhysicsWorld within this Cell
+	  * \param emptyCells a reference to current empty Cells in case the current Cell is to be added to the list
+	  * \param currentCoords coordinates of the current Cell
+	  * \param cellEnts the entities contained within this Cell
+	  */
     void _setCellOwner(const QMap<short, int> &cellOwnerCounter, QVector<btVector3> &emptyCells, const btVector3 &currentCoords, const QVector<obEntityWrapper *> &cellEnts);
 
+	/*!
+	  * \brief Computes the coordinates of the next Cell for browsing Cells in a given order (same as the one in lessThan).
+	  * \param current the coordinates of the current Cell
+	  * \return the coordinates of the next Cell
+	  */
     btVector3 _nextOrderedCellCoords(const btVector3 &current);
 
-
-
-
-
-
-
-
+protected:
+	/*! \struct lessThan
+	  * \brief An implementation of a comparison function for obEntityWrapper Cell coordinates.
+	  * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
+	  */
     struct lessThan {
-        lessThan(const int &resolution, GridInformation * grid) :
+		/*!
+		  * \brief Default constructor.
+		  * \param resolution the resolution to use for Cell coordinates
+		  * \param grid the GridInformation in which the Cell space is defined
+		  * \return a new lessThan
+		  */
+		lessThan(const int &resolution, GridInformation *grid) :
             resolution(resolution), grid(grid)
         {
         }
 
+		/*!
+		  * \brief The operator that is called for comparison of two obEntityWrapper instances.
+		  * \param p1 the first obEntityWrapper
+		  * \param p2 the second obEntityWrapper
+		  * \return whether p1's coordinates are lesser than p2's in the order defined by this class.
+		  *
+		  * \note p1 and p2 are in a QPair format because it is more practical for use with
+		  * entitiesWithAssignments.
+		  */
         bool operator()(const QPair<obEntityWrapper *, int> &p1, const QPair<obEntityWrapper *, int> &p2)
         {
             const btVector3 &pos1 = grid->toCellCoordinates(resolution, p1.first->getCenteredPosition());
@@ -195,15 +280,9 @@ protected:
                     (pos1.x() == pos2.x() && pos1.y() == pos2.y() && pos1.z() < pos2.z());
         }
 
-        int resolution;
-        GridInformation *grid;
+		int resolution;				/*!< The resolution of this lessThan comparison structure */
+		GridInformation *grid;		/*!< The GridInformation from which to read numbers of Cells */
     };
-
-
-
-
-
-//    virtual bool lessThanPerCoordinates(const QPair<obEntityWrapper *, int> &p1, const QPair<obEntityWrapper *, int> &p2);
 
     // Internal status
     enum {
