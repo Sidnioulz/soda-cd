@@ -1,0 +1,70 @@
+material Surfaces/Lava
+{
+    technique
+    {
+        pass
+        {
+            ambient 1.0 1.0 1.0
+            diffuse 1.0 1.0 1.0
+            //specular 0.8 0.3 0.3 0
+            emissive 1 0 0
+
+            texture_unit
+            {
+                texture Lava.jpg
+                tex_address_mode wrap
+                scale 10 10
+                // wave_xform scale sine 0.0 0.7 0.0 1.0
+            }
+        }
+    }
+}
+
+material Surfaces/RockLava
+{
+        technique
+        {
+                pass
+                {
+                        texture_unit
+                        {
+                                texture terr_rock6.jpg
+                        }
+                        texture_unit
+                        {
+                                texture Material_alpha_blend2.png
+                                colour_op alpha_blend
+                        }
+                        texture_unit
+                        {
+                                texture Lava.jpg
+                                colour_op_ex blend_current_alpha src_texture src_current
+                        }
+                }
+        }
+}
+
+
+material Surfaces/RockDirt
+{
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture terr_rock6.jpg
+			}
+			texture_unit
+			{
+				texture Material_alpha_blend.png             
+				colour_op alpha_blend
+			}
+			texture_unit
+			{
+				texture terr_rock-dirt.jpg
+				colour_op_ex blend_current_alpha src_texture src_current
+			}
+		}
+	}
+}
