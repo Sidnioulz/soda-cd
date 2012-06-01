@@ -53,11 +53,13 @@ const int PhysicsWorld::EntityColors[PhysicsWorld::NbColors][3] = {
 };
 
 PhysicsWorld::PhysicsWorld(const btScalar &targetTimeStep) :
-    id(WorldIdCounter++), targetTimeStep(targetTimeStep), entities(), borders(), buffer(new CircularTransformBuffer()), currentTime(0),
+    id(WorldIdCounter++), targetTimeStep(targetTimeStep), entities(), borders(), globalStaticEntities(),
+    buffer(new CircularTransformBuffer()), currentTime(0),
     localGrid(0), bulletManager(new BulletManager()), entityMutex(),
     entityAdditionQueue(), entityRemovalQueue(), CDInterface(this)
 {
     CDInterface.init();
+    bulletManager->setBroadphaseWorld(this);
 }
 
 PhysicsWorld::~PhysicsWorld()
@@ -74,11 +76,15 @@ PhysicsWorld::~PhysicsWorld()
     }
     entityAdditionQueue.clear();
 
-
     QMapIterator<Ogre::String, obEntityWrapper *> it(entities);
     while(it.hasNext())
         delete it.next().value();
     entities.clear();
+
+    QMapIterator<CellBorderCoordinates, CellBorderEntity *> bit(borders);
+    while(bit.hasNext())
+        delete bit.next().value();
+    borders.clear();
 
     if(localGrid)
         delete localGrid;
@@ -250,11 +256,9 @@ void PhysicsWorld::createScene()
 
     btRigidBody *floorBody = new btRigidBody(0, motionState, shape, localInertia);
 
-    // Store a pointer to the world the object belongs to
-//    floorBody->setUserPointer(this);
-
     // Add it to the physics world
     bulletManager->getDynamicsWorld()->addRigidBody(floorBody);
+    globalStaticEntities.append(floorBody);
 }
 
 PhysicsWorld::BulletFakeCCDThread::BulletFakeCCDThread(PhysicsWorld *world) :

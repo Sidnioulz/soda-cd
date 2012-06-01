@@ -167,6 +167,7 @@ private:
     btScalar targetTimeStep;                                //!< the target time step of the application
     QMap<Ogre::String, obEntityWrapper*> entities;          //!< map to the existing rigid bodies
     QMap<CellBorderCoordinates, CellBorderEntity*> borders; //!< map to entities used as Cell borders (not managed in LocalGrid, not sure if it makes sense yet)
+    QVector<btRigidBody *> globalStaticEntities;            //!< a vector to easily manage environment static entities like the floor
     CircularTransformBuffer *buffer;                        //!< pointer to the buffer on which the Bullet engine writes object positions
     btScalar currentTime;                                   //!< current time of the physics simulation
     LocalGrid *localGrid;                                   //!< pointer to the local grid containing the entities of this PhysicsWorld

@@ -420,9 +420,32 @@ void Simulation::extendLocalGrids(const int &resolution, const QVector<btVector3
     t.start();
 	qDebug("LocalGrid extension started.");
 #endif
+
+    const btVector3 &nbCells = grid->getGridAtResolution(resolution)->getNbCells();
+
+    for(int x=0; x<nbCells.x(); ++x)
+    {
+        for(int y=0; y<nbCells.y(); ++y)
+        {
+            for(int z=0; z<nbCells.z(); ++z)
+            {
+                btVector3 test = grid->toCellCoordinates(resolution, grid->toCenteredWorldCoordinates(resolution, btVector3(x,y,z)));
+                qDebug() << x << y << z << " \t ~~~ \t "<< test.x() << test.y() << test.z();
+            }
+        }
+    }
+
+
+
+
+
+
+
+
     // This vector contains a pair of coordinates used to define the rectangles within which each cluster exists
     QVector<QPair<btVector3, btVector3> > territoryBoundaries(numWorlds,
-                QPair<btVector3, btVector3>(sceneSize, btVector3(0, 0, 0) - sceneSize));
+                                                              QPair<btVector3, btVector3>(sceneSize + btVector3(1, 1, 1),
+                                                                                          btVector3(-1,-1,-1)));
 
     // Go through EKMeans assignments to compute boundaries
     for(int i=0; i<assignments.size(); ++i)
@@ -446,7 +469,9 @@ void Simulation::extendLocalGrids(const int &resolution, const QVector<btVector3
             qDebug() << maxCoord.x() << maxCoord.y() << maxCoord.z();
 
             QVector<int> margin = computeMargin(resolution, minCoord, maxCoord);
-            grids[i]->resize(margin, (maxCoord+btVector3(1,1,1)-minCoord), minCoord);
+            //FIXME: temporary hack for the extendGrid and resize bug that made some cells unowned.
+//            grids[i]->resize(margin, (maxCoord+btVector3(1,1,1)-minCoord), minCoord);
+            grids[i]->resize(margin, nbCells, btVector3(0, 0, 0));
         }
         catch (exception& e)
         {
@@ -488,7 +513,7 @@ void Simulation::_init()
     assignSurroundedCellsToOwners(emptyCells);
 
 	// Assign the Cells that are still empty, using a Clustering algorithm
-	assignEmptyCells(resolution, emptyCells);
+    assignEmptyCells(resolution, emptyCells);
 
 	// Assign LocalGrids to their respective PhysicsWorlds, and setup LocalGrid borders if wanted
     for(int i=0; i<numWorlds; ++i)

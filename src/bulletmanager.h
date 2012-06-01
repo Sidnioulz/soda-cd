@@ -103,20 +103,20 @@ public:
     ~BulletManager();
 
     /*!
-     * \brief Sets a LocalGrid to use for the spatial subdivision broadphase.
+     * \brief Sets a PhysicsWorld to use for the spatial subdivision broadphase.
      * \param grid the grid to use
      */
-    inline void setBroadphaseLocalGrid(LocalGrid *grid)
+    inline void setBroadphaseWorld(PhysicsWorld *world)
     {
-        broadphase->setLocalGrid(grid);
+        broadphase->setWorld(world);
     }
 
     /*!
-     * \brief Removes any previously set LocalGrid for the broadphase.
+     * \brief Removes any previously set PhysicsWorld for the broadphase.
      */
-    inline void unsetBroadphaseLocalGrid()
+    inline void unsetBroadphaseWorld()
     {
-        broadphase->unsetLocalGrid();
+        broadphase->unsetWorld();
     }
 
     /*!

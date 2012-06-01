@@ -1,12 +1,9 @@
 #include "btlocalgridbroadphase.h"
-
+#include "physicsworld.h"
 #include <QVector>
 
-//TODO: créer obEntity (mère de obEW et CBE), écrire btLGProxy, qui contient pointeur vers obEntity, ajouter pointeur vers proxy à obEntity (ou à obRigidBody??)
-
-
-btLocalGridBroadphase::btLocalGridBroadphase(LocalGrid *grid, btOverlappingPairCache* overlappingPairCache) :
-    grid(grid),
+btLocalGridBroadphase::btLocalGridBroadphase(PhysicsWorld *world, btOverlappingPairCache* overlappingPairCache) :
+    world(world),
     m_pairCache(overlappingPairCache),
     m_ownsPairCache(false)
 {
@@ -65,9 +62,10 @@ bool btLocalGridBroadphase::aabbOverlap(btBroadphaseProxy *proxy0, btBroadphaseP
 void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
 {
     // Don't do anything until a grid has been set
-    if(!grid)
+    if(!world->getLocalGrid())
         return;
 
+    LocalGrid *grid = world->getLocalGrid();
     const btVector3 &nbCells = grid->getGridInformation()->getGridAtResolution(grid->getResolution())->getNbCells();
 
     // A table that stores pointers to lists of entities that possibly overlap with those of the current Cell
@@ -87,6 +85,8 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
                 // Perform operations only if the world has entities
                 if(entities)
                 {
+//                    m_pairCache->addOverlappingPair(entities->at(u)->getProxy(), ); //FIXME:
+
                     // First setup a cache table telling which next cells also have entities to check against
                     for(int i=0; i<2; ++i)
                         for(int j=0; j<2; ++j)
@@ -114,7 +114,6 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
                             //FIXME: should be performed on proxies?
                             if(aabbOverlap(entities->at(u)->getProxy(), entities->at(v)->getProxy()))
                             {
-                                //NOTE: might be necessary to check if it's in the cache first?
                                 m_pairCache->addOverlappingPair(entities->at(u)->getProxy(), entities->at(v)->getProxy());
                             }
 
@@ -140,9 +139,10 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
 void btLocalGridBroadphase::rayTest(const btVector3 &/*rayFrom*/,const btVector3 &/*rayTo*/, btBroadphaseRayCallback &rayCallback, const btVector3 &/*aabbMin*/, const btVector3 &/*aabbMax*/)
 {
     // Don't do anything until a grid has been set
-    if(!grid)
+    if(!world->getLocalGrid())
         return;
 
+    LocalGrid *grid = world->getLocalGrid();
     const btVector3 &nbCells = grid->getGridInformation()->getGridAtResolution(grid->getResolution())->getNbCells();
     const QVector<obEntityWrapper *> *entities;
 
@@ -167,9 +167,10 @@ void btLocalGridBroadphase::rayTest(const btVector3 &/*rayFrom*/,const btVector3
 void btLocalGridBroadphase::aabbTest(const btVector3 &aabbMin, const btVector3 &aabbMax, btBroadphaseAabbCallback &callback)
 {
     // Don't do anything until a grid has been set
-    if(!grid)
+    if(!world->getLocalGrid())
         return;
 
+    LocalGrid *grid = world->getLocalGrid();
     const btVector3 &nbCells = grid->getGridInformation()->getGridAtResolution(grid->getResolution())->getNbCells();
     const QVector<obEntityWrapper *> *entities;
 

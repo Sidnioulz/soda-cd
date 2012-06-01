@@ -23,7 +23,10 @@
 
 #include <QtDebug>
 #include <btBulletCollisionCommon.h>
-#include "localgrid.h"
+#include "obentity.h"
+
+// Forward declaration
+class PhysicsWorld;
 
 struct btLocalGridProxy : public btBroadphaseProxy
 {
@@ -44,7 +47,7 @@ struct btLocalGridProxy : public btBroadphaseProxy
 class btLocalGridBroadphase : public btBroadphaseInterface
 {
 public:
-    btLocalGridBroadphase(LocalGrid *grid = 0, btOverlappingPairCache *overlappingPairCache = 0);
+    btLocalGridBroadphase(PhysicsWorld *world = 0, btOverlappingPairCache *overlappingPairCache = 0);
         ~btLocalGridBroadphase();
 
     virtual btBroadphaseProxy *createProxy(const btVector3 &aabbMin, const btVector3 &aabbMax, int shapetype, void *userPtr , short int collisionFilterGroup, short int collisionFilterMask, btDispatcher *dispatcher, void *multiSapProxy);
@@ -137,24 +140,24 @@ public:
 
 
     /*!
-     * \brief Sets a LocalGrid to use for the spatial subdivision broadphase.
-     * \param grid the grid to use
+     * \brief Sets a PhysicsWorld to use for the spatial subdivision broadphase.
+     * \param newWorld the world to use
      */
-    inline void setLocalGrid(LocalGrid *newGrid)
+    inline void setWorld(PhysicsWorld *newWorld)
     {
-        grid = newGrid;
+        world = newWorld;
     }
 
     /*!
-     * \brief Removes any previously set LocalGrid for the broadphase, which will not return any collision anymore
+     * \brief Removes any previously set PhysicsWorld for the broadphase, which will not return any collision anymore
      */
-    inline void unsetLocalGrid()
+    inline void unsetWorld()
     {
-        grid = 0;
+        world = 0;
     }
 
 private:
-    LocalGrid               *grid;              /*!< A pointer to the LocalGrid used within this broadphase */
+    PhysicsWorld            *world;              /*!< A pointer to the PhysicsWorld containing the grid used within this broadphase */
     btOverlappingPairCache  *m_pairCache;
     bool                    m_ownsPairCache;
 
