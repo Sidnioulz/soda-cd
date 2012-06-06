@@ -287,3 +287,12 @@ bool LocalGrid::ownedByAnotherWorld(const btVector3 &coord) const
     short id = at(coord).getOwnerId();
     return (id != ownerId && id != PhysicsWorld::IdBeingProcessed);
 }
+
+bool LocalGrid::ownedByAnotherWorld(const int &x, const int &y, const int &z) const
+{
+    if(outOfBounds(x, y, z))
+        return true;
+
+    short id = at(x, y, z).getOwnerId();
+    return (id != ownerId && id != PhysicsWorld::IdBeingProcessed);
+}

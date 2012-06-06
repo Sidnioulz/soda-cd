@@ -221,6 +221,20 @@ public:
     }
 
     /*!
+     * \brief Returns a constant reference to the Cell located at the given coordinates.
+     * \param x the x coordinate of the wanted Cell
+     * \param y the y coordinate of the wanted Cell
+     * \param z the z coordinate of the wanted Cell
+     * \return a constant reference to the wanted Cell
+     *
+     * \sa inline Cell &at(const int &x, const int &y, const int &z)
+     */
+    inline const Cell &at(const int &x, const int &y, const int &z) const
+    {
+        return Array::operator ()(x, y, z);
+    }
+
+    /*!
      * \brief Tries to find, for all Cells with an unknown id, whether the id can be deduced already or if it must be negociated later with neighbors.
      * \return the list of coordinates of Cells that are now owned by the LocalGrid
      */
@@ -258,6 +272,15 @@ public:
      * \return whether the matching Cell belongs to another PhysicsWorld
      */
     bool ownedByAnotherWorld(const btVector3 &coord) const;
+
+    /*!
+     * \brief Tells whether a Cell is owned by another PhysicsWorld.
+     * \param x the x coordinate of the Cell to check
+     * \param y the y coordinate of the Cell to check
+     * \param z the z coordinate of the Cell to check
+     * \return whether the matching Cell belongs to another PhysicsWorld
+     */
+    bool ownedByAnotherWorld(const int &x, const int &y, const int &z) const;
 
     /*!
      * \brief Returns a set of coordinates that is roughly in the middle of the LocalGrid.
