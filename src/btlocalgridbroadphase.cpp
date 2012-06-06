@@ -61,6 +61,11 @@ bool btLocalGridBroadphase::aabbOverlap(btBroadphaseProxy *proxy0, btBroadphaseP
 
 void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
 {
+    //MISSING: border-entity collisions
+    //MISSING: static env. collisions
+
+
+
     // Don't do anything until a grid has been set
     if(!world->getLocalGrid())
         return;

@@ -534,7 +534,7 @@ void OgreWidget::render()
     ogreRoot->renderOneFrame();
     update();
 
-    //WARNING: Render again if we missed a tick. This may cause stack overflow.
+    // Render again if we missed a tick. This may cause stack overflow in extreme cases.
     if(renderingPassQueued)
     {
         renderingPassQueued = false;

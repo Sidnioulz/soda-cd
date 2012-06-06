@@ -90,7 +90,6 @@ public:
   * This class implements special static rigid bodies that are used to detect when
   * an obEntityWrapper crosses a Cell's border.
   */
-//TODO: whenever LocalGrid is used for broad-phase, CellBorderEntity information should be accessible straight from the Cell objects.
 class CellBorderEntity : public obEntity
 {
 public:

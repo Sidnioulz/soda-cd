@@ -126,6 +126,7 @@ private:
 
 
 //TODO: super iterators, that then can be combined with the interface to transparently link lists without any copy
+// For instance, a class that creates obETRL iterators for a list of pointers to obETRL given when constructed.
 /*! \class obEntityTransformRecordListIterator
   * \brief An iterator on obEntityTransformRecordList objects.
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>

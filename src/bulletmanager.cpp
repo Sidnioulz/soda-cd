@@ -31,7 +31,7 @@
 using namespace std;
 
 BulletManagerWorld::BulletManagerWorld(btCollisionDispatcher *&dispatcher, btLocalGridBroadphase *&broadphase, btSequentialImpulseConstraintSolver *&solver, btDefaultCollisionConfiguration *&config) :
-    btDiscreteDynamicsWorld(dispatcher, broadphase, solver, config) //FIXME:
+    btDiscreteDynamicsWorld(dispatcher, new btDbvtBroadphase(), solver, config) //FIXME:
 {
 }
 
