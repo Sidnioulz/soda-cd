@@ -43,9 +43,9 @@ GridInformation::GridInformation(const int resolution, const btVector3 &spaceLen
 	parent(parent),
 	child(0),
     spaceLen(spaceLen),
-    nbCells(qMax(resolution, qFloor(spaceLen.x() / (biggestObjectSize.x()*2))),
-            qMax(resolution, qFloor(spaceLen.y() / (biggestObjectSize.y()*2))),
-            qMax(resolution, qFloor(spaceLen.z() / (biggestObjectSize.z()*2)))),
+    nbCells(qMax(resolution, qFloor(spaceLen.x() / (biggestObjectSize.x()+1))),
+            qMax(resolution, qFloor(spaceLen.y() / (biggestObjectSize.y()+1))),
+            qMax(resolution, qFloor(spaceLen.z() / (biggestObjectSize.z()+1)))),
     cellLen(spaceLen / nbCells)
 {
     qDebug() << "####\nGRID INFORMATION\n" << resolution;

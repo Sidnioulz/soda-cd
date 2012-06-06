@@ -100,7 +100,7 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
                                 // 0,0,0 is the current Cell.
                                 if(i || j || k)
                                 {
-                                    if(!grid->outOfBounds(x+i, y+j, z+k))
+                                    if(!grid->ownedByAnotherWorld(x+i, y+j, z+k))
                                     {
                                         Cell &o = grid->at(i, j, k);
                                         entityVectors[i][j][k] = o.getEntities();
