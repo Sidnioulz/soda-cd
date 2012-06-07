@@ -216,7 +216,6 @@ void LocalGrid::setCellOwnedBy(const btVector3 &coords, const short id)
 
 QVector<btVector3> LocalGrid::resolveEmptyCellOwnerships()
 {
-    //FIXME: this whole function is broken
     QVector<btVector3> nowAssigned;
 
     // For each cell of the LocalGrid's data, try to find an owner if it doesn't have one
@@ -228,14 +227,12 @@ QVector<btVector3> LocalGrid::resolveEmptyCellOwnerships()
         if(cell.getOwnerId() == PhysicsWorld::UnknownWorldId)
         {
             //NOTE: the good version might be it.position() + offset
-            /*short finalId = */resolveOwnership(cell, Utils::btVectorFromBlitz(it.position()));
+            short finalId = resolveOwnership(cell, Utils::btVectorFromBlitz(it.position()));
 
-//            if(finalId != PhysicsWorld::NullWorldId)
-//                nowAssigned.append(Utils::btVectorFromBlitz(it.position()));
+            if(finalId != PhysicsWorld::NullWorldId)
+                nowAssigned.append(Utils::btVectorFromBlitz(it.position()));
         }
     }
-
-    qDebug() << "World " << this->getOwnerId() << " has retrieved " << nowAssigned.size() << " cells.";
 
     return nowAssigned;
 }
