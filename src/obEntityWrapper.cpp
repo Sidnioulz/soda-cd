@@ -155,7 +155,7 @@ void obEntityWrapper::removeSecondaryWorld(PhysicsWorld *oldSecWorld)
 Animation* obEntityWrapper::getAnimation() const
 {
 	qDebug("TODO");
-    if(hasStaticMesh())
+    if(isStatic())
         return animation;
     else
         return NULL;

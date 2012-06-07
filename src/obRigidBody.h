@@ -46,6 +46,7 @@
 #include <OgreVector3.h>
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
+#include "obentity.h"
 
 /*! \class obRigidBody
   * \brief A dual Ogre-Bullet rigid body
@@ -60,6 +61,7 @@ class obRigidBody
 public:
     /*!
       * \brief Default constructor.
+      * \param parent the parent entity of this rigid body
       * \param name unique name of the body in the world
       * \param pos the initial position of the body
       * \param quat the initial rotation of the body
@@ -71,7 +73,8 @@ public:
       * without Ogre::SceneNode. Both objects must be created later using methods
       * of the class.
       */
-	obRigidBody(const Ogre::String &name,
+    obRigidBody(obEntity *parent,
+                const Ogre::String &name,
                 const Ogre::Vector3 &pos,
                 const Ogre::Quaternion &quat,
                 const Ogre::Vector3 &scale = Ogre::Vector3(1,1,1),
@@ -175,6 +178,15 @@ public:
       */
     void setTransformation(const Ogre::Vector3 &rotation, const Ogre::Vector3 &direction);
 
+    /*!
+      * \brief Returns the parent obEntity of this rigid body
+      * \return the parent obEntity of this object
+      */
+    inline obEntity *getParent() const
+    {
+        return parent;
+    }
+
 	/*! \brief Gets the mass of the body.
 	  * \return the mass of the body
 	  */
@@ -199,6 +211,7 @@ private:
     const static float DynamicBodyRestitution;  /*!< Dynamic body restitution (see Bullet documentation) */
     const static float DynamicBodyFriction;     /*!< Dynamic body friction (see Bullet documentation) */
 
+    obEntity            *parent;        /**< Parent entity of this rigid body */
     Ogre::SceneNode     *node;          /**< Ogre scene node of the body */
     btRigidBody         *btBody;        /**< Bullet rigid body */
     btTriangleMesh      *triangleMesh;  /**< Bullet polygonal mesh */

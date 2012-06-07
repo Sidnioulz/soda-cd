@@ -78,6 +78,30 @@ public:
       * update vehicle simulation
       */
     void internalSingleStepSimulation(btScalar timeStep);
+
+    /*!
+     * \brief Adds a btCollisionObject to the underlying btCollisionWorld. See official Bullet documentation.
+     * \param collisionObject please refer to the Bullet documentation
+     * \param collisionFilterGroup please refer to the Bullet documentation
+     * \param collisionFilterMask please refer to the Bullet documentation
+     *
+     * \note This function is overridden from the Bullet Physics one because of the need
+     * for us to customize the user pointer associated to a btBroadphaseProxy. The Bullet
+     * documentation does not tell what this function does, and thus it is not properly
+     * documented in SODA CD. Modify at your own expenses.
+     */
+    void addCollisionObject(btCollisionObject *collisionObject, short int collisionFilterGroup, short int collisionFilterMask);
+
+    /*!
+     * \brief Removes a btCollisionObject from the underlying btCollisionWorld. See official Bullet documentation.
+     * \param collisionObject please refer to the Bullet documentation
+     *
+     * \note This function is overridden from the Bullet Physics one because of the need
+     * for us to customize the user pointer associated to a btBroadphaseProxy. The Bullet
+     * documentation does not tell what this function does, and thus it is not properly
+     * documented in SODA CD. Modify at your own expenses.
+     */
+    void removeCollisionObject(btCollisionObject *collisionObject);
 };
 
 /*! \class BulletManager

@@ -156,10 +156,18 @@ public:
     /*! \brief Tells whether the entity has a static mesh.
       * \return whether the object's mesh is static
       */
-	inline bool hasStaticMesh() const
-	{
-		return staticMesh;
-	}
+    inline bool hasStaticMesh() const
+    {
+        return staticMesh;
+    }
+
+    /*! \brief Tells whether the entity is static (static mesh or null mass)
+      * \return whether the entity is static
+      */
+    inline bool isStatic() const
+    {
+        return hasStaticMesh() || obBody->getMass() == 0;
+    }
 
     /*! \brief Gets the id of the physics world in which the entity exists and is managed.
       * \return the id of the PhysicsWorld that owns the entity

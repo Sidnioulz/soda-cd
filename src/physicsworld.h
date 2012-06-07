@@ -21,8 +21,6 @@
 #ifndef PHYSICSWORLD_H
 #define PHYSICSWORLD_H
 
-#include <QMap>
-#include <QMapIterator>
 #include <OgreRoot.h>
 #include <OgreSceneManager.h>
 #include <OgreString.h>
@@ -102,6 +100,24 @@ public:
     void removeEntity(obEntityWrapper *obEnt, btScalar targetTime);
 
     /*!
+     * \brief Returns a reference to this PhysicsWorld's entities.
+     * \return a constant reference to the vector containing the dynamic entities of the world
+     */
+    inline const QVector<obEntityWrapper*> &getEntities() const
+    {
+        return entities;
+    }
+
+    /*!
+     * \brief Returns a reference to this PhysicsWorld's static btRigidBody objects.
+     * \return a constant reference to the vector containing the static entities of the world
+     */
+    inline const QVector<btRigidBody *> &getStaticEntities() const
+    {
+        return globalStaticEntities;
+    }
+
+    /*!
      * \brief Draws cubes inside all owned Cells of the Grid.
      */
     void drawCells();
@@ -153,6 +169,16 @@ private:
       */
     void _addCellBorder(CellBorderEntity *cbEnt);
 
+    /*!
+     * \brief Removes from an entity container anything that matches a given entity's name.
+     * \param container the container to remove an obEntityWrapper from
+     * \param obEnt the obEntityWrapper to remove
+     *
+     * \note There is apparently no reason why this method couldn't be refactored to
+     * directly use an Ogre::String as a second parameter if it makes things easier.
+     */
+    void _entityVectoryRemovalMethod(QVector<obEntityWrapper *> &container, obEntityWrapper *obEnt);
+
 	/*!
       * \brief Removes an entity wrapper from this physics world.
 	  * \param obEnt the entity to remove
@@ -160,24 +186,23 @@ private:
     void _removeEntity(obEntityWrapper *obEnt);
 
 
-    static const int NbColors = 12;                         //!< number of available colors for the per-thread coloring of entities
-    static const int EntityColors[NbColors][3];             //!< table containing color codes used to distinguish entity thread owners
+    static const int          NbColors = 12;             //!< number of available colors for the per-thread coloring of entities
+    static const int          EntityColors[NbColors][3]; //!< table containing color codes used to distinguish entity thread owners
 
-    short id;                                               //!< a number associated only to this object and used for entity naming
-    btScalar targetTimeStep;                                //!< the target time step of the application
-    QMap<Ogre::String, obEntityWrapper*> entities;          //!< map to the existing rigid bodies
-    QMap<CellBorderCoordinates, CellBorderEntity*> borders; //!< map to entities used as Cell borders (not managed in LocalGrid, not sure if it makes sense yet)
-    QVector<btRigidBody *> globalStaticEntities;            //!< a vector to easily manage environment static entities like the floor
-    CircularTransformBuffer *buffer;                        //!< pointer to the buffer on which the Bullet engine writes object positions
-    btScalar currentTime;                                   //!< current time of the physics simulation
-    LocalGrid *localGrid;                                   //!< pointer to the local grid containing the entities of this PhysicsWorld
-    BulletManager* bulletManager;                           //!< manager of the bullet physics engine
+    short                     id;                        //!< a number associated only to this object and used for entity naming
+    btScalar                  targetTimeStep;            //!< the target time step of the application
+    QVector<obEntityWrapper*> entities;                  //!< a vector for the existing rigid bodies
+    QVector<btRigidBody *>    globalStaticEntities;      //!< a vector to easily manage environment static entities like the floor
+    CircularTransformBuffer   *buffer;                   //!< pointer to the buffer on which the Bullet engine writes object positions
+    btScalar                  currentTime;               //!< current time of the physics simulation
+    LocalGrid                 *localGrid;                //!< pointer to the local grid containing the entities of this PhysicsWorld
+    BulletManager             *bulletManager;            //!< manager of the bullet physics engine
 
-    QMutex entityMutex;                                     //!< a mutex for inserting and deleting entities between CD iterations
-    TimedEntityQueue entityAdditionQueue;                   //!< a queue for objects to be added between next iterations of the collision detection algorithm
-    TimedEntityQueue entityRemovalQueue;                    //!< a queue for objects to be removed added between next iterations of the collision detection algorithm
+    QMutex                    entityMutex;               //!< a mutex for inserting and deleting entities between CD iterations
+    TimedEntityQueue          entityAdditionQueue;       //!< a queue for objects to be added between next iterations of the collision detection algorithm
+    TimedEntityQueue          entityRemovalQueue;        //!< a queue for objects to be removed between next iterations of the collision detection algorithm
 
-    static short WorldIdCounter;                            //!< a counter to make sure world IDs are unique
+    static short              WorldIdCounter;            //!< a counter to make sure world IDs are unique
 
 	/*! \class BulletFakeCCDThread
 	  * \brief A thread that is responsible of collision detection.

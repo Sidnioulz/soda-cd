@@ -29,14 +29,7 @@ btBroadphaseProxy *btLocalGridBroadphase::createProxy(const btVector3 &aabbMin, 
     btAssert(aabbMin[0]<= aabbMax[0] && aabbMin[1]<= aabbMax[1] && aabbMin[2]<= aabbMax[2]);
 
     btLocalGridProxy *proxy0 = new btLocalGridProxy(aabbMin, aabbMax, userPtr, collisionFilterGroup, collisionFilterMask, multiSapProxy);
-
-    obEntity *entity = static_cast<obEntity *>(userPtr);
-    entity->setProxy(proxy0);
-
-//    if(entity->getType() == obEntity::obEntityWrapperType)
-//    {
-//        obEntityWrapper *obEnt = dynamic_cast<obEntityWrapper *>(entity);
-//    }
+//    entity->setProxy(proxy0);
 
     return proxy0;
 }
@@ -45,7 +38,7 @@ void btLocalGridBroadphase::destroyProxy(btBroadphaseProxy *proxyOrg, btDispatch
 {
         btLocalGridProxy *proxy0 = static_cast<btLocalGridProxy*>(proxyOrg);
 
-        proxy0->parentEntity->unsetProxy();
+//        proxy0->parentEntity->unsetProxy();
         proxy0->m_clientObject = 0;
 
         m_pairCache->removeOverlappingPairsContainingProxy(proxyOrg,dispatcher);
@@ -64,8 +57,6 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
     //MISSING: border-entity collisions
     //MISSING: static env. collisions
 
-
-
     // Don't do anything until a grid has been set
     if(!world->getLocalGrid())
         return;
@@ -79,6 +70,9 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
     // Quicker pointer to entityVectors[0][0][0] for code readability
     const QVector<obEntityWrapper *> *entities;
 
+    // Reference to the static entities defined in the linked world.
+    const QVector<btRigidBody *> &staticEnts = world->getStaticEntities();
+
     // Browse through all Cells
     for(int x=0; x<nbCells.x(); ++x)
         for(int y=0; y<nbCells.y(); ++y)
@@ -90,7 +84,15 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
                 // Perform operations only if the world has entities
                 if(entities)
                 {
-//                    m_pairCache->addOverlappingPair(entities->at(u)->getProxy(), ); //FIXME:
+                    // Check all dynamic entities against their static counterparts
+                    for(int i=0; i<entities->size(); ++i)
+                        for(int j=0; j<staticEnts.size(); ++j)
+                            if(true)
+//                            if(aabbOverlap(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseProxy(), staticEnts[j]->getBroadphaseProxy()))
+                            {
+                                //NOTE: might be necessary to check if it's in the cache first?
+                                m_pairCache->addOverlappingPair(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseProxy(), staticEnts[j]->getBroadphaseProxy());
+                            }
 
                     // First setup a cache table telling which next cells also have entities to check against
                     for(int i=0; i<2; ++i)
@@ -116,10 +118,11 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
                     {
                         // First check against entities of the same Cell
                         for(int v=u+1; v<entities->size(); ++v)
-                            //FIXME: should be performed on proxies?
-                            if(aabbOverlap(entities->at(u)->getProxy(), entities->at(v)->getProxy()))
+                            if(true)
+//                            if(aabbOverlap(entities->at(u)->getRigidBody()->getBulletBody()->getBroadphaseProxy(), entities->at(v)->getRigidBody()->getBulletBody()->getBroadphaseProxy()))
                             {
-                                m_pairCache->addOverlappingPair(entities->at(u)->getProxy(), entities->at(v)->getProxy());
+                                //NOTE: might be necessary to check if it's in the cache first?
+                                m_pairCache->addOverlappingPair(entities->at(u)->getRigidBody()->getBulletBody()->getBroadphaseProxy(), entities->at(v)->getRigidBody()->getBulletBody()->getBroadphaseProxy());
                             }
 
                         // Then of neighboring Cells
@@ -129,11 +132,11 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
                                 {
                                     if(entityVectors[i][j][k])
                                         for(int v=0; v<entityVectors[i][j][k]->size(); ++v)
-                                            //FIXME: should be performed on proxies?
-                                            if(aabbOverlap(entities->at(u)->getProxy(), entityVectors[i][j][k]->at(v)->getProxy()))
+                                            if(true)
+//                                            if(aabbOverlap(entities->at(u)->getRigidBody()->getBulletBody()->getBroadphaseProxy(), entityVectors[i][j][k]->at(v)->getRigidBody()->getBulletBody()->getBroadphaseProxy()))
                                             {
                                                 //NOTE: might be necessary to check if it's in the cache first?
-                                                m_pairCache->addOverlappingPair(entities->at(u)->getProxy(), entityVectors[i][j][k]->at(v)->getProxy());
+                                                m_pairCache->addOverlappingPair(entities->at(u)->getRigidBody()->getBulletBody()->getBroadphaseProxy(), entityVectors[i][j][k]->at(v)->getRigidBody()->getBulletBody()->getBroadphaseProxy());
                                             }
                                 }
                     }
@@ -161,7 +164,7 @@ void btLocalGridBroadphase::rayTest(const btVector3 &/*rayFrom*/,const btVector3
                 if(entities)
                     for(int i=0; i<entities->size(); ++i)
                     {
-                        btLocalGridProxy *proxy = entities->at(i)->getProxy();
+                        btBroadphaseProxy *proxy = entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseProxy();
 
                         if(proxy)
                             rayCallback.process(proxy);
@@ -189,7 +192,7 @@ void btLocalGridBroadphase::aabbTest(const btVector3 &aabbMin, const btVector3 &
                 if(entities)
                     for(int i=0; i<entities->size(); ++i)
                     {
-                        btLocalGridProxy *proxy = entities->at(i)->getProxy();
+                        btBroadphaseProxy *proxy = entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseProxy();
 
                         if(proxy && TestAabbAgainstAabb2(aabbMin, aabbMax, proxy->m_aabbMin, proxy->m_aabbMax))
                             callback.process(proxy);

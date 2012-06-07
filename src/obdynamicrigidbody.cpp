@@ -30,7 +30,7 @@ obDynamicRigidBody::obDynamicRigidBody(obEntityWrapper *parent,
 									   const Ogre::Quaternion &quat,
 									   const Ogre::Vector3 &scale,
 									   int mass) :
-    obRigidBody(name, pos, quat, scale, mass),
+    obRigidBody(parent, name, pos, quat, scale, mass),
 	parent(parent)
 {
 }

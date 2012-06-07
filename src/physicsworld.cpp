@@ -53,7 +53,7 @@ const int PhysicsWorld::EntityColors[PhysicsWorld::NbColors][3] = {
 };
 
 PhysicsWorld::PhysicsWorld(const btScalar &targetTimeStep) :
-    id(WorldIdCounter++), targetTimeStep(targetTimeStep), entities(), borders(), globalStaticEntities(),
+    id(WorldIdCounter++), targetTimeStep(targetTimeStep), entities(), globalStaticEntities(),
     buffer(new CircularTransformBuffer()), currentTime(0),
     localGrid(0), bulletManager(new BulletManager()), entityMutex(),
     entityAdditionQueue(), entityRemovalQueue(), CDInterface(this)
@@ -71,20 +71,18 @@ PhysicsWorld::~PhysicsWorld()
     while(addIt.hasNext())
     {
         obEntityWrapper *obEnt = addIt.next().first;
-        entities.remove(obEnt->getName());
+        _entityVectoryRemovalMethod(entities, obEnt);
         delete obEnt;
     }
     entityAdditionQueue.clear();
 
-    QMapIterator<Ogre::String, obEntityWrapper *> it(entities);
-    while(it.hasNext())
-        delete it.next().value();
+    for(int i=0; i<entities.size(); ++i)
+        delete entities[i];
     entities.clear();
 
-    QMapIterator<CellBorderCoordinates, CellBorderEntity *> bit(borders);
-    while(bit.hasNext())
-        delete bit.next().value();
-    borders.clear();
+    for(int i=0; i<globalStaticEntities.size(); ++i)
+        delete globalStaticEntities[i];
+    globalStaticEntities.clear();
 
     if(localGrid)
         delete localGrid;
@@ -113,6 +111,7 @@ CircularTransformBuffer* PhysicsWorld::getCircularBuffer() const
     return buffer;
 }
 
+//TODO: modify queue to add/remove objects according to targetTime and to store targetTime // ROLLBACK&PROPAGATE
 void PhysicsWorld::addEntity(obEntityWrapper *obEnt, btScalar targetTime)
 {
     entityMutex.lock();
@@ -124,7 +123,8 @@ void PhysicsWorld::_addEntity(obEntityWrapper *obEnt)
 {
     if(localGrid)
         localGrid->addEntity(obEnt);
-    entities.insert(obEnt->getName(), obEnt);
+    entities.append(obEnt);
+
     getBulletManager()->getDynamicsWorld()->addRigidBody(obEnt->getRigidBody()->getBulletBody());
     obEnt->setColor(EntityColors[id%NbColors][0]/255.f, EntityColors[id%NbColors][1]/255.f, EntityColors[id%NbColors][2]/255.f);
     obEnt->setOwnerWorld(this);
@@ -139,7 +139,15 @@ void PhysicsWorld::_addCellBorder(CellBorderEntity *cbEnt)
     cbEnt->setColor(EntityColors[id%NbColors][0]/255.f, EntityColors[id%NbColors][1]/255.f, EntityColors[id%NbColors][2]/255.f);
 }
 
-//TODO: modify queue to add/remove objects according to targetTime and to store targetTime
+void PhysicsWorld::_entityVectoryRemovalMethod(QVector<obEntityWrapper *> &container, obEntityWrapper *obEnt)
+{
+    Q_ASSERT(obEnt != 0);
+
+    for(int i=0; i<container.size(); ++i)
+        if(container[i]->getName() == obEnt->getName())
+            container.remove(i--);
+}
+
 void PhysicsWorld::removeEntity(obEntityWrapper *obEnt, btScalar targetTime)
 {
     entityMutex.lock();
@@ -150,8 +158,9 @@ void PhysicsWorld::removeEntity(obEntityWrapper *obEnt, btScalar targetTime)
 void PhysicsWorld::_removeEntity(obEntityWrapper *obEnt)
 {
 	if(localGrid)
-		localGrid->removeEntity(obEnt);
-    entities.remove(obEnt->getName());
+        localGrid->removeEntity(obEnt);
+    _entityVectoryRemovalMethod(entities, obEnt);
+
     getBulletManager()->getDynamicsWorld()->removeRigidBody(obEnt->getRigidBody()->getBulletBody());
     obEnt->unsetOwnerWorld();
 }
@@ -266,19 +275,14 @@ PhysicsWorld::BulletFakeCCDThread::BulletFakeCCDThread(PhysicsWorld *world) :
 {
 }
 
-//TODO: must include a pointer to last computed buffer entry st. only moved objects are inserted?
 void PhysicsWorld::BulletFakeCCDThread::myTickCallback(btDynamicsWorld *world, btScalar timeStep)
 {
     PhysicsWorld *w = static_cast<PhysicsWorld *>(world->getWorldUserInfo());
     w->currentTime += timeStep;
 
     obEntityTransformRecordList *list = new obEntityTransformRecordList(w->currentTime);
-    QMapIterator<Ogre::String, obEntityWrapper*> it(w->entities);
-    while(it.hasNext())
-    {
-        QMap<Ogre::String, obEntityWrapper *>::const_iterator entity = it.next();
-        list->addTransform(entity.value(), entity.value()->getRigidBody()->getBulletBody()->getWorldTransform());
-    }
+    for(int i=0; i<w->entities.size(); ++i)
+        list->addTransform(w->entities[i], w->entities[i]->getRigidBody()->getBulletBody()->getWorldTransform());
 
     w->buffer->appendTimeStep(list);
 }
@@ -295,12 +299,8 @@ void PhysicsWorld::BulletFakeCCDThread::run()
 {
     // Initialization
     obEntityTransformRecordList *initialPositions = new obEntityTransformRecordList(0);
-    QMapIterator<Ogre::String, obEntityWrapper*> it(world->entities);
-    while(it.hasNext())
-    {
-            QMap<Ogre::String, obEntityWrapper *>::const_iterator entity = it.next();
-            initialPositions->addTransform(entity.value(), entity.value()->getRigidBody()->getBulletBody()->getWorldTransform());
-    }
+    for(int i=0; i<world->entities.size(); ++i)
+        initialPositions->addTransform(world->entities[i], world->entities[i]->getRigidBody()->getBulletBody()->getWorldTransform());
 
     // Stores the moment at which the simulation must be rewinded after an object insertion or removal
     btScalar rewindTime;

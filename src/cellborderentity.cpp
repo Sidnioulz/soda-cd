@@ -52,7 +52,7 @@ CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates 
             bodyLen.setZ(0.001);
 
         // Create the rigid body
-        obBody = new obRigidBody(name, Utils::vectorFromBullet(worldCoords), Ogre::Quaternion::IDENTITY);
+        obBody = new obRigidBody(this, name, Utils::vectorFromBullet(worldCoords), Ogre::Quaternion::IDENTITY);
         obBody->createSceneNode();
         obBody->createBorder(bodyLen, true);
 

@@ -520,6 +520,6 @@ void Simulation::_init()
     {
         worlds[i]->assignLocalGrid(grids[i]);
 //        worlds[i]->drawCells();
-//        worlds[i]->setupLocalGridBorders();
+        worlds[i]->setupLocalGridBorders();
     }
 }

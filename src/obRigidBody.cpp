@@ -50,7 +50,8 @@ const float obRigidBody::StaticBodyFriction     = 0.8f;
 const float obRigidBody::DynamicBodyRestitution = 0.6f;
 const float obRigidBody::DynamicBodyFriction    = 0.6f;
 
-obRigidBody::obRigidBody(const Ogre::String &name, const Ogre::Vector3 &pos, const Ogre::Quaternion &quat, const Ogre::Vector3 &scale, int mass) :
+obRigidBody::obRigidBody(obEntity *parent, const Ogre::String &name, const Ogre::Vector3 &pos, const Ogre::Quaternion &quat, const Ogre::Vector3 &scale, const int mass) :
+    parent(parent),
     node(0),
     btBody(0),
 	triangleMesh(0),
@@ -213,6 +214,7 @@ void obRigidBody::createBody(Ogre::Mesh *ptr)
     btBody->setRestitution(DynamicBodyRestitution);
     btBody->setFriction(DynamicBodyFriction);
     btBody->setCollisionFlags(btBody->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+    btBody->getCollisionShape()->setUserPointer(parent);
 }
 
 void obRigidBody::createBodyWithShape(btCollisionShape *shape, const bool staticMesh)
@@ -228,6 +230,7 @@ void obRigidBody::createBodyWithShape(btCollisionShape *shape, const bool static
 	btBody = new btRigidBody(staticMesh ? 0:mass, _createMotionState(), btShape, localInertiaTensor);
     btBody->setRestitution(staticMesh ? StaticBodyRestitution:DynamicBodyRestitution);
     btBody->setFriction(staticMesh ? StaticBodyFriction:DynamicBodyFriction);
+    btBody->getCollisionShape()->setUserPointer(parent);
 }
 
 
@@ -305,6 +308,9 @@ void obRigidBody::createMeshCollider(Ogre::Mesh *ptr)
 	btBody = new btRigidBody(0.0, _createMotionState(), btShape);
     btBody->setRestitution(StaticBodyRestitution);
     btBody->setFriction(StaticBodyFriction);
+    btBody->getCollisionShape()->setUserPointer(parent);
+
+    btBody->getCollisionShape()->setUserPointer(this);
 }
 
 void obRigidBody::setTransformation(const Ogre::Vector3 &rotation, const Ogre::Vector3 &direction)

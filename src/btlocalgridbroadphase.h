@@ -38,7 +38,7 @@ struct btLocalGridProxy : public btBroadphaseProxy
         btBroadphaseProxy(minpt,maxpt,userPtr,collisionFilterGroup,collisionFilterMask,multiSapProxy),
         parentEntity(0)
     {
-        parentEntity = static_cast<obEntity *>(userPtr);
+//        parentEntity = static_cast<obEntity *>(userPtr);
     }
 
     obEntity *parentEntity;
@@ -103,41 +103,14 @@ public:
         aabbMax.setValue(BT_LARGE_FLOAT,BT_LARGE_FLOAT,BT_LARGE_FLOAT);
     }
 
-
-
-
-
-
     virtual void resetPool(btDispatcher *dispatcher)
     {
     }
-
 
     inline virtual void printStats()
     {
         qWarning() << "printStats is not implemented yet for btLocalGridBroadphase.";
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     /*!
      * \brief Sets a PhysicsWorld to use for the spatial subdivision broadphase.

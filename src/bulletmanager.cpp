@@ -1,4 +1,19 @@
 /*
+ *** Methods from BulletManagerWorld are overridden from Bullet:
+ * Bullet Continuous Collision Detection and Physics Library
+ * Copyright (c) 2003-2011 Erwin Coumans  http://bulletphysics.org
+ *
+ * This software is provided 'as-is', without any express or implied warranty.
+ * In no event will the authors be held liable for any damages arising from the use of this software.
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it freely,
+ * subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ *
+ *** Rest of the class
  * Copyright (2012) Inria Rennes - IRISA
  *
  * Contributor(s):
@@ -31,7 +46,7 @@
 using namespace std;
 
 BulletManagerWorld::BulletManagerWorld(btCollisionDispatcher *&dispatcher, btLocalGridBroadphase *&broadphase, btSequentialImpulseConstraintSolver *&solver, btDefaultCollisionConfiguration *&config) :
-    btDiscreteDynamicsWorld(dispatcher, new btDbvtBroadphase(), solver, config) //FIXME:
+    btDiscreteDynamicsWorld(dispatcher, broadphase, solver, config)
 {
 }
 
@@ -255,6 +270,92 @@ void BulletManagerWorld::internalSingleStepSimulation(btScalar timeStep)
         (*m_internalTickCallback)(this, timeStep);
     }
 }
+
+
+void BulletManagerWorld::addCollisionObject(btCollisionObject *collisionObject, short int collisionFilterGroup, short int collisionFilterMask)
+{
+    btAssert(collisionObject);
+
+    //check that the object isn't already added
+    btAssert( m_collisionObjects.findLinearSearch(collisionObject)  == m_collisionObjects.size());
+
+    m_collisionObjects.push_back(collisionObject);
+
+    //calculate new AABB
+    btTransform trans = collisionObject->getWorldTransform();
+
+    btVector3	minAabb;
+    btVector3	maxAabb;
+    collisionObject->getCollisionShape()->getAabb(trans,minAabb,maxAabb);
+
+    int type = collisionObject->getCollisionShape()->getShapeType();
+    collisionObject->setBroadphaseHandle( getBroadphase()->createProxy(
+        minAabb,
+        maxAabb,
+        type,
+        collisionObject,
+        collisionFilterGroup,
+        collisionFilterMask,
+        m_dispatcher1,0
+        ));
+}
+
+
+void BulletManagerWorld::removeCollisionObject(btCollisionObject *collisionObject)
+{
+    //bool removeFromBroadphase = false;
+
+    {
+        btBroadphaseProxy* bp = collisionObject->getBroadphaseHandle();
+        if (bp)
+        {
+            //
+            // only clear the cached algorithms
+            //
+            getBroadphase()->getOverlappingPairCache()->cleanProxyFromPairs(bp,m_dispatcher1);
+            getBroadphase()->destroyProxy(bp,m_dispatcher1);
+            collisionObject->setBroadphaseHandle(0);
+        }
+    }
+
+    //swapremove
+    m_collisionObjects.remove(collisionObject);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 BulletManager::BulletManager() :
