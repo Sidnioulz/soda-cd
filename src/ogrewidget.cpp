@@ -403,11 +403,11 @@ void OgreWidget::initOgreSystem()
     items.push_back("cam.pX");
     items.push_back("cam.pY");
     items.push_back("cam.pZ");
-    items.push_back("");
     items.push_back("cam.oW");
     items.push_back("cam.oX");
     items.push_back("cam.oY");
     items.push_back("cam.oZ");
+    items.push_back("");
     items.push_back("");
     items.push_back("Filtering");
     items.push_back("Poly Mode");
@@ -476,10 +476,10 @@ bool OgreWidget::frameRenderingQueued(const Ogre::FrameEvent &evt)
             mDetailsPanel->setParamValue(0, Ogre::StringConverter::toString(ogreCamera->getDerivedPosition().x));
             mDetailsPanel->setParamValue(1, Ogre::StringConverter::toString(ogreCamera->getDerivedPosition().y));
             mDetailsPanel->setParamValue(2, Ogre::StringConverter::toString(ogreCamera->getDerivedPosition().z));
-            mDetailsPanel->setParamValue(4, Ogre::StringConverter::toString(ogreCamera->getDerivedOrientation().w));
-            mDetailsPanel->setParamValue(5, Ogre::StringConverter::toString(ogreCamera->getDerivedOrientation().x));
-            mDetailsPanel->setParamValue(6, Ogre::StringConverter::toString(ogreCamera->getDerivedOrientation().y));
-            mDetailsPanel->setParamValue(7, Ogre::StringConverter::toString(ogreCamera->getDerivedOrientation().z));
+            mDetailsPanel->setParamValue(3, Ogre::StringConverter::toString(ogreCamera->getDerivedOrientation().w));
+            mDetailsPanel->setParamValue(4, Ogre::StringConverter::toString(ogreCamera->getDerivedOrientation().x));
+            mDetailsPanel->setParamValue(5, Ogre::StringConverter::toString(ogreCamera->getDerivedOrientation().y));
+            mDetailsPanel->setParamValue(6, Ogre::StringConverter::toString(ogreCamera->getDerivedOrientation().z));
         }
     }
     return true;
@@ -488,7 +488,6 @@ bool OgreWidget::frameRenderingQueued(const Ogre::FrameEvent &evt)
 //TODO: optimize render()
 void OgreWidget::render()
 {
-
     // An internal variable
     static btScalar simulationRunTime = 0;
 

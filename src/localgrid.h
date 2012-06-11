@@ -25,11 +25,11 @@
 #include "grid.h"
 #include "cell.h"
 
-// Forward declaration
-class PhysicsWorld;
-
 #include <blitz/array.h>
 using namespace blitz;
+
+// Forward declaration
+class PhysicsWorld;
 
 /*! \class LocalGrid
   * \brief A 3D grid of Cells containing obEntityWrappers, that is specific to a given PhysicsWorld.

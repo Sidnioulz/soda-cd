@@ -128,7 +128,7 @@ public:
 
     /*!
      * \brief Sets a PhysicsWorld to use for the spatial subdivision broadphase.
-     * \param grid the grid to use
+     * \param world the world to use
      */
     inline void setBroadphaseWorld(PhysicsWorld *world)
     {
@@ -145,7 +145,7 @@ public:
 
     /*!
       * \brief Returns the dynamics world of the bullet instance.
-      * \return the btDiscreteDynamicsWorld of this instance
+      * \return the btDynamicsWorld of this instance
       */
     inline btDynamicsWorld* getDynamicsWorld() const
     {

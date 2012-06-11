@@ -51,6 +51,7 @@ void RandomCubeSimulation::setupBasic3DEnvironment()
     Ogre::SceneNode *node = OgreResources::getSceneManager()->getRootSceneNode()->createChildSceneNode();
     node->attachObject(ent);
     node->setPosition(0, 0, 0);
+    node->showBoundingBox(true);
 
     // Setup some sky
     Ogre::Plane plane;

@@ -205,7 +205,6 @@ protected:
     QTimer                           renderingTimer;        //!< Emits ticks when rendering is needed to reach FPS
     bool                             currentlyRendering;    //!< Tells whether the rendering function is currently running
     bool                             renderingPassQueued;   //!< Tells whether a tick was emitted during a pass, which means another one is needed to keep up
-    QElapsedTimer                    physicsTimer;          //!< Timer representing the elapsed time in the physics environment
 
 signals:
     /*!

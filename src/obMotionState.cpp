@@ -31,7 +31,7 @@ obMotionState::obMotionState(obEntityWrapper *parent) : parentBody(parent), grid
 void obMotionState::setLocalGrid(LocalGrid *newGrid)
 {
     grid = newGrid;
-    btVector3 coords = grid->getGridInformation()->toCellCoordinates(grid->getGridInformation()->getBestTerritoryResolution(), parentBody->getCenteredPosition());
+    btVector3 coords = grid->getGridInformation()->toCellCoordinates(grid->getResolution(), parentBody->getCenteredPosition());
 	if(grid->at(coords).containsEntity(parentBody))
         lastCellCoords = coords;
     else
@@ -51,11 +51,9 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
 {
     if(grid && parentBody)
     {
-        btVector3 coords = grid->getGridInformation()->toCellCoordinates(grid->getGridInformation()->getBestTerritoryResolution(), parentBody->getCenteredPosition());
+        btVector3 coords = grid->getGridInformation()->toCellCoordinates(grid->getResolution(), parentBody->getCenteredPosition());
         if(coords != lastCellCoords)
         {
-
-            //FIXME: this is plain wrong, should be a Cell ownership test.
             if(grid->ownedByAnotherWorld(coords))
             {
                 if(grid->outOfBounds(coords))
@@ -65,7 +63,6 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
 
                 //FIXME: temporary hack to avoid segfaults
                 //TODO: start sync with neighbour
-                //TODO: send a signal to parent
 
 				parentBody->setColor(1, 0, 0);
                 unsetLocalGrid();
@@ -73,7 +70,7 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
             else
             {
 				grid->at(lastCellCoords).removeEntity(parentBody);
-				grid->at(coords).removeEntity(parentBody);
+                grid->at(coords).addEntity(parentBody);
                 lastCellCoords = coords;
             }
         }

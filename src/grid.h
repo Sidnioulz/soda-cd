@@ -29,8 +29,6 @@
 // Forward declaration
 class GridInformation;
 
-//TODO: find a better way to cut grids so that each grid is populated enough
-
 /*! \class InvalidResolutionException
   * \brief An exception for methods that try to operate on a resolution that doesn't exist within the GridInformation.
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>

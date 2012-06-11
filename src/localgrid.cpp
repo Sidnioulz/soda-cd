@@ -90,11 +90,13 @@ QString LocalGrid::displayBoundsInfo() const
 void LocalGrid::addEntity(obEntityWrapper *obEnt)
 {
     // Get the Cell coordinates in which to add the entity
-    btVector3 cellCoords = gridInfo->toCellCoordinates(gridInfo->getBestTerritoryResolution(), obEnt->getCenteredPosition());
+    btVector3 cellCoords = gridInfo->toCellCoordinates(resolution, obEnt->getCenteredPosition());
 
     // Check that it exists and get it
     Q_ASSERT(!outOfBounds(cellCoords));
     Cell &cell = at(cellCoords);
+
+    qDebug() << "LocalGrid::addEntity(" << obEnt->getName().c_str() << "): to cell " << cellCoords.x() << cellCoords.y() << cellCoords.z();
 
     // Add the entity
     cell.addEntity(obEnt);
@@ -201,19 +203,26 @@ void LocalGrid::setCellOwnedBy(const btVector3 &coords, const short id)
 {
     if(!outOfBounds(coords))
     {
-        if(at(coords).getOwnerId() != PhysicsWorld::NullWorldId)
+        Cell &c = at(coords);
+
+        if(c.getOwnerId() != PhysicsWorld::NullWorldId && c.getOwnerId() != PhysicsWorld::UnknownWorldId)
         {
-            qWarning() << "Warning, changed owner of Cell " << coords.x() << coords.y() << coords.z() << " while it already had one (" << at(coords).getOwnerId() << ")" << " to " << id;
-            if(at(coords).getEntities() != 0 && at(coords).getEntities()->size() != 0)
-                qWarning() << "\t " << at(coords).getEntities()->size() << "entities in this cell";
+            qWarning() << "Warning, changed owner of Cell " << coords.x() << coords.y() << coords.z() << " while it already had one (" << c.getOwnerId() << ")" << " to " << id;
+            if(c.getEntities() != 0 && c.getEntities()->size() != 0)
+                qWarning() << "\t " << c.getEntities()->size() << "entities in this cell";
         }
 
-        at(coords).setOwnerId(id);
+        c.setOwnerId(id);
+        if(id != this->getOwnerId())
+            qDebug() << "setCellOwnedBy(" << coords.x() << coords.y() << coords.z() << "," << id << "): foreign cell belongs to" << id << "in grid" << this->getOwnerId();
+        else
+            qDebug() << "setCellOwnedBy(" << coords.x() << coords.y() << coords.z() << "," << id << "): cell belongs to self (" << id << ")";
     }
     else
-        qDebug() << "Grid " << ownerId << "oob " << coords.x() << coords.y() << coords.z() << id;
+        qDebug() << "setCellOwnedBy(" << coords.x() << coords.y() << coords.z() << "," << id << "): out of bounds in grid" << this->getOwnerId();
 }
 
+//FIXME: fix this story of nowAssigned vector containing weird stuff. Maybe the problem comes from resolveOwnership().
 QVector<btVector3> LocalGrid::resolveEmptyCellOwnerships()
 {
     QVector<btVector3> nowAssigned;
@@ -227,10 +236,10 @@ QVector<btVector3> LocalGrid::resolveEmptyCellOwnerships()
         if(cell.getOwnerId() == PhysicsWorld::UnknownWorldId)
         {
             //NOTE: the good version might be it.position() + offset
-            short finalId = resolveOwnership(cell, Utils::btVectorFromBlitz(it.position()));
+            /*short finalId = */resolveOwnership(cell, Utils::btVectorFromBlitz(it.position()));
 
-            if(finalId != PhysicsWorld::NullWorldId)
-                nowAssigned.append(Utils::btVectorFromBlitz(it.position()));
+//            if(finalId != PhysicsWorld::NullWorldId)
+//                nowAssigned.append(Utils::btVectorFromBlitz(it.position()));
         }
     }
 

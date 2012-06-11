@@ -221,7 +221,10 @@ void PhysicsWorld::drawCells()
 //            position.setX(position.x() + (int)(rand() % 40 - 20));
             btVector3 scale(localGrid->getGridInformation()->getCellLength() / (btVector3(102, 102, 102)));
 
-            Ogre::String entityName = "cell" + Ogre::StringConverter::toString(coords.x()) + Ogre::StringConverter::toString(coords.y()) + Ogre::StringConverter::toString(coords.z());
+            Ogre::String entityName = "cell_id:" + /*Ogre::StringConverter::toString(id) +
+                    "x:" +*/ Ogre::StringConverter::toString(coords.x()) +
+                    "y:" + Ogre::StringConverter::toString(coords.y()) +
+                    "z:" + Ogre::StringConverter::toString(coords.z());
 
             Ogre::Vector3 ogrePos = Utils::vectorFromBullet(position);
             Ogre::Vector3 ogreScale = Utils::vectorFromBullet(scale);

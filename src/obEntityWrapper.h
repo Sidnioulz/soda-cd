@@ -91,6 +91,9 @@ private:
   *
   * This class implements entities that are both Ogre::Entity and obDynamicRigidBody.
   * It allows synchronous manipulation of object representations in Ogre and Bullet.
+  *
+  * \note For historical reasons, this class is named obEntityWrapper. A more suitable
+  * name for it would be obDynamicEntity.
   */
 class obEntityWrapper : public obEntity
 {

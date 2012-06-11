@@ -27,8 +27,6 @@
 #include <QSharedPointer>
 #include "obentitytransformrecordlist.h"
 
-//TODO: test load bursts of half buffer size, and then of twice buffer size
-
 /*! \class CircularTransformBuffer
   * \brief Implements a circular buffer containing information on transforms for all objects at given time steps.
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>

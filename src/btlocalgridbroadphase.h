@@ -28,22 +28,13 @@
 // Forward declaration
 class PhysicsWorld;
 
-struct btLocalGridProxy : public btBroadphaseProxy
-{
-    btLocalGridProxy() :
-        parentEntity(0)
-    {}
-
-    btLocalGridProxy(const btVector3& minpt,const btVector3& maxpt,void* userPtr,short int collisionFilterGroup,short int collisionFilterMask,void* multiSapProxy) :
-        btBroadphaseProxy(minpt,maxpt,userPtr,collisionFilterGroup,collisionFilterMask,multiSapProxy),
-        parentEntity(0)
-    {
-//        parentEntity = static_cast<obEntity *>(userPtr);
-    }
-
-    obEntity *parentEntity;
-};
-
+/*! \class btLocalGridBroadphase
+  * \brief A broadphase implementation making use of LocalGrid.
+  * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
+  *
+  * This class is a spatial subdivision uniform grid broadphase, based
+  * on the LocalGrid that already exists within PhysicsWorlds.
+  */
 class btLocalGridBroadphase : public btBroadphaseInterface
 {
 public:
@@ -56,17 +47,9 @@ public:
 
     bool aabbOverlap(btBroadphaseProxy *proxy0, btBroadphaseProxy *proxy1);
 
+    bool aabbOverlap(const btVector3 &aabb0Min, const btVector3 &aabb0Max, const btVector3 &aabb1Min, const btVector3 &aabb1Max);
+
     virtual void calculateOverlappingPairs(btDispatcher *dispatcher);
-
-    inline btLocalGridProxy *castProxy(btBroadphaseProxy *proxy)
-    {
-        return static_cast<btLocalGridProxy*>(proxy);
-    }
-
-    inline const btLocalGridProxy *castProxy(btBroadphaseProxy *proxy) const
-    {
-        return static_cast<const btLocalGridProxy*>(proxy);
-    }
 
     inline void getAabb(btBroadphaseProxy *proxy, btVector3 &aabbMin, btVector3 &aabbMax) const
     {

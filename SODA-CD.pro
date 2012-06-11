@@ -76,6 +76,7 @@ HEADERS += \
     src/simulation.h \
     src/randomcubesimulation.h \
     src/obghostentity.h \
+    src/obentity.h \
     src/btlocalgridbroadphase.h
 
 SOURCES += \
@@ -112,6 +113,7 @@ SOURCES += \
     src/simulation.cpp \
     src/randomcubesimulation.cpp \
     src/obghostentity.cpp \
+    src/obentity.cpp \
     src/btlocalgridbroadphase.cpp
 
 LIBS += -lOgreMain \

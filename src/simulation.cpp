@@ -254,11 +254,18 @@ void Simulation::_setCellOwner(const QMap<short, int> &cellOwnerCounter, QVector
 
     // If the Cell was empty, add it to the list of empty Cells for later assignment
     if(maxIndex == PhysicsWorld::NullWorldId)
+    {
+        qDebug() << "\tEmpty " << currentCoords.x() << currentCoords.y() << currentCoords.z();
         emptyCells.append(currentCoords);
+    }
     // Else, notify all PhysicsWorlds which one the Cell was assigned to
     else
+    {
+        qDebug() << "_setCellOwner decision:" << currentCoords.x() << currentCoords.y() << currentCoords.z() << " owned by ID " << worlds[maxIndex]->getId() << " with" << cellEnts.size() << "entities";
+
         for(int w=0; w<numWorlds; ++w)
-			notifyCellAssignment(grids[w], currentCoords, worlds[maxIndex]->getId(), &cellEnts);
+            notifyCellAssignment(grids[w], currentCoords, worlds[maxIndex]->getId(), &cellEnts);
+    }
 }
 
 btVector3 Simulation::_nextOrderedCellCoords(const btVector3 &current)
@@ -303,20 +310,20 @@ QVector<btVector3> Simulation::computeCellOwnersAndLocateEmptyCells(const int &r
         obEntityWrapper *obEnt = entitiesWithAssignments[i].first;
         const btVector3 &coords = grid->toCellCoordinates(resolution, obEnt->getCenteredPosition());
 
-        qDebug() << "Coordinates " << coords.x() << coords.y() << coords.z();
+        qDebug() << "JCoordinates " << coords.x() << coords.y() << coords.z();
 
         // Different Cells, compute the owner for the current Cell and notify all worlds
         if(coords != currentCoords)
         {
+            qDebug() << "\tCoordinates " << currentCoords.x() << currentCoords.y() << currentCoords.z();
             _setCellOwner(cellOwnerCounter, emptyCells, currentCoords, cellEnts);
-            qDebug() << "Cell " << currentCoords.x() << currentCoords.y() << currentCoords.z() << " now owned by a world";
 
             // For all Cells between the one just processed and the next to contain an entity, mark the Cell empty
             btVector3 nextCoords = _nextOrderedCellCoords(currentCoords);
             while (nextCoords != coords)
             {
-                qDebug() << "Coordinates " << nextCoords.x() << nextCoords.y() << nextCoords.z();
-                qDebug() << "Empty " << nextCoords.x() << nextCoords.y() << nextCoords.z();
+                qDebug() << "\tCoordinates " << nextCoords.x() << nextCoords.y() << nextCoords.z();
+                qDebug() << "\tEmpty " << nextCoords.x() << nextCoords.y() << nextCoords.z();
                 emptyCells.append(nextCoords);
                 nextCoords = _nextOrderedCellCoords(nextCoords);
             }
@@ -408,8 +415,10 @@ void Simulation::notifyCellAssignment(LocalGrid *local, const btVector3 &coords,
 
 	if(entities && local->getOwnerId() == owner)
     {
+        qDebug() << "notifyCellAssignment: confirmed that world" << owner << "owns" << entities->size() << "entities.";
+
 		for(int i=0; i<entities->size(); ++i)
-			local->addEntity(entities->operator [](i)); //TODO: check that there are no duplicates?
+            local->addEntity(entities->at(i));
     }
 }
 
@@ -509,10 +518,10 @@ void Simulation::_init()
     // Browse all sorted entities to assign Cell owners to non-empty Cells, and return the list of empty ones
     QVector<btVector3> emptyCells = computeCellOwnersAndLocateEmptyCells(resolution);
 
-    // Make sure that whenever a Cell is surrounded by Cells from the same LocalGrid, that LocalGrid owns it
+//    // Make sure that whenever a Cell is surrounded by Cells from the same LocalGrid, that LocalGrid owns it
     assignSurroundedCellsToOwners(emptyCells);
 
-	// Assign the Cells that are still empty, using a Clustering algorithm
+//	// Assign the Cells that are still empty, using a Clustering algorithm
     assignEmptyCells(resolution, emptyCells);
 
 	// Assign LocalGrids to their respective PhysicsWorlds, and setup LocalGrid borders if wanted
@@ -520,6 +529,6 @@ void Simulation::_init()
     {
         worlds[i]->assignLocalGrid(grids[i]);
 //        worlds[i]->drawCells();
-        worlds[i]->setupLocalGridBorders();
+//        worlds[i]->setupLocalGridBorders();
     }
 }
