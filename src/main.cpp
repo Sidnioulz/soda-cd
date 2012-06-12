@@ -37,13 +37,7 @@ MainAsapCdWindow::MainAsapCdWindow(QWidget *parent) :
     ui->widget->setLayout(new QGridLayout());
     ui->widget->layout()->setMargin(0);
 
-    // Setup actions for menu entries
-    QAction *closeAct = new QAction("&Quit", this);
-    connect(closeAct, SIGNAL(triggered()), this, SLOT(close()));
-    ui->menuMenu->addAction(closeAct);
-
     // Create the Ogre Widget
-    //TODO: in the long term there should be some proper rendering threads which get the CTBI pointer and are connected to the Ogre widget
     ogreWidget = new OgreWidget(targetFPS);
     ui->widget->layout()->addWidget(ogreWidget);
 
@@ -54,6 +48,18 @@ MainAsapCdWindow::MainAsapCdWindow(QWidget *parent) :
     ogreWidget->setFocus();
     this->setWindowState(Qt::WindowMaximized);
     this->setFocusPolicy(Qt::StrongFocus);
+
+    // Setup actions for menu entries
+    QAction *closeAct = new QAction("&Quit", this);
+    connect(closeAct, SIGNAL(triggered()), this, SLOT(close()));
+    ui->menuMenu->addAction(closeAct);
+
+    QAction *toggleOgre = new QAction("&Show 3D Widget", this);
+    toggleOgre->setCheckable(true);
+    toggleOgre->setChecked(true);
+
+    connect(toggleOgre, SIGNAL(triggered(bool)), ogreWidget, SLOT(setShown(bool)));
+    ui->menuDebug->addAction(toggleOgre);
 }
 
 MainAsapCdWindow::~MainAsapCdWindow()
