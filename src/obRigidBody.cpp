@@ -214,7 +214,7 @@ void obRigidBody::createBody(Ogre::Mesh *ptr)
 	btBody = new btRigidBody(mass, _createMotionState(), btShape, localInertiaTensor);
     btBody->setRestitution(DynamicBodyRestitution);
     btBody->setFriction(DynamicBodyFriction);
-    btBody->setCollisionFlags(btBody->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+//    btBody->setCollisionFlags(btBody->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
     btBody->getCollisionShape()->setUserPointer(parent);
 }
 

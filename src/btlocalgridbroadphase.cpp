@@ -9,8 +9,8 @@ btLocalGridBroadphase::btLocalGridBroadphase(PhysicsWorld *world, btOverlappingP
 {
     if (!overlappingPairCache)
     {
-        void* mem = btAlignedAlloc(sizeof(btHashedOverlappingPairCache),16);
-        m_pairCache = new (mem)btHashedOverlappingPairCache();
+        void* mem = btAlignedAlloc(sizeof(btSortedOverlappingPairCache),16);
+        m_pairCache = new (mem)btSortedOverlappingPairCache();
         m_ownsPairCache = true;
     }
 }
@@ -28,7 +28,7 @@ btBroadphaseProxy *btLocalGridBroadphase::createProxy(const btVector3 &aabbMin, 
 {
     btAssert(aabbMin[0]<= aabbMax[0] && aabbMin[1]<= aabbMax[1] && aabbMin[2]<= aabbMax[2]);
 
-    btLocalGridProxy *proxy0 = new btLocalGridProxy(aabbMin, aabbMax, userPtr, collisionFilterGroup, collisionFilterMask, multiSapProxy);
+    btBroadphaseProxy *proxy0 = new btBroadphaseProxy(aabbMin, aabbMax, userPtr, collisionFilterGroup, collisionFilterMask, multiSapProxy);
 //    entity->setProxy(proxy0);
 
     return proxy0;
@@ -36,34 +36,39 @@ btBroadphaseProxy *btLocalGridBroadphase::createProxy(const btVector3 &aabbMin, 
 
 void btLocalGridBroadphase::destroyProxy(btBroadphaseProxy *proxyOrg, btDispatcher *dispatcher)
 {
-        btLocalGridProxy *proxy0 = static_cast<btLocalGridProxy*>(proxyOrg);
+//        btBroadphaseProxy *proxy0 = static_cast<btBroadphaseProxy*>(proxyOrg);
 
 //        proxy0->parentEntity->unsetProxy();
-        proxy0->m_clientObject = 0;
+        proxyOrg->m_clientObject = 0;
 
         m_pairCache->removeOverlappingPairsContainingProxy(proxyOrg,dispatcher);
 }
 
+//FIXME: wrong conditions
 bool btLocalGridBroadphase::aabbOverlap(btBroadphaseProxy *proxy0, btBroadphaseProxy *proxy1)
 {
-    return 1;
+//    return true;
 
 //    return (proxy0->m_aabbMin[0] <= proxy1->m_aabbMax[0] || proxy1->m_aabbMin[0] <= proxy0->m_aabbMax[0]) &&
 //           (proxy0->m_aabbMin[1] <= proxy1->m_aabbMax[1] || proxy1->m_aabbMin[1] <= proxy0->m_aabbMax[1]) &&
 //           (proxy0->m_aabbMin[2] <= proxy1->m_aabbMax[2] || proxy1->m_aabbMin[2] <= proxy0->m_aabbMax[2]);
 
-//    return (proxy0->m_aabbMin[0] <= proxy1->m_aabbMax[0] && proxy1->m_aabbMin[0] <= proxy0->m_aabbMax[0]) &&
-//           (proxy0->m_aabbMin[1] <= proxy1->m_aabbMax[1] && proxy1->m_aabbMin[1] <= proxy0->m_aabbMax[1]) &&
-//           (proxy0->m_aabbMin[2] <= proxy1->m_aabbMax[2] && proxy1->m_aabbMin[2] <= proxy0->m_aabbMax[2]);
+    return (proxy0->m_aabbMin[0] <= proxy1->m_aabbMax[0] && proxy1->m_aabbMin[0] <= proxy0->m_aabbMax[0]) &&
+           (proxy0->m_aabbMin[1] <= proxy1->m_aabbMax[1] && proxy1->m_aabbMin[1] <= proxy0->m_aabbMax[1]) &&
+           (proxy0->m_aabbMin[2] <= proxy1->m_aabbMax[2] && proxy1->m_aabbMin[2] <= proxy0->m_aabbMax[2]);
 }
 
+//FIXME: wrong conditions
 bool btLocalGridBroadphase::aabbOverlap(const btVector3 &aabb0Min, const btVector3 &aabb0Max, const btVector3 &aabb1Min, const btVector3 &aabb1Max)
 {
-    return 1;
+    return (aabb0Min[0] <= aabb1Max[0] && aabb1Min[0] <= aabb0Max[0]) &&
+           (aabb0Min[1] <= aabb1Max[1] && aabb1Min[1] <= aabb0Max[1]) &&
+           (aabb0Min[2] <= aabb1Max[2] && aabb1Min[2] <= aabb0Max[2]);
 }
 
 void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
 {
+    qDebug() << "calculateOverlappingPairs() BEGIN:" << m_pairCache->getNumOverlappingPairs();
     //MISSING: border-entity collisions
     //MISSING: static env. collisions
 
@@ -84,7 +89,7 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
     const QVector<btRigidBody *> &staticEnts = world->getStaticEntities();
 
     //FIXME: temp entity counter
-    int entityCounter=0;
+    int entSizeCounter=0, entityUniCounter=0, overlapCounter=0;
     btVector3 ent0Min, ent0Max, ent1Min, ent1Max;
 
     for(Array<Cell, 3>::const_iterator it = grid->begin(); it != grid->end(); it++)
@@ -98,29 +103,28 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
         entityVectors[0][0][0] = entities = cell.getEntities();
         if(entities)
         {
-            entityCounter += entities->size();
+            entSizeCounter += entities->size();
 
             for(int i=0; i<entities->size(); ++i)
             {
                 entities->at(i)->getRigidBody()->getBulletBody()->getAabb(ent0Min, ent0Max);
+                entityUniCounter++;
 
                 for(int j=0; j<staticEnts.size(); ++j)
                 {
                     staticEnts[j]->getAabb(ent1Min, ent1Max);
 
-
-
-                    if(aabbOverlap(ent0Min, ent0Max, ent1Min, ent1Max))
+                    if(aabbOverlap(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle()))
                     {
+                        overlapCounter++;
 
-
-//                        if(!m_pairCache->findPair(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle()))
+                        if(!m_pairCache->findPair(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle()))
                             m_pairCache->addOverlappingPair(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle());
                     }
                     else
                     {
-//                        if(m_pairCache->findPair(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle()))
-//                            m_pairCache->removeOverlappingPair(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle(), dispatcher);
+                        if(m_pairCache->findPair(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle()))
+                            m_pairCache->removeOverlappingPair(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle(), dispatcher);
                     }
 
 
@@ -130,9 +134,7 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
         }
     }
 
-
-
-
+    qDebug() << "calculateOverlappingPairs() END:" << m_pairCache->getNumOverlappingPairs();
 
 
     //    // Browse through all Cells
