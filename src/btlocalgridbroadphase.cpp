@@ -77,175 +77,119 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
         return;
 
     LocalGrid *grid = world->getLocalGrid();
-    const btVector3 &nbCells = grid->getGridInformation()->getGridAtResolution(grid->getResolution())->getNbCells();
+//    const btVector3 &nbCells = grid->getGridInformation()->getGridAtResolution(grid->getResolution())->getNbCells();
 
-    // A table that stores pointers to lists of entities that possibly overlap with those of the current Cell
+    // A table that stores pointers to lists of entities that possibly overlap with those of the current Cell. 0,0,0 is not set
     const QVector<obEntityWrapper *> *entityVectors[2][2][2];
+    entityVectors[0][0][0] = 0;
 
-    // Quicker pointer to entityVectors[0][0][0] for code readability
+    // Pointer to the current Cell's entities
     const QVector<obEntityWrapper *> *entities;
+
+    // Grid size information used to browse the grid
+    const btVector3 &offset = grid->getOffset();
+    const btVector3 uBound = grid->getLength() + offset;
 
     // Reference to the static entities defined in the linked world.
     const QVector<btRigidBody *> &staticEnts = world->getStaticEntities();
+    const int &staticEntSize = staticEnts.size();
 
-    //FIXME: temp entity counter
-    int entSizeCounter=0, entityUniCounter=0, overlapCounter=0;
-    btVector3 ent0Min, ent0Max, ent1Min, ent1Max;
-
-    for(Array<Cell, 3>::const_iterator it = grid->begin(); it != grid->end(); it++)
+    for(int x=offset.x(); x<uBound.x(); ++x)
+        for(int y=offset.y(); y<uBound.y(); ++y)
+            for(int z=offset.z(); z<uBound.z(); ++z)
     {
-        // Get the Cell and its position
-        const Cell &cell = *it;
-        const TinyVector<int,3> &pos = it.position();
-        const btVector3 &btpos = Utils::btVectorFromBlitz(it.position());
+        // Get the Cell and its coordinates
+        const Cell &cell = grid->at(x, y, z);
 
-        // Perform collision detection against static bodies
-        entityVectors[0][0][0] = entities = cell.getEntities();
+        entities = cell.getEntities();
         if(entities)
         {
-            entSizeCounter += entities->size();
-
-            for(int i=0; i<entities->size(); ++i)
+            const int &entSize = entities->size();
+            // Perform collision detection against static bodies first
+            for(int i=0; i<entSize; ++i)
             {
-                entities->at(i)->getRigidBody()->getBulletBody()->getAabb(ent0Min, ent0Max);
-                entityUniCounter++;
-
-                for(int j=0; j<staticEnts.size(); ++j)
+//                entities->at(i)->getRigidBody()->getBulletBody()->getAabb(ent0Min, ent0Max);
+                for(int j=0; j<staticEntSize; ++j)
                 {
-                    staticEnts[j]->getAabb(ent1Min, ent1Max);
+//                    staticEnts[j]->getAabb(ent1Min, ent1Max);
 
-                    if(aabbOverlap(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle()))
+                    if(aabbOverlap(entities->at(i)->getBroadphaseProxy(), staticEnts[j]->getBroadphaseHandle()))
                     {
-                        overlapCounter++;
-
-                        if(!m_pairCache->findPair(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle()))
-                            m_pairCache->addOverlappingPair(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle());
+                        if(!m_pairCache->findPair(entities->at(i)->getBroadphaseProxy(), staticEnts[j]->getBroadphaseHandle()))
+                            m_pairCache->addOverlappingPair(entities->at(i)->getBroadphaseProxy(), staticEnts[j]->getBroadphaseHandle());
                     }
                     else
                     {
-                        if(m_pairCache->findPair(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle()))
-                            m_pairCache->removeOverlappingPair(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle(), dispatcher);
+                        if(m_pairCache->findPair(entities->at(i)->getBroadphaseProxy(), staticEnts[j]->getBroadphaseHandle()))
+                            m_pairCache->removeOverlappingPair(entities->at(i)->getBroadphaseProxy(), staticEnts[j]->getBroadphaseHandle(), dispatcher);
+                    }
+                }
+            }
+
+            // Now setup a cache table telling which adjacent cells also have entities to check against
+            for(int i=0; i<2; ++i)
+                for(int j=0; j<2; ++j)
+                    for(int k=0; k<2; ++k)
+                    {
+                        // 0,0,0 is not used, ignore it
+                        if(i || j || k)
+                        {
+                            if(!grid->ownedByAnotherWorld(x+i, y+j, z+k))
+                            {
+                                Cell &o = grid->at(x+i, y+j, z+k);
+                                entityVectors[i][j][k] = o.getEntities();
+                            }
+                            else
+                                entityVectors[i][j][k] = 0;
+                        }
                     }
 
 
 
-                }
+
+            // Now browse this Cell's entity vector and check each entity for collisions
+            // against those of all other entity vectors
+            for(int u=0; u<entSize; ++u)
+            {
+                // First check against entities of the same Cell (avoiding duplicates)
+                for(int v=u+1; v<entSize; ++v)
+                    if(aabbOverlap(entities->at(u)->getBroadphaseProxy(), entities->at(v)->getBroadphaseProxy()))
+                    {
+                        if(!m_pairCache->findPair(entities->at(u)->getBroadphaseProxy(), entities->at(v)->getBroadphaseProxy()))
+                            m_pairCache->addOverlappingPair(entities->at(u)->getBroadphaseProxy(), entities->at(v)->getBroadphaseProxy());
+                    }
+                    else
+                    {
+                        if(m_pairCache->findPair(entities->at(u)->getBroadphaseProxy(), entities->at(v)->getBroadphaseProxy()))
+                            m_pairCache->removeOverlappingPair(entities->at(u)->getBroadphaseProxy(), entities->at(v)->getBroadphaseProxy(), dispatcher);
+                    }
+
+                // Then of neighboring Cells (ignoring entityVectors[0][0][0] since it is set to null)
+                for(int i=0; i<2; ++i)
+                    for(int j=0; j<2; ++j)
+                        for(int k=0; k<2; ++k)
+                        {
+                            if(entityVectors[i][j][k])
+                            {
+                                const int &neighborSize = entityVectors[i][j][k]->size();
+                                for(int v=0; v<neighborSize; ++v)
+                                    if(aabbOverlap(entities->at(u)->getBroadphaseProxy(), entityVectors[i][j][k]->at(v)->getBroadphaseProxy()))
+                                    {
+                                        if(!m_pairCache->findPair(entities->at(u)->getBroadphaseProxy(), entityVectors[i][j][k]->at(v)->getBroadphaseProxy()))
+                                            m_pairCache->addOverlappingPair(entities->at(u)->getBroadphaseProxy(), entityVectors[i][j][k]->at(v)->getBroadphaseProxy());
+                                    }
+                                    else
+                                    {
+                                        if(m_pairCache->findPair(entities->at(u)->getBroadphaseProxy(), entityVectors[i][j][k]->at(v)->getBroadphaseProxy()))
+                                            m_pairCache->removeOverlappingPair(entities->at(u)->getBroadphaseProxy(), entityVectors[i][j][k]->at(v)->getBroadphaseProxy(), dispatcher);
+                                    }
+                            }
+                        }
             }
         }
     }
 
     qDebug() << "calculateOverlappingPairs() END:" << m_pairCache->getNumOverlappingPairs();
-
-
-    //    // Browse through all Cells
-    //    for(int x=0; x<nbCells.x(); ++x)
-    //        for(int y=0; y<nbCells.y(); ++y)
-    //            for(int z=0; z<nbCells.z(); ++z)
-    //            {
-    //                Cell &c = grid->at(x, y, z);
-    //                entityVectors[0][0][0] = entities = c.getEntities();
-
-    //                // Perform operations only if the world has entities
-    //                if(entities)
-    //                {
-    //                    // Check all dynamic entities against their static counterparts
-    //                    for(int i=0; i<entities->size(); ++i)
-    //                        for(int j=0; j<staticEnts.size(); ++j)
-    //                            if(aabbOverlap(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle()))
-    //                            {
-    //                                if(!m_pairCache->findPair(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle()))
-    //                                    m_pairCache->addOverlappingPair(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle());
-    //                            }
-    //                            else
-    //                            {
-    //                                if(m_pairCache->findPair(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle()))
-    //                                    m_pairCache->removeOverlappingPair(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle(), dispatcher);
-    //                            }
-    ////                            {
-    ////                                //NOTE: might be necessary to check if it's in the cache first?
-    ////                                m_pairCache->addOverlappingPair(entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), staticEnts[j]->getBroadphaseHandle());
-    ////                            }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//                    // First setup a cache table telling which next cells also have entities to check against
-//                    for(int i=0; i<2; ++i)
-//                        for(int j=0; j<2; ++j)
-//                            for(int k=0; k<2; ++k)
-//                            {
-//                                // 0,0,0 is the current Cell.
-//                                if(i || j || k)
-//                                {
-//                                    if(!grid->ownedByAnotherWorld(x+i, y+j, z+k))
-//                                    {
-//                                        Cell &o = grid->at(i, j, k);
-//                                        entityVectors[i][j][k] = o.getEntities();
-//                                    }
-//                                    else
-//                                        entityVectors[i][j][k] = 0;
-//                                }
-//                            }
-
-//                    // Now browse this Cell's entity vector and check each entity for collisions
-//                    // against those of all other entity vectors
-//                    for(int u=0; u<entities->size(); ++u)
-//                    {
-//                        // First check against entities of the same Cell
-//                        for(int v=u+1; v<entities->size(); ++v)
-//                            if(aabbOverlap(entities->at(u)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), entities->at(v)->getRigidBody()->getBulletBody()->getBroadphaseHandle()))
-////                            {
-////                                //NOTE: might be necessary to check if it's in the cache first?
-////                                m_pairCache->addOverlappingPair(entities->at(u)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), entities->at(v)->getRigidBody()->getBulletBody()->getBroadphaseHandle());
-////                            }
-//                                {
-//                                    if(!m_pairCache->findPair(entities->at(u)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), entities->at(v)->getRigidBody()->getBulletBody()->getBroadphaseHandle()))
-//                                        m_pairCache->addOverlappingPair(entities->at(u)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), entities->at(v)->getRigidBody()->getBulletBody()->getBroadphaseHandle());
-//                                }
-//                                else
-//                                {
-//                                    if(m_pairCache->findPair(entities->at(u)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), entities->at(v)->getRigidBody()->getBulletBody()->getBroadphaseHandle()))
-//                                        m_pairCache->removeOverlappingPair(entities->at(u)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), entities->at(v)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), dispatcher);
-//                                }
-
-//                        // Then of neighboring Cells
-//                        for(int i=0; i<2; ++i)
-//                            for(int j=0; j<2; ++j)
-//                                for(int k=0; k<2; ++k)
-//                                {
-//                                    if(entityVectors[i][j][k])
-//                                        for(int v=0; v<entityVectors[i][j][k]->size(); ++v)
-//                                            if(aabbOverlap(entities->at(u)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), entityVectors[i][j][k]->at(v)->getRigidBody()->getBulletBody()->getBroadphaseHandle()))
-////                                            {
-////                                                //NOTE: might be necessary to check if it's in the cache first?
-////                                                m_pairCache->addOverlappingPair(entities->at(u)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), entityVectors[i][j][k]->at(v)->getRigidBody()->getBulletBody()->getBroadphaseHandle());
-////                                            }
-//                                            {
-//                                                if(!m_pairCache->findPair(entities->at(u)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), entities->at(v)->getRigidBody()->getBulletBody()->getBroadphaseHandle()))
-//                                                    m_pairCache->addOverlappingPair(entities->at(u)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), entities->at(v)->getRigidBody()->getBulletBody()->getBroadphaseHandle());
-//                                            }
-//                                            else
-//                                            {
-//                                                if(m_pairCache->findPair(entities->at(u)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), entities->at(v)->getRigidBody()->getBulletBody()->getBroadphaseHandle()))
-//                                                    m_pairCache->removeOverlappingPair(entities->at(u)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), entities->at(v)->getRigidBody()->getBulletBody()->getBroadphaseHandle(), dispatcher);
-//                                            }
-//                                }
-//                    }
-//                }
-//            }
 }
 
 void btLocalGridBroadphase::rayTest(const btVector3 &/*rayFrom*/,const btVector3 &/*rayTo*/, btBroadphaseRayCallback &rayCallback, const btVector3 &/*aabbMin*/, const btVector3 &/*aabbMax*/)
@@ -268,7 +212,7 @@ void btLocalGridBroadphase::rayTest(const btVector3 &/*rayFrom*/,const btVector3
                 if(entities)
                     for(int i=0; i<entities->size(); ++i)
                     {
-                        btBroadphaseProxy *proxy = entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle();
+                        btBroadphaseProxy *proxy = entities->at(i)->getBroadphaseProxy();
 
                         if(proxy)
                             rayCallback.process(proxy);
@@ -296,7 +240,7 @@ void btLocalGridBroadphase::aabbTest(const btVector3 &aabbMin, const btVector3 &
                 if(entities)
                     for(int i=0; i<entities->size(); ++i)
                     {
-                        btBroadphaseProxy *proxy = entities->at(i)->getRigidBody()->getBulletBody()->getBroadphaseHandle();
+                        btBroadphaseProxy *proxy = entities->at(i)->getBroadphaseProxy();
 
                         if(proxy && TestAabbAgainstAabb2(aabbMin, aabbMax, proxy->m_aabbMin, proxy->m_aabbMax))
                             callback.process(proxy);

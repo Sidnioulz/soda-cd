@@ -46,11 +46,11 @@ public:
      * \return a new RandomCubeSimulation
      */
     RandomCubeSimulation(const btScalar &targetTimeStep = 1.0f/60,
-                         const int &numWorlds = 1, //QThread::idealThreadCount(),
+                         const int &numWorlds = 4, //QThread::idealThreadCount(),
                          const int &numInterfaces = 1,
                          //                         const btVector3 &sceneSize = btVector3(1000, 400, 1000), interesting as a case study where one CPU gets no territory
                          const btVector3 &sceneSize = btVector3(2000, 800, 2000),
-                         const int &numEntities = 20);
+                         const int &numEntities = 2000);
 
     /*!
       * \brief Default destructor.

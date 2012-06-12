@@ -102,6 +102,10 @@ public:
      * documented in SODA CD. Modify at your own expenses.
      */
     void removeCollisionObject(btCollisionObject *collisionObject);
+
+    //TODO:
+    void updateAabbs();
+    void performDiscreteCollisionDetection();
 };
 
 /*! \class BulletManager

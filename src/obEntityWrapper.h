@@ -289,10 +289,21 @@ public:
     /*! \brief Gets the rigid body of the entity.
 	  * \return the obDynamicRigidBody of the entity
       */
-	inline obDynamicRigidBody* getRigidBody() const
+    inline obDynamicRigidBody *getRigidBody() const
 	{
 		return obBody;
 	}
+
+    /*!
+     * \brief Returns the Broadphase proxy to use in btLocalGridBroadphase.
+     * \return a pointer to the btBroadphaseProxy of this entity
+     *
+     * \warning The btBroadphaseProxy currently returned may not be the good one.
+     */
+    inline btBroadphaseProxy *getBroadphaseProxy() const
+    {
+        return obBody->getBulletBody()->getBroadphaseProxy();
+    }
 
     /*! \brief Gets the Ogre part of the entity.
       * \return the Ogre::Entity of the entity

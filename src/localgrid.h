@@ -295,13 +295,31 @@ public:
 //       (offset + (length / 2)) * gridInfo->getGridAtResolution(gridInfo->getBestTerritoryResolution())->getCellLength();
     }
 
-	/*!
-	  * \brief Returns the LocalGrid's resolution.
-	  * \return the LocalGrid's resolution
-	  */
-	inline int getResolution() const
-	{
-		return resolution;
+    /*!
+      * \brief Returns the LocalGrid's resolution.
+      * \return the LocalGrid's resolution
+      */
+    inline const int &getResolution() const
+    {
+        return resolution;
+    }
+
+    /*!
+      * \brief Returns the LocalGrid's length.
+      * \return the LocalGrid's length
+      */
+    inline const btVector3 &getLength() const
+    {
+        return length;
+    }
+
+    /*!
+      * \brief Returns the LocalGrid's offset.
+      * \return the LocalGrid's offset
+      */
+    inline const btVector3 &getOffset() const
+    {
+        return offset;
     }
 
     /*!

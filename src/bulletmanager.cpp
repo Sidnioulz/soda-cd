@@ -353,6 +353,76 @@ void BulletManagerWorld::removeCollisionObject(btCollisionObject *collisionObjec
 
 
 
+void	BulletManagerWorld::updateAabbs()
+{
+    BT_PROFILE("updateAabbs");
+    int cpt=0;
+
+    btTransform predictedTrans;
+    for ( int i=0;i<m_collisionObjects.size();i++)
+    {
+        btCollisionObject* colObj = m_collisionObjects[i];
+
+        //only update aabb of active objects
+        if (m_forceUpdateAllAabbs || colObj->isActive())
+        {
+            updateSingleAabb(colObj); ++cpt;
+        }
+    }
+
+    qDebug() << "updateAabbs" << cpt;
+}
+
+
+
+void	BulletManagerWorld::performDiscreteCollisionDetection()
+{
+    BT_PROFILE("performDiscreteCollisionDetection");
+
+    btDispatcherInfo& dispatchInfo = getDispatchInfo();
+
+    updateAabbs();
+
+    {
+        BT_PROFILE("calculateOverlappingPairs");
+        m_broadphasePairCache->calculateOverlappingPairs(m_dispatcher1);
+    }
+
+
+    btDispatcher* dispatcher = getDispatcher();
+    {
+        BT_PROFILE("dispatchAllCollisionPairs");
+        if (dispatcher)
+            dispatcher->dispatchAllCollisionPairs(m_broadphasePairCache->getOverlappingPairCache(),dispatchInfo,m_dispatcher1);
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

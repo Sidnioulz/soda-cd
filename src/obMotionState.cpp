@@ -65,6 +65,7 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
                 //TODO: start sync with neighbour
 
 				parentBody->setColor(1, 0, 0);
+                grid->at(lastCellCoords).removeEntity(parentBody);
                 unsetLocalGrid();
             }
             else
