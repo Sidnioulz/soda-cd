@@ -20,6 +20,7 @@
  */
 #include "ogreresources.h"
 
+QMutex              OgreResources::sceneManagerMutex;
 QMutex              OgreResources::materialMutex;
 Ogre::Root         *OgreResources::ogreRoot = 0;
 Ogre::SceneManager *OgreResources::ogreSceneManager = 0;

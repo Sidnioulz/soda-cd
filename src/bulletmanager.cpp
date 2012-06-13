@@ -356,9 +356,8 @@ void BulletManagerWorld::removeCollisionObject(btCollisionObject *collisionObjec
 void	BulletManagerWorld::updateAabbs()
 {
     BT_PROFILE("updateAabbs");
-    int cpt=0;
 
-    btTransform predictedTrans;
+//    btTransform predictedTrans;
     for ( int i=0;i<m_collisionObjects.size();i++)
     {
         btCollisionObject* colObj = m_collisionObjects[i];
@@ -366,11 +365,9 @@ void	BulletManagerWorld::updateAabbs()
         //only update aabb of active objects
         if (m_forceUpdateAllAabbs || colObj->isActive())
         {
-            updateSingleAabb(colObj); ++cpt;
+            updateSingleAabb(colObj);
         }
     }
-
-    qDebug() << "updateAabbs" << cpt;
 }
 
 
@@ -396,6 +393,26 @@ void	BulletManagerWorld::performDiscreteCollisionDetection()
             dispatcher->dispatchAllCollisionPairs(m_broadphasePairCache->getOverlappingPairCache(),dispatchInfo,m_dispatcher1);
     }
 
+
+    {
+        BT_PROFILE("manageBorderCollisionsForDemo");
+
+        btLocalGridBroadphase *bdPhase = static_cast<btLocalGridBroadphase *>(m_broadphasePairCache);
+        const btBroadphasePairArray &array = bdPhase->getBorderCrossingPairCache()->getOverlappingPairArray();
+
+        const int &bdArraySize = array.size();
+        for(int i=0; i<bdArraySize; ++i)
+        {
+            btCollisionObject *collObj0 = static_cast<btCollisionObject *>(array[i].m_pProxy0->m_clientObject);
+            obEntity *entity0 = static_cast<obEntity *>(collObj0->getCollisionShape()->getUserPointer());
+            if(entity0->getType() == obEntity::obEntityWrapperType)
+            {
+                obEntityWrapper *obEnt = dynamic_cast<obEntityWrapper *>(entity0);
+                qDebug() << "performDiscreteCollisionDetection():" << obEnt->getName().c_str() << "collides with a border at time step" << m_localTime;
+//                obEnt->setColor(0, 0, 0); //FIXME: instead register in an event queue the time of color change
+            }
+        }
+    }
 }
 
 

@@ -259,7 +259,7 @@ void PhysicsWorld::createScene()
     // Create a floor
     btTransform transform;
     transform.setIdentity();
-    transform.setOrigin(btVector3(0,1,0));
+    transform.setOrigin(btVector3(0,0,0));
 
     btDefaultMotionState *motionState = new btDefaultMotionState(transform);
     btCollisionShape *shape = new btStaticPlaneShape(btVector3(0,1,0), 0);

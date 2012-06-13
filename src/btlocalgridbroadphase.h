@@ -49,6 +49,11 @@ public:
 
     bool aabbOverlap(const btVector3 &aabb0Min, const btVector3 &aabb0Max, const btVector3 &aabb1Min, const btVector3 &aabb1Max);
 
+    /*!
+     *
+     * \param dispatcher
+     *
+     */
     virtual void calculateOverlappingPairs(btDispatcher *dispatcher);
 
     inline void getAabb(btBroadphaseProxy *proxy, btVector3 &aabbMin, btVector3 &aabbMax) const
@@ -76,6 +81,17 @@ public:
     inline virtual const btOverlappingPairCache *getOverlappingPairCache() const
     {
         return m_pairCache;
+    }
+
+
+    inline virtual	btOverlappingPairCache*	getBorderCrossingPairCache()
+    {
+        return m_borderCache;
+    }
+
+    inline virtual	const btOverlappingPairCache*	getBorderCrossingPairCache() const
+    {
+        return m_borderCache;
     }
 
     ///getAabb returns the axis aligned bounding box in the 'global' coordinate frame
@@ -115,6 +131,7 @@ public:
 private:
     PhysicsWorld            *world;              /*!< A pointer to the PhysicsWorld containing the grid used within this broadphase */
     btOverlappingPairCache  *m_pairCache;
+    btOverlappingPairCache  *m_borderCache;
     bool                    m_ownsPairCache;
 
 };

@@ -149,7 +149,7 @@ public:
     }
 
     /*! \brief Returns the entities of the Cell.
-      * \return a pointer to the write-protected obEntityWrapper
+      * \return a pointer to the write-protected obEntityWrapper vector
       */
     inline const QVector<obEntityWrapper *> *getEntities() const
     {
@@ -162,6 +162,22 @@ public:
     inline QVector<obEntityWrapper *> *getEntities(int)
     {
         return entities;
+    }
+
+    /*! \brief Returns the borders of the Cell.
+      * \return a pointer to the write-protected CellBorderEntity vector
+      */
+    inline const QVector<CellBorderEntity *> *getBorders() const
+    {
+        return borders;
+    }
+
+    /*! \brief Returns the borders of the Cell. The dummy parameter indicates the returned vector can be modified.
+      * \return a pointer to the CellBorderEntity vector for modification
+      */
+    inline QVector<CellBorderEntity *> *getBorders(int)
+    {
+        return borders;
     }
 
 private:

@@ -101,7 +101,7 @@ CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates 
 
         ogreEntity = OgreResources::getSceneManager()->createEntity(name, name);
         ogreEntity->setMaterialName("Examples/Smoke");
-//        ogreEntity->setVisible(false);
+        ogreEntity->setVisible(false);
         obBody->getSceneNode()->attachObject(ogreEntity);
 
         // Setup a user pointer for later use within the Bullet manager

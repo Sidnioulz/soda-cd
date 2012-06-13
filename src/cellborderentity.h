@@ -132,6 +132,17 @@ public:
         return coords;
     }
 
+    /*!
+     * \brief Returns the Broadphase proxy to use in btLocalGridBroadphase.
+     * \return a pointer to the btBroadphaseProxy of this entity
+     *
+     * \warning The btBroadphaseProxy currently returned may not be the good one.
+     */
+    inline btBroadphaseProxy *getBroadphaseHandle() const
+    {
+        return obBody->getBulletBody()->getBroadphaseProxy();
+    }
+
     /*! \brief Sets a definite color for the entity.
       * \param r the amount of red in the color to set
       * \param g the amount of green in the color to set
@@ -144,8 +155,6 @@ private:
     Ogre::Entity            *ogreEntity;         /*!< Ogre entity */
     LocalGrid               *grid;               /*!< The grid of which this CellBorderEntity is a border */
 
-	Ogre::SceneNode		    *node;				 /*!< Ogre scene node of the body */
-	btRigidBody				*btBody;			 /*!< Bullet rigid body */
     btVector3				coords;		         /*!< Cell coordinates of the border entity */
 	short					direction;			 /*!< Direction of the border entity on the Cell */
 };

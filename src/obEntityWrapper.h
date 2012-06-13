@@ -300,7 +300,7 @@ public:
      *
      * \warning The btBroadphaseProxy currently returned may not be the good one.
      */
-    inline btBroadphaseProxy *getBroadphaseProxy() const
+    inline btBroadphaseProxy *getBroadphaseHandle() const
     {
         return obBody->getBulletBody()->getBroadphaseProxy();
     }

@@ -64,7 +64,7 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
                 //FIXME: temporary hack to avoid segfaults
                 //TODO: start sync with neighbour
 
-				parentBody->setColor(1, 0, 0);
+//                parentBody->setColor(1, 0, 0); //FIXME: instead register in an event queue the time of color change
                 grid->at(lastCellCoords).removeEntity(parentBody);
                 unsetLocalGrid();
             }
