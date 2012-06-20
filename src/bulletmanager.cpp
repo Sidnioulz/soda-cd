@@ -400,6 +400,7 @@ void	BulletManagerWorld::performDiscreteCollisionDetection()
         btLocalGridBroadphase *bdPhase = static_cast<btLocalGridBroadphase *>(m_broadphasePairCache);
         const btBroadphasePairArray &array = bdPhase->getBorderCrossingPairCache()->getOverlappingPairArray();
 
+//TODO: getEntityFromProxy()
         const int &bdArraySize = array.size();
         for(int i=0; i<bdArraySize; ++i)
         {

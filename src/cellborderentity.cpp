@@ -105,6 +105,7 @@ CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates 
         obBody->getSceneNode()->attachObject(ogreEntity);
 
         // Setup a user pointer for later use within the Bullet manager
+        // This step is compulsory to be able to retrieve the entity from the broad-phase algorithm.
         obBody->getBulletBody()->getCollisionShape()->setUserPointer(this);
 	}
     else

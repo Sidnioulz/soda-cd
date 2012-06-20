@@ -1,3 +1,23 @@
+/*
+ * Copyright (2012) Inria Rennes - IRISA
+ *
+ * Contributor(s):
+ *  Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
 #include "btlocalgridbroadphase.h"
 #include "physicsworld.h"
 #include <QVector>
@@ -30,25 +50,19 @@ btLocalGridBroadphase::~btLocalGridBroadphase()
     btAlignedFree(m_borderCache);
 }
 
-btBroadphaseProxy *btLocalGridBroadphase::createProxy(const btVector3 &aabbMin, const btVector3 &aabbMax, int /*shapetype*/, void *userPtr, short collisionFilterGroup, short collisionFilterMask, btDispatcher *dispatcher, void *multiSapProxy)
+btBroadphaseProxy *btLocalGridBroadphase::createProxy(const btVector3 &aabbMin, const btVector3 &aabbMax, int /*shapetype*/, void *userPtr, short collisionFilterGroup, short collisionFilterMask, btDispatcher */*dispatcher*/, void *multiSapProxy)
 {
     btAssert(aabbMin[0]<= aabbMax[0] && aabbMin[1]<= aabbMax[1] && aabbMin[2]<= aabbMax[2]);
 
-    btBroadphaseProxy *proxy0 = new btBroadphaseProxy(aabbMin, aabbMax, userPtr, collisionFilterGroup, collisionFilterMask, multiSapProxy);
-//    entity->setProxy(proxy0);
-
-    return proxy0;
+    return new btBroadphaseProxy(aabbMin, aabbMax, userPtr, collisionFilterGroup, collisionFilterMask, multiSapProxy);
 }
 
-void btLocalGridBroadphase::destroyProxy(btBroadphaseProxy *proxyOrg, btDispatcher *dispatcher)
+void btLocalGridBroadphase::destroyProxy(btBroadphaseProxy *proxy, btDispatcher *dispatcher)
 {
-//        btBroadphaseProxy *proxy0 = static_cast<btBroadphaseProxy*>(proxyOrg);
+    proxy->m_clientObject = 0;
 
-//        proxy0->parentEntity->unsetProxy();
-        proxyOrg->m_clientObject = 0;
-
-        m_pairCache->removeOverlappingPairsContainingProxy(proxyOrg, dispatcher);
-        m_borderCache->removeOverlappingPairsContainingProxy(proxyOrg, dispatcher);
+    m_pairCache->removeOverlappingPairsContainingProxy(proxy, dispatcher);
+    m_borderCache->removeOverlappingPairsContainingProxy(proxy, dispatcher);
 }
 
 //FIXME: wrong conditions
@@ -241,34 +255,6 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
     }
 
     qDebug() << "calculateOverlappingPairs("<<world->getId()<<") END:  " << m_pairCache->getNumOverlappingPairs() << "E-E \t&" << m_borderCache->getNumOverlappingPairs() << "E-B";
-}
-
-void btLocalGridBroadphase::rayTest(const btVector3 &/*rayFrom*/,const btVector3 &/*rayTo*/, btBroadphaseRayCallback &rayCallback, const btVector3 &/*aabbMin*/, const btVector3 &/*aabbMax*/)
-{
-    // Don't do anything until a grid has been set
-    if(!world->getLocalGrid())
-        return;
-
-    LocalGrid *grid = world->getLocalGrid();
-    const btVector3 &nbCells = grid->getGridInformation()->getGridAtResolution(grid->getResolution())->getNbCells();
-    const QVector<obEntityWrapper *> *entities;
-
-    for(int x=0; x<nbCells.x(); ++x)
-        for(int y=0; y<nbCells.y(); ++y)
-            for(int z=0; z<nbCells.z(); ++z)
-            {
-                Cell &c = grid->at(x, y, z);
-                entities = c.getEntities();
-
-                if(entities)
-                    for(int i=0; i<entities->size(); ++i)
-                    {
-                        btBroadphaseProxy *proxy = entities->at(i)->getBroadphaseHandle();
-
-                        if(proxy)
-                            rayCallback.process(proxy);
-                    }
-            }
 }
 
 void btLocalGridBroadphase::aabbTest(const btVector3 &aabbMin, const btVector3 &aabbMax, btBroadphaseAabbCallback &callback)

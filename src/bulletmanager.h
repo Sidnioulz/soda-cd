@@ -85,10 +85,9 @@ public:
      * \param collisionFilterGroup please refer to the Bullet documentation
      * \param collisionFilterMask please refer to the Bullet documentation
      *
-     * \note This function is overridden from the Bullet Physics one because of the need
-     * for us to customize the user pointer associated to a btBroadphaseProxy. The Bullet
-     * documentation does not tell what this function does, and thus it is not properly
-     * documented in SODA CD. Modify at your own expenses.
+     * \note The Bullet documentation does not tell what this function does,
+     * and thus it is not properly documented in SODA CD. Modify at your own
+     * expenses.
      */
     void addCollisionObject(btCollisionObject *collisionObject, short int collisionFilterGroup, short int collisionFilterMask);
 
@@ -96,15 +95,28 @@ public:
      * \brief Removes a btCollisionObject from the underlying btCollisionWorld. See official Bullet documentation.
      * \param collisionObject please refer to the Bullet documentation
      *
-     * \note This function is overridden from the Bullet Physics one because of the need
-     * for us to customize the user pointer associated to a btBroadphaseProxy. The Bullet
-     * documentation does not tell what this function does, and thus it is not properly
-     * documented in SODA CD. Modify at your own expenses.
+     * \note The Bullet documentation does not tell what this function does,
+     * and thus it is not properly documented in SODA CD. Modify at your own
+     * expenses.
      */
     void removeCollisionObject(btCollisionObject *collisionObject);
 
-    //TODO:
+    /*!
+     * \brief Updates AABBs of all bodies. See official Bullet documentation.
+     *
+     * \note The Bullet documentation does not tell what this function does,
+     * and thus it is not properly documented in SODA CD. Modify at your own
+     * expenses.
+     */
     void updateAabbs();
+
+    /*!
+     * \brief Performs one pass of discrete collision detection. See official Bullet documentation.
+     *
+     * \note The Bullet documentation does not tell what this function does,
+     * and thus it is not properly documented in SODA CD. Modify at your own
+     * expenses.
+     */
     void performDiscreteCollisionDetection();
 };
 

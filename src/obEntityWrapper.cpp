@@ -65,6 +65,7 @@ obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &m
             obBody->createBodyWithShape(shape, staticMesh);
 
         // Setup a user pointer for later use within the Bullet manager
+        // This step is compulsory to be able to retrieve the entity from the broad-phase algorithm.
         obBody->getBulletBody()->getCollisionShape()->setUserPointer(this);
     }
     else
