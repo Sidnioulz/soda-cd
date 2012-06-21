@@ -524,6 +524,14 @@ void OgreWidget::render()
 
                 node->setPosition(Utils::vectorFromBullet(record.transform.getOrigin()));
                 node->setOrientation(Utils::quaternionFromBullet(record.transform.getRotation()));
+
+#ifndef NDEBUG
+                // Update color according to status for debug
+                if(record.status == obEntity::CrossingBorder)
+                    record.obEnt->setColor(0, 0, 0);
+                else if(record.status == obEntity::OutOfWorld)
+                    record.obEnt->setColor(1, 0, 0);
+#endif
             }
         }
 

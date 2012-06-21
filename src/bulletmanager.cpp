@@ -272,7 +272,6 @@ void BulletManagerWorld::internalSingleStepSimulation(btScalar timeStep)
     }
 }
 
-
 void BulletManagerWorld::addCollisionObject(btCollisionObject *collisionObject, short int collisionFilterGroup, short int collisionFilterMask)
 {
     btAssert(collisionObject);
@@ -301,7 +300,6 @@ void BulletManagerWorld::addCollisionObject(btCollisionObject *collisionObject, 
         ));
 }
 
-
 void BulletManagerWorld::removeCollisionObject(btCollisionObject *collisionObject)
 {
     //bool removeFromBroadphase = false;
@@ -323,37 +321,18 @@ void BulletManagerWorld::removeCollisionObject(btCollisionObject *collisionObjec
     m_collisionObjects.remove(collisionObject);
 }
 
+//void BulletManagerWorld::addRigidBody(btRigidBody *body)
+//{
+//    btDiscreteDynamicsWorld::addRigidBody(body, obEntity::NormalStatus, ~((signed short)0));
+//}
 
+//void BulletManagerWorld::addRigidBody(btRigidBody* body, short /*group*/, short /*mask*/)
+//{
+//    qWarning() << "Collision filters are not supported in SODA CD: they are used to encode obEntity statuses.";
+//    btDiscreteDynamicsWorld::addRigidBody(body, obEntity::NormalStatus, ~((signed short)0));
+//}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void	BulletManagerWorld::updateAabbs()
+void BulletManagerWorld::updateAabbs()
 {
     BT_PROFILE("updateAabbs");
 
@@ -409,7 +388,8 @@ void	BulletManagerWorld::performDiscreteCollisionDetection()
             if(entity0->getType() == obEntity::obEntityWrapperType)
             {
                 obEntityWrapper *obEnt = dynamic_cast<obEntityWrapper *>(entity0);
-                qDebug() << "performDiscreteCollisionDetection():" << obEnt->getName().c_str() << "collides with a border at time step" << m_localTime;
+//                qDebug() << "performDiscreteCollisionDetection():" << obEnt->getName().c_str() << "collides with a border";
+                obEnt->setStatus(obEntity::CrossingBorder);
 //                obEnt->setColor(0, 0, 0); //FIXME: instead register in an event queue the time of color change
             }
         }

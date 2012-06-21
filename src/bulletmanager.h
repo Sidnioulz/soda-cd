@@ -101,6 +101,29 @@ public:
      */
     void removeCollisionObject(btCollisionObject *collisionObject);
 
+//    /*!
+//     * \brief Adds a btRigidBody to the world. See official Bullet documentation.
+//     * \param body the btRigidBody to addignored
+//     *
+//     * \note This function is an override of the original one from Bullet, it has
+//     * been written so as to make a special use of  collision filter groups.
+//     */
+//    void addRigidBody(btRigidBody *body);
+
+//    /*!
+//     * \brief Adds a btRigidBody to the world, ignoring the user-set collision filter.
+//     * \param body the btRigidBody to add
+//     * \param group a CollisionFilterGroup parameter that will be ignored
+//     * \param mask a CollisionFilterMask parameter that will be ignored
+//     *
+//     * \note This function is an override of the original one from Bullet, it has
+//     * been written so as to disable collision filter groups that are used for
+//     * other purposes in SODA CD.
+//     */
+
+//    void addRigidBody(btRigidBody* body, short group, short mask);
+
+
     /*!
      * \brief Updates AABBs of all bodies. See official Bullet documentation.
      *

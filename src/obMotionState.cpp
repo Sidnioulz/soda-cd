@@ -64,7 +64,12 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
                 //FIXME: temporary hack to avoid segfaults
                 //TODO: start sync with neighbour
 
-//                parentBody->setColor(1, 0, 0); //FIXME: instead register in an event queue the time of color change
+                // Set the new status of the entity depending on where it landed
+                //TODO: GridInformation::isOutOfSimulationSpace
+                //TODO: outOfBounds renamed to isOutOfBounds
+                parentBody->setStatus(obEntity::OutOfWorld);
+
+                // Cleanup grid now that the entity is outside of it
                 grid->at(lastCellCoords).removeEntity(parentBody);
                 unsetLocalGrid();
             }

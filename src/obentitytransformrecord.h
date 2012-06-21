@@ -32,8 +32,14 @@
   * at a given time.
   */
 struct obEntityTransformRecord {
-    obEntityWrapper *obEnt; /*!< Pointer to the obEntityWrapper to which the transform can be applied */
-    btTransform transform;  /*!< Position and rotation of the object */
+    obEntityWrapper *obEnt;             /*!< Pointer to the obEntityWrapper to which the transform can be applied */
+    btTransform     transform;          /*!< Position and rotation of the object */
+    btVector3       linearVelocity;     /*!< Linear velocity of the entity */
+    btVector3       angularVelocity;    /*!< Angular velocity of the entity */
+
+#ifndef NDEBUG
+    signed short    status;             /*!< Current status for visual feedback */
+#endif
 
     /*!
      * \brief Default constructor.

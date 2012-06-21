@@ -19,14 +19,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 #include "obentitytransformrecord.h"
+#include "obentity.h"
 
 obEntityTransformRecord::obEntityTransformRecord() :
     obEnt(0)
+  #ifndef NDEBUG
+  , status(obEntity::NonExistant)
+  #endif
 {
 }
 
 obEntityTransformRecord::obEntityTransformRecord(obEntityWrapper *obEnt, const btTransform &transform) :
     obEnt(obEnt),
     transform(transform)
+  #ifndef NDEBUG
+  , status(obEnt? obEnt->getStatus() : (signed short) obEntity::NonExistant)
+  #endif
 {
 }
