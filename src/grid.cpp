@@ -44,9 +44,9 @@ GridInformation::GridInformation(const WorldType worldType, const int resolution
 	parent(parent),
 	child(0),
     spaceLen(spaceLen),
-    nbCells(qMax(resolution, qFloor(spaceLen.x() / (biggestObjectSize.x()+1))),
-            qMax(resolution, qFloor(spaceLen.y() / (biggestObjectSize.y()+1))),
-            qMax(resolution, qFloor(spaceLen.z() / (biggestObjectSize.z()+1)))),
+    nbCells(qMax(resolution, qFloor(spaceLen.x() / (2*biggestObjectSize.x()+1))),
+            qMax(resolution, qFloor(spaceLen.y() / (2*biggestObjectSize.y()+1))),
+            qMax(resolution, qFloor(spaceLen.z() / (2*biggestObjectSize.z()+1)))),
     cellLen(spaceLen / nbCells)
 {
     qDebug() << "####\nGRID INFORMATION\n" << resolution;
