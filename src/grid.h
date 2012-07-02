@@ -93,6 +93,17 @@ public:
         NB_DIRECTIONS=6                                     /*!< Do not use in production code. */
     } Directions;                                           /*!< These enums allow represent a one-dimensional move in the 3D array */
 
+    /*! \enum __WorldType
+      * \brief The type of world that this grid refers to.
+      * \warning At the moment, no management is made of simulation space bound collisions. Objects are just removed of all worlds and abandoned.
+      */
+    typedef enum __WorldType {
+        ClosedWorld=0,                  /*!< A world that is closed within a rigid cube, no borders are created on the simulation space bounds */
+        SidewiseOpenWorld=1,            /*!< A world that can expand on the sides (x,z coordinates), and on the top, but not at floor level (no floor border) */
+        FullyOpenWorld=2,               /*!< A world that can expand in all directions (full borders on simulation space bounds, users must manage border overlaps) */
+        CustomWorld=3                   /*!< All other configurations - BE CAREFUL: CustomWorld currently has undefined behavior. */
+    } WorldType;
+
     //! A variable that represents Cell coordinates that cannot exist
     const static btVector3 InvalidCellCoordinates;
 
@@ -111,6 +122,7 @@ public:
 
     /*!
       * \brief Returns the GridInformation that matches the current simulation's 3D space, after creating it if necessary.
+      * \param worldType the type of world being simulated
       * \param initScaleRatio scale ratio between biggest and smallest objects that will populate the grid
       * \param sceneSize length of the scene on all axes
       * \param biggestObjectSize the size of the biggest object of the scene
@@ -120,7 +132,16 @@ public:
       * This function returns a pointer to a static GridInformation that represents the currently
       * simulated world, using the given parameters to create it if necessary.
       */
-    static GridInformation *getGrid(const btScalar initScaleRatio, const btVector3 &sceneSize, const btVector3 &biggestObjectSize, bool reset = false);
+    static GridInformation *getGrid(const WorldType worldType, const btScalar &initScaleRatio, const btVector3 &sceneSize, const btVector3 &biggestObjectSize, bool reset = false);
+
+    /*!
+      * \brief Returns the World Type of this GridInformation.
+      * \return the WorldType of this GridInformation
+      */
+    inline const WorldType &getWorldType() const
+    {
+        return worldType;
+    }
 
     /*!
       * \brief Sets the child GridInformation of this object to the one given as a parameter.
@@ -257,30 +278,31 @@ public:
      * \param coord the coordinates to check for
      * \return whether the coordinates are within the bounds of the global simulated world
      */
-    bool withinWorldCellBounds(const btVector3 &coord) const
+    bool isWithinWorldCellBounds(const btVector3 &coord) const
     {
-        return true;
-        return (coord.x() >= -nbCells.x()/2) && (coord.x() < nbCells.x()/2) &&
+        return (coord.x() >= 0) && (coord.x() < nbCells.x()) &&
                 (coord.y() >= 0) && (coord.y() < nbCells.y()) &&
-                (coord.z() >= -nbCells.z()/2) && (coord.z() < nbCells.z()/2);
+                (coord.z() >= 0) && (coord.z() < nbCells.z());
     }
 
 private:
 	/*!
       * \brief Default constructor.
+      * \param worldType the type of world being simulated
       * \param resolution the resolution of this GridInformation
       * \param spaceLen the size of the scene space that this GridInformation corresponds to
       * \param biggestObjectSize the size of the biggest object that will populate the grid
       * \param parent a pointer to a parent GridInformation if known
       * \return a new GridInformation.
       */
-    explicit GridInformation(const int resolution, const btVector3 &spaceLen, const btVector3 &biggestObjectSize, GridInformation *parent=0);
+    explicit GridInformation(const WorldType worldType, const int resolution, const btVector3 &spaceLen, const btVector3 &biggestObjectSize, GridInformation *parent=0);
 
     /*!
       * \brief Default destructor.
       */
-    virtual ~GridInformation();
+    ~GridInformation();
 
+    WorldType worldType;                //!< Type of world being simulated
     int resolution;                     //!< Resolution of this GridInformation
     int bestTerritoryResolution;        //!< Best resolution to manage territories for the scene represented by this GridInformation
     GridInformation *parent;            //!< Parent of this GridInformation

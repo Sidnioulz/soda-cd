@@ -250,7 +250,7 @@ public:
      * \param z the z coordinate to check for
      * \return whether they are out of bounds
      */
-    inline bool outOfBounds(const int &x, const int &y, const int &z) const
+    inline bool cellOutOfBounds(const int &x, const int &y, const int &z) const
     {
         return !(x>=lbound(0) && x<=ubound(0) &&
                  y>=lbound(1) && y<=ubound(1) &&
@@ -262,7 +262,7 @@ public:
      * \param coord the coordinates to check for
      * \return whether they are out of bounds
      */
-    inline bool outOfBounds(const btVector3 &coord) const
+    inline bool cellOutOfBounds(const btVector3 &coord) const
     {
         return !(coord.x()>=lbound(0) && coord.x()<=ubound(0) &&
                  coord.y()>=lbound(1) && coord.y()<=ubound(1) &&
@@ -270,20 +270,28 @@ public:
     }
 
     /*!
-     * \brief Tells whether a Cell is owned by another PhysicsWorld.
+     * \brief Tells whether a Cell is owned by this LocalGrid.
      * \param coord the coordinates of the Cell to check
-     * \return whether the matching Cell belongs to another PhysicsWorld
+     * \return true if the matching Cell is NOT owned by this LocalGrid
+     *
+     * This function tells whether a given Cell is owned by this LocalGrid.
+     * If it returns true, it may either be owned by another LocalGrid or be
+     * outside of the global simulation space bounds.
      */
-    bool ownedByAnotherWorld(const btVector3 &coord) const;
+    bool cellNotOwnedBySelf(const btVector3 &coord) const;
 
     /*!
-     * \brief Tells whether a Cell is owned by another PhysicsWorld.
+     * \brief Tells whether a Cell is owned by this LocalGrid.
      * \param x the x coordinate of the Cell to check
      * \param y the y coordinate of the Cell to check
      * \param z the z coordinate of the Cell to check
-     * \return whether the matching Cell belongs to another PhysicsWorld
+     * \return true if the matching Cell is NOT owned by this LocalGrid
+     *
+     * This function tells whether a given Cell is owned by this LocalGrid.
+     * If it returns true, it may either be owned by another LocalGrid or be
+     * outside of the global simulation space bounds.
      */
-    bool ownedByAnotherWorld(const int &x, const int &y, const int &z) const;
+    bool cellNotOwnedBySelf(const int &x, const int &y, const int &z) const;
 
     /*!
      * \brief Returns a set of coordinates that is roughly in the middle of the LocalGrid.
@@ -323,11 +331,15 @@ public:
     }
 
     /*!
-     * \brief Tells whether the Cell at given coordinates is connected to another world's LocalGrid or belongs to another world.
+     * \brief Tells whether the Cell at given coordinates is adjacent to unowned inhabitable Cells or is itself unowned.
      * \param coord the coordinates to check
      * \return whether the matching Cell belongs to another world or is on the grid border
+     *
+     * This function, precisely, tells whether a given Cell is directly adjacent to a Cell that, or is itself a Cell that:
+     *   - belongs to another PhysicsWorld
+     *   - is out of the global simulation space bounds with an OpenWorld configuration
      */
-    bool connectedToAnotherWorld(const btVector3 &coord) const;
+    bool cellAdjacentToOrIsUnownedCell(const btVector3 &coord) const;
 
     /*!
      * \brief Retrieves the list of directions for which a Cell is connected to another world.
@@ -339,7 +351,7 @@ public:
      * than this, the whole vector is set to false. It is up to clients to verify who
      * owns the Cell before calling this function if they need a distinction to be made.
      */
-    QVector<bool> getConnectionsToOtherWorlds(const btVector3 &coord) const;
+    QVector<bool> getCellBorders(const btVector3 &coord) const;
 
 
 private:

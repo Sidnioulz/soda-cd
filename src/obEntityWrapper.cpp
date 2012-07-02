@@ -98,6 +98,7 @@ obEntityWrapper::obEntityWrapper(const obEntityWrapper &other) throw(EntityAlrea
 obEntityWrapper::~obEntityWrapper()
 {
 	delete obBody;
+//    delete ogreEntity;
 	delete animation;
 }
 

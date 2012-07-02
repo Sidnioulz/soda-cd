@@ -93,7 +93,7 @@ void LocalGrid::addEntity(obEntityWrapper *obEnt)
     btVector3 cellCoords = gridInfo->toCellCoordinates(resolution, obEnt->getCenteredPosition());
 
     // Check that it exists and get it
-    Q_ASSERT(!outOfBounds(cellCoords));
+    Q_ASSERT(!cellOutOfBounds(cellCoords));
     Cell &cell = at(cellCoords);
 
     qDebug() << "LocalGrid::addEntity(" << obEnt->getName().c_str() << "): to cell " << cellCoords.x() << cellCoords.y() << cellCoords.z();
@@ -130,7 +130,7 @@ void LocalGrid::getNeighbors(const btVector3 &position, QVector<Cell *> &neighbo
     for(int i=-1; i<2; ++i)
         for(int j=-1; j<2; ++j)
             for(int k=-1; k<2; ++k)
-                if((i!=0 || j!=0 || k!=0) && !outOfBounds(btVector3(i, j, k) + position))
+                if((i!=0 || j!=0 || k!=0) && !cellOutOfBounds(btVector3(i, j, k) + position))
                 {
                     if(!neighbors.contains(&at(position)))
                     {
@@ -145,7 +145,7 @@ void LocalGrid::getUnownedNeighbors(const btVector3 &position, QVector<Cell *> &
     for(int i=-1; i<2; ++i)
         for(int j=-1; j<2; ++j)
             for(int k=-1; k<2; ++k)
-                if((i!=0 || j!=0 || k!=0) && !outOfBounds(btVector3(i, j, k) + position))
+                if((i!=0 || j!=0 || k!=0) && !cellOutOfBounds(btVector3(i, j, k) + position))
                 {
                     Cell &nCell = at(position);
                     if(nCell.getOwnerId() != PhysicsWorld::IdBeingProcessed &&  nCell.getOwnerId() != ownerId && !neighbors.contains(&at(position)))
@@ -172,7 +172,7 @@ short LocalGrid::resolveOwnership(Cell &cell, const btVector3 &position)
 
         // We found a neighbor owned by another world, so the currentConnectedCells must be
         // marked to NullWorlId for further negotiation with neighbors.
-        if(connectedToAnotherWorld(neighborPos))
+        if(cellAdjacentToOrIsUnownedCell(neighborPos))
             finalId = PhysicsWorld::NullWorldId;
 
         // There is another Cell that needs to be given a WorldId, let's explore its neighbors
@@ -201,7 +201,7 @@ void LocalGrid::getEmptyCellCoordinates(QVector<QPair<btVector3, short> > &outpu
 
 void LocalGrid::setCellOwnedBy(const btVector3 &coords, const short id)
 {
-    if(!outOfBounds(coords))
+    if(!cellOutOfBounds(coords))
     {
         Cell &c = at(coords);
 
@@ -213,13 +213,13 @@ void LocalGrid::setCellOwnedBy(const btVector3 &coords, const short id)
         }
 
         c.setOwnerId(id);
-        if(id != this->getOwnerId())
-            qDebug() << "setCellOwnedBy(" << coords.x() << coords.y() << coords.z() << "," << id << "): foreign cell belongs to" << id << "in grid" << this->getOwnerId();
-        else
-            qDebug() << "setCellOwnedBy(" << coords.x() << coords.y() << coords.z() << "," << id << "): cell belongs to self (" << id << ")";
+//        if(id != this->getOwnerId())
+//            qDebug() << "setCellOwnedBy(" << coords.x() << coords.y() << coords.z() << "," << id << "): foreign cell belongs to" << id << "in grid" << this->getOwnerId();
+//        else
+//            qDebug() << "setCellOwnedBy(" << coords.x() << coords.y() << coords.z() << "," << id << "): cell belongs to self (" << id << ")";
     }
-    else
-        qDebug() << "setCellOwnedBy(" << coords.x() << coords.y() << coords.z() << "," << id << "): out of bounds in grid" << this->getOwnerId();
+//    else
+//        qDebug() << "setCellOwnedBy(" << coords.x() << coords.y() << coords.z() << "," << id << "): out of bounds in grid" << this->getOwnerId();
 }
 
 //FIXME: fix this story of nowAssigned vector containing weird stuff. Maybe the problem comes from resolveOwnership().
@@ -246,57 +246,99 @@ QVector<btVector3> LocalGrid::resolveEmptyCellOwnerships()
     return nowAssigned;
 }
 
-bool LocalGrid::connectedToAnotherWorld(const btVector3 &coord) const
+bool LocalGrid::cellAdjacentToOrIsUnownedCell(const btVector3 &coord) const
 {
-    if(!(coord.x()>lbound(0) && coord.x()<ubound(0) &&
-        coord.y()>lbound(1) && coord.y()<ubound(1) &&
-        coord.z()>lbound(2) && coord.z()<ubound(2)))
-        return true;
+    // Possible adjacent foreigner on the left
+    if(coord.x() <= lbound(0))
+    {
+        // If the world type allows expansion on the side, or if the left-side cell is still within global space, then adjacent foreigner
+        if(gridInfo->getWorldType() != GridInformation::ClosedWorld || gridInfo->isWithinWorldCellBounds(coord + btVector3(-1, 0, 0)))
+            return true;
+    }
+
+    // Possible adjacent foreigner on the right
+    if(coord.x() >= ubound(0))
+    {
+        // If the world type allows expansion on the side, or if the left-side cell is still within global space, then adjacent foreigner
+        if(gridInfo->getWorldType() != GridInformation::ClosedWorld || gridInfo->isWithinWorldCellBounds(coord + btVector3(1, 0, 0)))
+            return true;
+    }
+
+    // Possible adjacent foreigner on the bottom
+    if(coord.z() <= lbound(2))
+    {
+        // If the world type allows expansion on the bottom, or if the left-side cell is still within global space, then adjacent foreigner
+        if(gridInfo->getWorldType() == GridInformation::FullyOpenWorld || gridInfo->isWithinWorldCellBounds(coord + btVector3(0, -1, 0)))
+            return true;
+    }
+
+    // Possible adjacent foreigner on the top
+    if(coord.z() >= ubound(2))
+    {
+        // If the world type allows expansion on the top, or if the left-side cell is still within global space, then adjacent foreigner
+        if(gridInfo->getWorldType() != GridInformation::ClosedWorld || gridInfo->isWithinWorldCellBounds(coord + btVector3(0, 1, 0)))
+            return true;
+    }
+
+    // Possible adjacent foreigner on the back
+    if(coord.z() <= lbound(2))
+    {
+        // If the world type allows expansion on the side, or if the left-side cell is still within global space, then adjacent foreigner
+        if(gridInfo->getWorldType() != GridInformation::ClosedWorld || gridInfo->isWithinWorldCellBounds(coord + btVector3(0, 0, -1)))
+            return true;
+    }
+
+    // Possible adjacent foreigner on the front
+    if(coord.z() >= ubound(2))
+    {
+        // If the world type allows expansion on the side, or if the left-side cell is still within global space, then adjacent foreigner
+        if(gridInfo->getWorldType() != GridInformation::ClosedWorld || gridInfo->isWithinWorldCellBounds(coord + btVector3(0, 0, 1)))
+            return true;
+    }
 
     short id = at(coord).getOwnerId();
     return (id != ownerId && id != PhysicsWorld::UnknownWorldId && id != PhysicsWorld::IdBeingProcessed);
 }
 
-QVector<bool> LocalGrid::getConnectionsToOtherWorlds(const btVector3 &coord) const
+QVector<bool> LocalGrid::getCellBorders(const btVector3 &coord) const
 {
-    QVector<bool> cons(6, false);
-
     // Don't report connections to other worlds for Cells that are not owned
-    if(ownedByAnotherWorld(coord))
-        return cons;
+    if(cellNotOwnedBySelf(coord))
+        return QVector<bool>(6, false);
 
 
-//    short Topid =at(coord+btVector3(0,1,0)).getOwnerId();
-//    short Bottomid =at(coord+btVector3(0,-1,0)).getOwnerId();
-//    short Rightid =at(coord+btVector3(1,0,0)).getOwnerId();
-//    short Leftid =at(coord+btVector3(-1,0,0)).getOwnerId();
-//    short Frontid =at(coord+btVector3(0,0,1)).getOwnerId();
-//    short Backid =at(coord+btVector3(0,0,-1)).getOwnerId();
+    QVector<bool> borders(6, false);
 
-    cons[GridInformation::Top] = ownedByAnotherWorld(coord+btVector3(0,1,0)) && gridInfo->getGridAtResolution(resolution)->withinWorldCellBounds(coord+btVector3(0,1,0));
-    cons[GridInformation::Bottom] = ownedByAnotherWorld(coord+btVector3(0,-1,0)) && gridInfo->getGridAtResolution(resolution)->withinWorldCellBounds(coord+btVector3(0,-1,0));
+    borders[GridInformation::Top] = cellNotOwnedBySelf(coord+btVector3(0,1,0)) &&
+            (gridInfo->getWorldType() != GridInformation::ClosedWorld || gridInfo->getGridAtResolution(resolution)->isWithinWorldCellBounds(coord+btVector3(0,1,0)));
+    borders[GridInformation::Bottom] = cellNotOwnedBySelf(coord+btVector3(0,-1,0)) &&
+            (gridInfo->getWorldType() == GridInformation::FullyOpenWorld || gridInfo->getGridAtResolution(resolution)->isWithinWorldCellBounds(coord+btVector3(0,-1,0)));
 
-    cons[GridInformation::Right] = ownedByAnotherWorld(coord+btVector3(1,0,0)) && gridInfo->getGridAtResolution(resolution)->withinWorldCellBounds(coord+btVector3(1,0,0));
-    cons[GridInformation::Left] = ownedByAnotherWorld(coord+btVector3(-1,0,0)) && gridInfo->getGridAtResolution(resolution)->withinWorldCellBounds(coord+btVector3(-1,0,0));
+    borders[GridInformation::Right] = cellNotOwnedBySelf(coord+btVector3(1,0,0)) &&
+            (gridInfo->getWorldType() != GridInformation::ClosedWorld || gridInfo->getGridAtResolution(resolution)->isWithinWorldCellBounds(coord+btVector3(1,0,0)));
+    borders[GridInformation::Left] = cellNotOwnedBySelf(coord+btVector3(-1,0,0)) &&
+            (gridInfo->getWorldType() != GridInformation::ClosedWorld || gridInfo->getGridAtResolution(resolution)->isWithinWorldCellBounds(coord+btVector3(-1,0,0)));
 
-    cons[GridInformation::Front] = ownedByAnotherWorld(coord+btVector3(0,0,1)) && gridInfo->getGridAtResolution(resolution)->withinWorldCellBounds(coord+btVector3(0,0,1));
-    cons[GridInformation::Back] = ownedByAnotherWorld(coord+btVector3(0,0,-1)) && gridInfo->getGridAtResolution(resolution)->withinWorldCellBounds(coord+btVector3(0,0,-1));
+    borders[GridInformation::Front] = cellNotOwnedBySelf(coord+btVector3(0,0,1)) &&
+            (gridInfo->getWorldType() != GridInformation::ClosedWorld || gridInfo->getGridAtResolution(resolution)->isWithinWorldCellBounds(coord+btVector3(0,0,1)));
+    borders[GridInformation::Back] = cellNotOwnedBySelf(coord+btVector3(0,0,-1)) &&
+            (gridInfo->getWorldType() != GridInformation::ClosedWorld || gridInfo->getGridAtResolution(resolution)->isWithinWorldCellBounds(coord+btVector3(0,0,-1)));
 
-    return cons;
+    return borders;
 }
 
-bool LocalGrid::ownedByAnotherWorld(const btVector3 &coord) const
+bool LocalGrid::cellNotOwnedBySelf(const btVector3 &coord) const
 {
-    if(outOfBounds(coord))
+    if(cellOutOfBounds(coord))
         return true;
 
     short id = at(coord).getOwnerId();
     return (id != ownerId && id != PhysicsWorld::IdBeingProcessed);
 }
 
-bool LocalGrid::ownedByAnotherWorld(const int &x, const int &y, const int &z) const
+bool LocalGrid::cellNotOwnedBySelf(const int &x, const int &y, const int &z) const
 {
-    if(outOfBounds(x, y, z))
+    if(cellOutOfBounds(x, y, z))
         return true;
 
     short id = at(x, y, z).getOwnerId();

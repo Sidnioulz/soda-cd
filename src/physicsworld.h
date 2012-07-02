@@ -127,14 +127,23 @@ public:
      */
     void setupLocalGridBorders();
 
-	/*!
-	  * \brief Returns the LocalGrid of this PhysicsWorld.
-	  * \return a pointer to this world's LocalGrid
-	  */
-	inline LocalGrid *getLocalGrid() const
-	{
-		return localGrid;
-	}
+    /*!
+      * \brief Returns the LocalGrid of this PhysicsWorld.
+      * \return a pointer to this world's LocalGrid
+      */
+    inline LocalGrid *getLocalGrid() const
+    {
+        return localGrid;
+    }
+
+    /*!
+      * \brief Returns the LocalGrid of this PhysicsWorld.
+      * \return a pointer to this world's LocalGrid
+      */
+    inline const btScalar &getCurrentTime() const
+    {
+        return currentTime;
+    }
 
     /*!
       * \brief Initializes the content of the PhysicsWorld scene.

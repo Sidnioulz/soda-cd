@@ -46,48 +46,56 @@ public:
      * \return a new RandomCubeSimulation
      */
     RandomCubeSimulation(const btScalar &targetTimeStep = 1.0f/60,
-                         const int &numWorlds = 2, //QThread::idealThreadCount(),
+                         const int &numWorlds = 4, //QThread::idealThreadCount(),
                          const int &numInterfaces = 1,
                          //                         const btVector3 &sceneSize = btVector3(1000, 400, 1000), interesting as a case study where one CPU gets no territory
-                         const btVector3 &sceneSize = btVector3(2000, 800, 2000),
-                         const int &numEntities = 40);
+                         const btVector3 &sceneSize = btVector3(10000, 2000, 10000),
+                         const int &numEntities = 6000);
 
     /*!
-      * \brief Default destructor.
-      */
-    virtual ~RandomCubeSimulation();
+     * \brief Default destructor.
+     */
+    ~RandomCubeSimulation();
 
     /*!
      * \overload
      */
-    virtual void setupBasic3DEnvironment();
+    void setupBasic3DEnvironment();
 
     /*!
      * \overload
      */
-    virtual void setupBasicPhysicsEnvironment(PhysicsWorld *world);
+    void setupBasicPhysicsEnvironment(PhysicsWorld *world);
 
     /*!
      * \overload
      */
-    virtual void loadEntities();
+     void loadEntities();
 
     /*!
-      * \brief Creates a 3D box entity with both an Ogre and a bullet structure.
-      * \param position the x,y,z coordinates of the object
-      * \param scale the scale of the object in all axes (default 1 for each axis)
-      * \param mass the mass of the object (default 1)
-      * \return a pointer to the newly created entity
-      */
+     * \overload
+     */
+     inline GridInformation::WorldType getWorldType() const
+     {
+         return GridInformation::ClosedWorld;
+     }
+
+    /*!
+     * \brief Creates a 3D box entity with both an Ogre and a bullet structure.
+     * \param position the x,y,z coordinates of the object
+     * \param scale the scale of the object in all axes (default 1 for each axis)
+     * \param mass the mass of the object (default 1)
+     * \return a pointer to the newly created entity
+     */
     obEntityWrapper *_createBox(const btVector3 &position, const btVector3 &scale, const btScalar &mass);
 
     /*!
-      * \brief Creates a Ninja. Use with caution.
-      * \param position the x,y,z coordinates of the object
-      * \param scale the scale of the object in all axes (default 1 for each axis)
-      * \param mass the mass of the object (default 1)
-      * \return a pointer to the newly created entity
-      */
+     * \brief Creates a Ninja. Use with caution.
+     * \param position the x,y,z coordinates of the object
+     * \param scale the scale of the object in all axes (default 1 for each axis)
+     * \param mass the mass of the object (default 1)
+     * \return a pointer to the newly created entity
+     */
     obGhostEntity *_createNinja(const btVector3 &position, const btVector3 &scale, const btScalar &mass);
 
 };

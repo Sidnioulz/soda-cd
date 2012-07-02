@@ -21,6 +21,7 @@
  */
 #include "obMotionState.h"
 #include "obdynamicrigidbody.h"
+#include "physicsworld.h"
 #include "localgrid.h"
 #include "utils.h"
 
@@ -54,9 +55,9 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
         btVector3 coords = grid->getGridInformation()->toCellCoordinates(grid->getResolution(), parentBody->getCenteredPosition());
         if(coords != lastCellCoords)
         {
-            if(grid->ownedByAnotherWorld(coords))
+            if(grid->cellNotOwnedBySelf(coords))
             {
-                if(grid->outOfBounds(coords))
+                if(grid->cellOutOfBounds(coords))
                     qDebug() << "Entity '" << parentBody->getName().c_str() << "' in Grid '" << grid->getOwnerId() << "' is out of bounds\t(" << coords.x()<<"," << coords.y()<<"," << coords.z() << ", LG bounds:\t" << grid->displayBoundsInfo() << ")";
                 else
                     qDebug() << "Entity '" << parentBody->getName().c_str() << "' in Grid '" << grid->getOwnerId() << "' is in a foreign cell (" << grid->at(coords).getOwnerId() << ").";
@@ -64,12 +65,8 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
                 //FIXME: temporary hack to avoid segfaults
                 //TODO: start sync with neighbour
 
-                // Set the new status of the entity depending on where it landed
-                //TODO: GridInformation::isOutOfSimulationSpace
-                //TODO: outOfBounds renamed to isOutOfBounds
+                //TODO: Set the new status of the entity depending on where it landed
                 parentBody->setStatus(obEntity::OutOfWorld);
-
-                // Cleanup grid now that the entity is outside of it
                 grid->at(lastCellCoords).removeEntity(parentBody);
                 unsetLocalGrid();
             }

@@ -27,8 +27,7 @@ CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates 
 	obBody(0),
 //    ogreEntity(0),
     grid(grid),
-    coords(coords),
-    direction(coords.direction())
+    coords(coords)
 {
     Ogre::String name = "cell_id:" + Ogre::StringConverter::toString(grid->getOwnerId()) +
             "x:" + Ogre::StringConverter::toString(coords.x()) +
@@ -44,11 +43,11 @@ CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates 
 
         // Compute the shape of the body according to the wanted direction
         btVector3 bodyLen =  grid->getGridInformation()->getGridAtResolution(grid->getResolution())->getCellLength();
-        if(direction == GridInformation::Top || direction == GridInformation::Bottom)
+        if(coords.direction() == GridInformation::Top || coords.direction() == GridInformation::Bottom)
             bodyLen.setY(0.001);
-        if(direction == GridInformation::Left || direction == GridInformation::Right)
+        if(coords.direction() == GridInformation::Left || coords.direction() == GridInformation::Right)
             bodyLen.setX(0.001);
-        if(direction == GridInformation::Front || direction == GridInformation::Back)
+        if(coords.direction() == GridInformation::Front || coords.direction() == GridInformation::Back)
             bodyLen.setZ(0.001);
 
         // Create the rigid body
@@ -62,37 +61,37 @@ CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates 
         Ogre::Plane p;
         p.d = 0; // Actually useless according to Ogre documentation
 
-        if(direction == GridInformation::Top)
+        if(coords.direction() == GridInformation::Top)
         {
             p.normal = Ogre::Vector3(0, 1, 0);
             Ogre::MeshManager::getSingleton().createPlane(name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                                                           p, bodyLen.x(), bodyLen.z(), 1, 1, true, 1, 1, 1, Ogre::Vector3::UNIT_Z);
         }
-        else if(direction == GridInformation::Bottom)
+        else if(coords.direction() == GridInformation::Bottom)
         {
             p.normal = Ogre::Vector3(0, -1, 0);
             Ogre::MeshManager::getSingleton().createPlane(name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                                                           p, bodyLen.x(), bodyLen.z(), 1, 1, true, 1, 1, 1, Ogre::Vector3::NEGATIVE_UNIT_Z);
         }
-        else if(direction == GridInformation::Left)
+        else if(coords.direction() == GridInformation::Left)
         {
             p.normal = Ogre::Vector3(-1, 0, 0);
             Ogre::MeshManager::getSingleton().createPlane(name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                                                           p, bodyLen.z(), bodyLen.y(), 1, 1, true, 1, 1, 1, Ogre::Vector3::NEGATIVE_UNIT_Y);
         }
-        else if(direction == GridInformation::Right)
+        else if(coords.direction() == GridInformation::Right)
         {
             p.normal = Ogre::Vector3(1, 0, 0);
             Ogre::MeshManager::getSingleton().createPlane(name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                                                           p, bodyLen.z(), bodyLen.y(), 1, 1, true, 1, 1, 1, Ogre::Vector3::UNIT_Y);
         }
-        else if(direction == GridInformation::Back)
+        else if(coords.direction() == GridInformation::Back)
         {
             p.normal = Ogre::Vector3(0, 0, -1);
             Ogre::MeshManager::getSingleton().createPlane(name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                                                           p, bodyLen.y(), bodyLen.x(), 1, 1, true, 1, 1, 1, Ogre::Vector3::NEGATIVE_UNIT_X);
         }
-        else if(direction == GridInformation::Front)
+        else if(coords.direction() == GridInformation::Front)
         {
             p.normal = Ogre::Vector3(0, 0, 1);
             Ogre::MeshManager::getSingleton().createPlane(name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,

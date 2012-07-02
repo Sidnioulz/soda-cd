@@ -528,9 +528,15 @@ void OgreWidget::render()
 #ifndef NDEBUG
                 // Update color according to status for debug
                 if(record.status == obEntity::CrossingBorder)
+                {
                     record.obEnt->setColor(0, 0, 0);
+                }
                 else if(record.status == obEntity::OutOfWorld)
+                {
                     record.obEnt->setColor(1, 0, 0);
+//                    qDebug() << "Deleting eEntity '" << record.obEnt->getName().c_str() << "at time" << ptr->getTimeStep();
+//                    delete record.obEnt;
+                }
 #endif
             }
         }

@@ -37,7 +37,8 @@ InvalidResolutionException::InvalidResolutionException(const GridInformation * c
 
 GridInformation *GridInformation::grid = 0;
 
-GridInformation::GridInformation(const int resolution, const btVector3 &spaceLen, const btVector3 &biggestObjectSize, GridInformation *parent) :
+GridInformation::GridInformation(const WorldType worldType, const int resolution, const btVector3 &spaceLen, const btVector3 &biggestObjectSize, GridInformation *parent) :
+    worldType(worldType),
     resolution(resolution),
     bestTerritoryResolution(0),
 	parent(parent),
@@ -61,7 +62,7 @@ GridInformation::~GridInformation()
     child = 0;
 }
 
-GridInformation *GridInformation::getGrid(const btScalar initScaleRatio, const btVector3 &sceneSize, const btVector3 &biggestObjectSize, bool reset)
+GridInformation *GridInformation::getGrid(const WorldType worldType, const btScalar &initScaleRatio, const btVector3 &sceneSize, const btVector3 &biggestObjectSize, bool reset)
 {
     if(reset && grid != 0)
     {
@@ -85,7 +86,7 @@ GridInformation *GridInformation::getGrid(const btScalar initScaleRatio, const b
         btVector3 objSizePerRes(biggestObjectSize);
         for(int d=0; d<depth; ++d)
         {
-            GridInformation *dGrid = new GridInformation(d+1, sceneSize, objSizePerRes, prevGrid);
+            GridInformation *dGrid = new GridInformation(worldType, d+1, sceneSize, objSizePerRes, prevGrid);
             objSizePerRes /=2;
 
             // Let grid point to the root of the hierarchy, and connect child grids to their parents

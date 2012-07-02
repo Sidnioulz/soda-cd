@@ -92,6 +92,12 @@ public:
 		return bufferInterfaces;
 	}
 
+    /*!
+     * \brief Returns the type of world being simulated.
+     * \return the WorldType of this Simulation
+     */
+    virtual GridInformation::WorldType getWorldType() const = 0;
+
 protected:
 	/*!
      * \brief Setups the Ogre 3D environment in which the Simulation will occur (terrain, sky, fog, lights).
@@ -121,11 +127,11 @@ protected:
 	/*!
 	  * \brief Loads the entities that will be simulated. Must be defined by inheriting classes.
 	  */
-	virtual void loadEntities() = 0;
+    virtual void loadEntities() = 0;
 
-	/*!
-	  * \brief Computes the parameters that will be needed to compute Grid cell sizes and depth.
-	  */
+    /*!
+      * \brief Computes the parameters that will be needed to compute Grid cell sizes and depth.
+      */
     virtual void setupGridInformation();
 
 	/*!

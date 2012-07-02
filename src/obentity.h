@@ -53,19 +53,20 @@ public:
      * \variable EntityStatus
      * \brief Set of bits corresponding to different possible collision statuses for an object in SODA
      */
-    static const enum __EntityStatus {
+    typedef enum __EntityStatus {
         NonExistant = 0,                                /*!< Entity doesn't exist */
-        NormalStatus            = (1<<1),               /*!< Entity is in a normal status (only status of CellBorderEntity) */
+        NormalStatus            = (1<<1),               /*!< Entity is in a normal status (usual status of Entities) */
         CrossingBorder          = (1<<2),               /*!< Entity is crossing a border */
         OutOfWorld              = (1<<3),               /*!< Entity has left its world and should be transferred with IPC */
-        OutOfSimulationSpace    = (1<<4)                /*!< Entity has left the global simulation space and can be deleted */
+        OutOfSimulationSpace    = (1<<4),               /*!< Entity has left the global simulation space and can be deleted */
+        Overlapped              = (1<<5)                /*!< Border entity is being overlapped */
     } EntityStatus;
 
     /*!
      * \brief Sets the status of the obEntity to a new value.
      * \param newStatus the new status of the obEntity
      */
-    inline void setStatus(const signed short &newStatus)
+    inline void setStatus(const EntityStatus &newStatus)
     {
         //FIXME: temporary hack to see out of world objects
         if(status != OutOfWorld)
@@ -76,13 +77,13 @@ public:
      * \brief Retrieves the status of the obEntity.
      * \return the status of the obEntity
      */
-    inline const signed short &getStatus() const
+    inline const EntityStatus &getStatus() const
     {
         return status;
     }
 
 protected:
-    signed short status;                                /*!< Status of the obEntity */
+    EntityStatus status;                                /*!< Status of the obEntity */
 };
 
 #endif // OBENTITY_H

@@ -47,7 +47,6 @@ public:
       */
     BulletManagerWorld(btCollisionDispatcher*&, btLocalGridBroadphase*&, btSequentialImpulseConstraintSolver*&, btDefaultCollisionConfiguration*&);
 
-
     /*!
       * \brief Performs one step of physics simulation.
       * \param timeStep the length of simulation to perform
@@ -101,6 +100,15 @@ public:
      */
     void removeCollisionObject(btCollisionObject *collisionObject);
 
+    /*!
+     * \brief Returns the broadphase interface used by this world.
+     * \return the pointer to the btLocalGridBroadphase used in this world
+     */
+    btLocalGridBroadphase *getBroadphase()
+    {
+        return broadphase;
+    }
+
 //    /*!
 //     * \brief Adds a btRigidBody to the world. See official Bullet documentation.
 //     * \param body the btRigidBody to addignored
@@ -141,6 +149,9 @@ public:
      * expenses.
      */
     void performDiscreteCollisionDetection();
+
+private:
+    btLocalGridBroadphase* broadphase;                  //!< the broadphase algorithm interface
 };
 
 /*! \class BulletManager

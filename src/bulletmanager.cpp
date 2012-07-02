@@ -41,13 +41,15 @@
 #include "bulletmanager.h"
 #include "obEntityWrapper.h"
 #include "cellborderentity.h"
+#include "physicsworld.h"
 #include "btlocalgridbroadphase.h"
 
 using namespace std;
 
 BulletManagerWorld::BulletManagerWorld(btCollisionDispatcher *&dispatcher, btLocalGridBroadphase *&broadphase, btSequentialImpulseConstraintSolver *&solver, btDefaultCollisionConfiguration *&config) :
 //    btDiscreteDynamicsWorld(dispatcher, new btSimpleBroadphase(), solver, config)
-    btDiscreteDynamicsWorld(dispatcher, broadphase, solver, config)
+    btDiscreteDynamicsWorld(dispatcher, broadphase, solver, config),
+    broadphase(broadphase)
 {
 }
 
@@ -253,6 +255,8 @@ void BulletManagerWorld::internalSingleStepSimulation(btScalar timeStep)
 //    }
 
 
+    //TODO: integrate transfer of objectsi n this sync'd function. We have positions after integrateTransforms
+
 
     calculateSimulationIslands();
 
@@ -312,6 +316,7 @@ void BulletManagerWorld::removeCollisionObject(btCollisionObject *collisionObjec
             // only clear the cached algorithms
             //
             getBroadphase()->getOverlappingPairCache()->cleanProxyFromPairs(bp,m_dispatcher1);
+            getBroadphase()->getBorderCrossingPairCache()->cleanProxyFromPairs(bp,m_dispatcher1);
             getBroadphase()->destroyProxy(bp,m_dispatcher1);
             collisionObject->setBroadphaseHandle(0);
         }
@@ -379,7 +384,12 @@ void	BulletManagerWorld::performDiscreteCollisionDetection()
         btLocalGridBroadphase *bdPhase = static_cast<btLocalGridBroadphase *>(m_broadphasePairCache);
         const btBroadphasePairArray &array = bdPhase->getBorderCrossingPairCache()->getOverlappingPairArray();
 
-//TODO: getEntityFromProxy()
+        obEntityWrapper *obEnt = 0;
+        CellBorderEntity *border = 0;
+        btVector3 otherSideCoords;
+        PhysicsWorld *world = broadphase->getWorld();
+        LocalGrid *localGrid = broadphase->getWorld()->getLocalGrid();
+
         const int &bdArraySize = array.size();
         for(int i=0; i<bdArraySize; ++i)
         {
@@ -387,11 +397,73 @@ void	BulletManagerWorld::performDiscreteCollisionDetection()
             obEntity *entity0 = static_cast<obEntity *>(collObj0->getCollisionShape()->getUserPointer());
             if(entity0->getType() == obEntity::obEntityWrapperType)
             {
-                obEntityWrapper *obEnt = dynamic_cast<obEntityWrapper *>(entity0);
-//                qDebug() << "performDiscreteCollisionDetection():" << obEnt->getName().c_str() << "collides with a border";
+                obEnt = dynamic_cast<obEntityWrapper *>(entity0);
+//                qDebug() << "performDiscreteCollisionDetection("<< world->getId() <<"):" << obEnt->getName().c_str() << "collides with a border";
                 obEnt->setStatus(obEntity::CrossingBorder);
-//                obEnt->setColor(0, 0, 0); //FIXME: instead register in an event queue the time of color change
             }
+            else
+            {
+                border = dynamic_cast<CellBorderEntity *>(entity0);
+                border->setStatus(obEntity::Overlapped);
+            }
+
+
+            btCollisionObject *collObj1 = static_cast<btCollisionObject *>(array[i].m_pProxy1->m_clientObject);
+            obEntity *entity1 = static_cast<obEntity *>(collObj1->getCollisionShape()->getUserPointer());
+            if(entity1->getType() == obEntity::obEntityWrapperType)
+            {
+                obEnt = dynamic_cast<obEntityWrapper *>(entity1);
+//                qDebug() << "performDiscreteCollisionDetection("<< world->getId() <<"):" << obEnt->getName().c_str() << "collides with a border";
+                obEnt->setStatus(obEntity::CrossingBorder);
+            }
+            else
+            {
+                border = dynamic_cast<CellBorderEntity *>(entity1);
+                border->setStatus(obEntity::Overlapped);
+            }
+
+//            const CellBorderCoordinates &coord = border->getCoordinates();
+
+//            //TODO: use directionto compute realcords
+
+//            if(coord.direction() == GridInformation::Top)
+//            {
+//                otherSideCoords = btVector3(0,1,0);
+//                otherSideCoords += coord;
+//            }
+//            else if(coord.direction() == GridInformation::Bottom)
+//            {
+//                otherSideCoords = btVector3(0,-1,0);
+//                otherSideCoords += coord;
+//            }
+//            else if(coord.direction() == GridInformation::Left)
+//            {
+//                otherSideCoords = btVector3(-1,0,0);
+//                otherSideCoords += coord;
+//            }
+//            else if(coord.direction() == GridInformation::Right)
+//            {
+//                otherSideCoords = btVector3(1,0,0);
+//                otherSideCoords += coord;
+//            }
+//            else if(coord.direction() == GridInformation::Back)
+//            {
+//                otherSideCoords = btVector3(0,0,-1);
+//                otherSideCoords += coord;
+//            }
+//            else if(coord.direction() == GridInformation::Front)
+//            {
+//                otherSideCoords = btVector3(0,0,1);
+//                otherSideCoords += coord;
+//            }
+
+//            if(localGrid->getGridInformation()->isWithinWorldCellBounds(otherSideCoords))
+//            {
+//                qDebug() << "performDiscreteCollisionDetection("<< world->getId() <<"): border overlap with" << localGrid->at(otherSideCoords).getOwnerId();
+//            }
+
+
+            //TODO: its in this function that we check for border crossing and out of bounds objects, and we synchronize in BulletManagerWorld either way.
         }
     }
 }

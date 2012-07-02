@@ -152,17 +152,24 @@ void PhysicsWorld::removeEntity(obEntityWrapper *obEnt, btScalar targetTime)
 {
     entityMutex.lock();
     entityRemovalQueue.enqueue(TimedEntity(obEnt, targetTime));
+    qDebug() << "Marking entity '" << obEnt->getName().c_str() << "' for removal from world"<< getId() << "at time" << targetTime << "(" << currentTime << ")";
     entityMutex.unlock();
 }
 
 void PhysicsWorld::_removeEntity(obEntityWrapper *obEnt)
 {
-	if(localGrid)
+    qDebug() << "Removing entity '" << obEnt->getName().c_str() << "' from world"<< getId() << "at time" << currentTime;
+
+    // Remove the entity from the grid if it still is within a grid cell (entity knows better, it may be outside of the grid if the deletion is a result of it moving out of bounds)
+    if(localGrid && obEnt->getRigidBody()->getMotionState()->getLocalGrid())
         localGrid->removeEntity(obEnt);
+
+    // Remove the entity from the world's vector
     _entityVectoryRemovalMethod(entities, obEnt);
 
     getBulletManager()->getDynamicsWorld()->removeRigidBody(obEnt->getRigidBody()->getBulletBody());
     obEnt->unsetOwnerWorld();
+    qDebug() << "Finished removeEntity '" << obEnt->getName().c_str() << "' from world"<< getId() << "at time" << currentTime;
 }
 
 void PhysicsWorld::assignLocalGrid(LocalGrid *local)
@@ -246,7 +253,7 @@ void PhysicsWorld::setupLocalGridBorders()
     {
         // Instantiate the CellBorderEntity of the Cell
         btVector3 coords = Utils::btVectorFromBlitz(it.position());
-        QVector<bool> cons = localGrid->getConnectionsToOtherWorlds(coords);
+        QVector<bool> cons = localGrid->getCellBorders(coords);
 
         for(int i=0; i<cons.size(); ++i)
             if(cons[i])
@@ -285,7 +292,12 @@ void PhysicsWorld::BulletFakeCCDThread::myTickCallback(btDynamicsWorld *world, b
 
     obEntityTransformRecordList *list = new obEntityTransformRecordList(w->currentTime);
     for(int i=0; i<w->entities.size(); ++i)
+    {
         list->addTransform(w->entities[i], w->entities[i]->getRigidBody()->getBulletBody()->getWorldTransform());
+
+        if(w->entities[i]->getStatus() & (obEntity::OutOfWorld | obEntity::OutOfSimulationSpace))
+            w->_removeEntity(w->entities[i]);
+    }
 
     w->buffer->appendTimeStep(list);
 }
@@ -296,11 +308,11 @@ void PhysicsWorld::BulletFakeCCDThread::init()
         world->getBulletManager()->getDynamicsWorld()->setInternalTickCallback(myTickCallback, static_cast<void *>(this->world));
 }
 
-//TODO: investigate motionStates instead of this to see which performs better
 //TODO: proper thread joining when quitting
 void PhysicsWorld::BulletFakeCCDThread::run()
 {
     // Initialization
+    //FIXME: in this record, status's should be inserted? Use addRecord;
     obEntityTransformRecordList *initialPositions = new obEntityTransformRecordList(0);
     for(int i=0; i<world->entities.size(); ++i)
         initialPositions->addTransform(world->entities[i], world->entities[i]->getRigidBody()->getBulletBody()->getWorldTransform());
@@ -316,6 +328,7 @@ void PhysicsWorld::BulletFakeCCDThread::run()
         rewind=false;
 
         // Manage entity and grid queues before the next simulation
+        //FIXME: the code to add/remove entities below is probably partly wrong now.
         world->entityMutex.lock();
         while(!world->entityAdditionQueue.isEmpty())
         {
@@ -324,13 +337,13 @@ void PhysicsWorld::BulletFakeCCDThread::run()
             rewindTime = qMin(rewindTime, entity.second);
             rewind = true;
         }
-        while(!world->entityRemovalQueue.isEmpty())
-        {
-            QPair<obEntityWrapper *, btScalar> entity = world->entityRemovalQueue.dequeue();
-            world->_removeEntity(entity.first);
-            rewindTime = qMin(rewindTime, entity.second);
-            rewind = true;
-        }
+//        while(!world->entityRemovalQueue.isEmpty())
+//        {
+//            QPair<obEntityWrapper *, btScalar> entity = world->entityRemovalQueue.dequeue();
+//            world->_removeEntity(entity.first);
+//            rewindTime = qMin(rewindTime, entity.second);
+//            rewind = true;
+//        }
         world->entityMutex.unlock();
 
         // Rollback to a given time step (not yet implemented)

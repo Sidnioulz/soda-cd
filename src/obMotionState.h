@@ -51,30 +51,39 @@ public:
       * \param parent the rigid body that this motion state belongs to
       * \return a new obMotionState
       */
-	obMotionState(obEntityWrapper *parent);
+    obMotionState(obEntityWrapper *parent);
+
+    /*!
+      * \brief Returns the LocalGrid this object is within, or NULL if the object is outside its previous LocalGrid.
+      * \return the LocalGrid that owns the obMotionState's parent, or NULL if the parent is already out of the grid
+      */
+    inline LocalGrid *getLocalGrid() const
+    {
+        return grid;
+    }
 
     /*!
       * \brief Sets the LocalGrid this object is associated with (it must be within the grid).
       * \param newGrid the LocalGrid that owns the obMotionState's parent
       */
-    virtual void setLocalGrid(LocalGrid *newGrid);
+    void setLocalGrid(LocalGrid *newGrid);
 
     /*!
       * \brief Sets the LocalGrid this object is associated with to NULL (use to detach object from a grid).
       */
-    virtual void unsetLocalGrid();
+    void unsetLocalGrid();
 
     /*!
       * \brief Returns the world transform of this motion state.
       * \param worldTrans a reference to the variable where to store the world transform
       */
-    virtual void getWorldTransform(btTransform &worldTrans) const;
+    void getWorldTransform(btTransform &worldTrans) const;
 
     /*!
       * \brief Changes the world transform of this motion state to a given one.
       * \param worldTrans the transform to set this motion state to
       */
-    virtual void setWorldTransform(const btTransform &worldTrans);
+    void setWorldTransform(const btTransform &worldTrans);
 
     /*!
       * \brief Returns the last known Cell coordinates of this motion state.

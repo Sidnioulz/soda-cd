@@ -220,6 +220,15 @@ public:
         world = 0;
     }
 
+    /*!
+     * \brief Returns a pointer to this broadphase's PhysicsWorld.
+     * \return a pointer to this btLocalGridBroadphase's PhysicsWorld
+     */
+    inline PhysicsWorld *getWorld() const
+    {
+        return world;
+    }
+
 private:
     PhysicsWorld            *world;             /*!< Pointer to the PhysicsWorld containing the grid used within this broadphase */
     btOverlappingPairCache  *m_pairCache;       /*!< Pointer to the cache used for obEntityWrapper-obEntityWrapper overlaps */

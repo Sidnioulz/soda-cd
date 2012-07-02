@@ -127,7 +127,7 @@ public:
      * \brief Gets the Cell space coordinates of the entity.
      * \return a btVector3 containing the Cell coordinates of this entity
      */
-    inline btVector3 getCoordinates() const
+    inline const CellBorderCoordinates &getCoordinates() const
     {
         return coords;
     }
@@ -155,7 +155,7 @@ private:
     Ogre::Entity            *ogreEntity;         /*!< Ogre entity */
     LocalGrid               *grid;               /*!< The grid of which this CellBorderEntity is a border */
 
-    btVector3				coords;		         /*!< Cell coordinates of the border entity */
+    CellBorderCoordinates	coords;		         /*!< Cell coordinates of the border entity, with a direction parameter */
 	short					direction;			 /*!< Direction of the border entity on the Cell */
 };
 

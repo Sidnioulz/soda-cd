@@ -22,18 +22,14 @@
 #include "obentity.h"
 
 obEntityTransformRecord::obEntityTransformRecord() :
-    obEnt(0)
-  #ifndef NDEBUG
-  , status(obEntity::NonExistant)
-  #endif
+    obEnt(0),
+    status(obEntity::NonExistant)
 {
 }
 
 obEntityTransformRecord::obEntityTransformRecord(obEntityWrapper *obEnt, const btTransform &transform) :
     obEnt(obEnt),
-    transform(transform)
-  #ifndef NDEBUG
-  , status(obEnt? obEnt->getStatus() : (signed short) obEntity::NonExistant)
-  #endif
+    transform(transform),
+    status(obEnt? obEnt->getStatus() : obEntity::NonExistant)
 {
 }

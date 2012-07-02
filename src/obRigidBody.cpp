@@ -67,6 +67,7 @@ obRigidBody::obRigidBody(obEntity *parent, const Ogre::String &name, const Ogre:
 obRigidBody::~obRigidBody()
 {
     delete triangleMesh;
+    node->removeAndDestroyAllChildren();
     delete node;
 
     delete btBody->getMotionState();
@@ -77,7 +78,7 @@ void obRigidBody::createSceneNode()
 {
     node = OgreResources::getSceneManager()->getRootSceneNode()->createChildSceneNode(name, position, quaternion);
     node->scale(scale);
-    node->showBoundingBox(true);
+//    node->showBoundingBox(true);
 }
 
 Ogre::SceneNode* obRigidBody::getSceneNode() const

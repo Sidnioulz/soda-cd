@@ -89,7 +89,7 @@ bool btLocalGridBroadphase::aabbOverlap(const btVector3 &aabb0Min, const btVecto
 
 void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
 {
-    qDebug() << "calculateOverlappingPairs("<<world->getId()<<")  BEGIN:" << m_pairCache->getNumOverlappingPairs() << "E-E \t&" << m_borderCache->getNumOverlappingPairs() << "E-B";
+//    qDebug() << "calculateOverlappingPairs("<<world->getId()<<")  BEGIN:" << m_pairCache->getNumOverlappingPairs() << "E-E \t&" << m_borderCache->getNumOverlappingPairs() << "E-B";
     //MISSING: border-entity collisions
     //MISSING: static env. collisions
 
@@ -165,7 +165,7 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
                         // 0,0,0 is not used, ignore it
                         if(i || j || k)
                         {
-                            if(!grid->ownedByAnotherWorld(x+i, y+j, z+k))
+                            if(!grid->cellNotOwnedBySelf(x+i, y+j, z+k))
                             {
                                 Cell &o = grid->at(x+i, y+j, z+k);
                                 entityVectors[i][j][k] = o.getEntities();
@@ -257,7 +257,7 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
         }
     }
 
-    qDebug() << "calculateOverlappingPairs("<<world->getId()<<") END:  " << m_pairCache->getNumOverlappingPairs() << "E-E \t&" << m_borderCache->getNumOverlappingPairs() << "E-B";
+//    qDebug() << "calculateOverlappingPairs("<<world->getId()<<") END:  " << m_pairCache->getNumOverlappingPairs() << "E-E \t&" << m_borderCache->getNumOverlappingPairs() << "E-B";
 }
 
 void btLocalGridBroadphase::aabbTest(const btVector3 &aabbMin, const btVector3 &aabbMax, btBroadphaseAabbCallback &callback)

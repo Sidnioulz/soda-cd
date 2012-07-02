@@ -128,7 +128,7 @@ void Simulation::setupGridInformation()
                        qMax(highestSizePerAxis.y() / lowestSizePerAxis.y(),
                             highestSizePerAxis.z() / lowestSizePerAxis.z()));
 
-    grid = GridInformation::getGrid(biggestSizeRatio, sceneSize, highestSizePerAxis);
+    grid = GridInformation::getGrid(getWorldType(), biggestSizeRatio, sceneSize, highestSizePerAxis);
 }
 
 QVector<btVector3> Simulation::getEntitiesPositions() const
@@ -255,13 +255,13 @@ void Simulation::_setCellOwner(const QMap<short, int> &cellOwnerCounter, QVector
     // If the Cell was empty, add it to the list of empty Cells for later assignment
     if(maxIndex == PhysicsWorld::NullWorldId)
     {
-        qDebug() << "\tEmpty " << currentCoords.x() << currentCoords.y() << currentCoords.z();
+//        qDebug() << "\tEmpty " << currentCoords.x() << currentCoords.y() << currentCoords.z();
         emptyCells.append(currentCoords);
     }
     // Else, notify all PhysicsWorlds which one the Cell was assigned to
     else
     {
-        qDebug() << "_setCellOwner decision:" << currentCoords.x() << currentCoords.y() << currentCoords.z() << " owned by ID " << worlds[maxIndex]->getId() << " with" << cellEnts.size() << "entities";
+//        qDebug() << "_setCellOwner decision:" << currentCoords.x() << currentCoords.y() << currentCoords.z() << " owned by ID " << worlds[maxIndex]->getId() << " with" << cellEnts.size() << "entities";
 
         for(int w=0; w<numWorlds; ++w)
             notifyCellAssignment(grids[w], currentCoords, worlds[maxIndex]->getId(), &cellEnts);
@@ -310,20 +310,20 @@ QVector<btVector3> Simulation::computeCellOwnersAndLocateEmptyCells(const int &r
         obEntityWrapper *obEnt = entitiesWithAssignments[i].first;
         const btVector3 &coords = grid->toCellCoordinates(resolution, obEnt->getCenteredPosition());
 
-        qDebug() << "JCoordinates " << coords.x() << coords.y() << coords.z();
+//        qDebug() << "JCoordinates " << coords.x() << coords.y() << coords.z();
 
         // Different Cells, compute the owner for the current Cell and notify all worlds
         if(coords != currentCoords)
         {
-            qDebug() << "\tCoordinates " << currentCoords.x() << currentCoords.y() << currentCoords.z();
+//            qDebug() << "\tCoordinates " << currentCoords.x() << currentCoords.y() << currentCoords.z();
             _setCellOwner(cellOwnerCounter, emptyCells, currentCoords, cellEnts);
 
             // For all Cells between the one just processed and the next to contain an entity, mark the Cell empty
             btVector3 nextCoords = _nextOrderedCellCoords(currentCoords);
             while (nextCoords != coords)
             {
-                qDebug() << "\tCoordinates " << nextCoords.x() << nextCoords.y() << nextCoords.z();
-                qDebug() << "\tEmpty " << nextCoords.x() << nextCoords.y() << nextCoords.z();
+//                qDebug() << "\tCoordinates " << nextCoords.x() << nextCoords.y() << nextCoords.z();
+//                qDebug() << "\tEmpty " << nextCoords.x() << nextCoords.y() << nextCoords.z();
                 emptyCells.append(nextCoords);
                 nextCoords = _nextOrderedCellCoords(nextCoords);
             }
@@ -339,14 +339,14 @@ QVector<btVector3> Simulation::computeCellOwnersAndLocateEmptyCells(const int &r
     }
     // Process the Cell containing the last entity
     _setCellOwner(cellOwnerCounter, emptyCells, currentCoords, cellEnts);
-    qDebug() << "Cell " << currentCoords.x() << currentCoords.y() << currentCoords.z() << " now owned by a world";
+//    qDebug() << "Cell " << currentCoords.x() << currentCoords.y() << currentCoords.z() << " now owned by a world";
 
     // Then, mark empty all next Cells
     btVector3 nextCoords = _nextOrderedCellCoords(currentCoords);
     while (nextCoords != GridInformation::InvalidCellCoordinates)
     {
-        qDebug() << "Coordinates " << nextCoords.x() << nextCoords.y() << nextCoords.z();
-        qDebug() << "Empty " << nextCoords.x() << nextCoords.y() << nextCoords.z();
+//        qDebug() << "Coordinates " << nextCoords.x() << nextCoords.y() << nextCoords.z();
+//        qDebug() << "Empty " << nextCoords.x() << nextCoords.y() << nextCoords.z();
         emptyCells.append(nextCoords);
         nextCoords = _nextOrderedCellCoords(nextCoords);
     }
@@ -415,7 +415,7 @@ void Simulation::notifyCellAssignment(LocalGrid *local, const btVector3 &coords,
 
 	if(entities && local->getOwnerId() == owner)
     {
-        qDebug() << "notifyCellAssignment: confirmed that world" << owner << "owns" << entities->size() << "entities.";
+//        qDebug() << "notifyCellAssignment: confirmed that world" << owner << "owns" << entities->size() << "entities.";
 
 		for(int i=0; i<entities->size(); ++i)
             local->addEntity(entities->at(i));
@@ -432,17 +432,17 @@ void Simulation::extendLocalGrids(const int &resolution, const QVector<btVector3
 
     const btVector3 &nbCells = grid->getGridAtResolution(resolution)->getNbCells();
 
-    for(int x=0; x<nbCells.x(); ++x)
-    {
-        for(int y=0; y<nbCells.y(); ++y)
-        {
-            for(int z=0; z<nbCells.z(); ++z)
-            {
-                btVector3 test = grid->toCellCoordinates(resolution, grid->toCenteredWorldCoordinates(resolution, btVector3(x,y,z)));
-                qDebug() << x << y << z << " \t ~~~ \t "<< test.x() << test.y() << test.z();
-            }
-        }
-    }
+//    for(int x=0; x<nbCells.x(); ++x)
+//    {
+//        for(int y=0; y<nbCells.y(); ++y)
+//        {
+//            for(int z=0; z<nbCells.z(); ++z)
+//            {
+//                btVector3 test = grid->toCellCoordinates(resolution, grid->toCenteredWorldCoordinates(resolution, btVector3(x,y,z)));
+//                qDebug() << x << y << z << " \t ~~~ \t "<< test.x() << test.y() << test.z();
+//            }
+//        }
+//    }
 
 
 
@@ -473,9 +473,9 @@ void Simulation::extendLocalGrids(const int &resolution, const QVector<btVector3
             btVector3 minCoord = grid->toCellCoordinates(resolution, territoryBoundaries[i].first);
             btVector3 maxCoord = grid->toCellCoordinates(resolution, territoryBoundaries[i].second);
 
-			qDebug() << "LocalGrid " << i << " being extended to:";
-            qDebug() << minCoord.x() << minCoord.y() << minCoord.z();
-            qDebug() << maxCoord.x() << maxCoord.y() << maxCoord.z();
+//			qDebug() << "LocalGrid " << i << " being extended to:";
+//            qDebug() << minCoord.x() << minCoord.y() << minCoord.z();
+//            qDebug() << maxCoord.x() << maxCoord.y() << maxCoord.z();
 
             QVector<int> margin = computeMargin(resolution, minCoord, maxCoord);
             //FIXME: temporary hack for the extendGrid and resize bug that made some cells unowned.
@@ -529,6 +529,6 @@ void Simulation::_init()
     {
         worlds[i]->assignLocalGrid(grids[i]);
 //        worlds[i]->drawCells();
-        worlds[i]->setupLocalGridBorders();
+//        worlds[i]->setupLocalGridBorders();
     }
 }

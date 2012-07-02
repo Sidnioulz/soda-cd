@@ -82,10 +82,12 @@ void RandomCubeSimulation::loadEntities()
     int x,y,z;
     btScalar scale;
     btVector3 defaultBoxSize(102, 102, 102); // hard-linked
+    srand(1600000);
     for(int i=0; i<numEntities; ++i)
     {
         // Get random coordinates and scale
-        scale=(rand() % 11 + 1.9) * 0.1;
+        //scale=(rand() % 11 + 1.9) * 0.1; //NOTE: disabled for experiments
+        scale=1;
         x=qMax(-sceneSize.x()/2 + defaultBoxSize.x()*scale, qMin(sceneSize.x()/2 - defaultBoxSize.x()*scale -1, rand() % (int)(sceneSize.x()) - sceneSize.x()/2));
         y=qMax((int)(defaultBoxSize.x()*scale), qMin((int)(sceneSize.y() - defaultBoxSize.x()*scale -1), rand() % (int)(sceneSize.y())));
         z=qMax(-sceneSize.z()/2 + defaultBoxSize.z()*scale, qMin(sceneSize.z()/2 - defaultBoxSize.z()*scale -1, rand() % (int)(sceneSize.z()) - sceneSize.z()/2));
