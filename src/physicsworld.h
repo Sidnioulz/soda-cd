@@ -30,6 +30,9 @@
 #include "obRigidBody.h"
 #include "obEntityWrapper.h"
 
+// Forward reference
+class Simulation;
+
 //! An obEntityWrapper instance associated with a time unit that represents a temporal event.
 typedef QPair<obEntityWrapper *, btScalar> TimedEntity;
 
@@ -43,15 +46,18 @@ typedef QQueue<TimedEntity > TimedEntityQueue;
   * This class is responsible of the physics simulation of a subset of the total Simulation.
   * It contains a BulletManager, a LocalGrid and is the interface for management of entities.
   */
-class PhysicsWorld
+class PhysicsWorld : public QObject
 {
+    Q_OBJECT
+
 public:
     /*!
       * \brief Default constructor.
+      * \param simulation the Simulation this world belongs to
       * \param targetTimeStep the duration of a simulation time step
       * \return a new PhysicsWorld
       */
-    PhysicsWorld(const btScalar &targetTimeStep);
+    PhysicsWorld(const Simulation &simulation, const btScalar &targetTimeStep);
 
     /*!
       * \brief Default destructor.
@@ -62,6 +68,11 @@ public:
       * \brief Starts the collision detection thread.
       */
     void startSimulation();
+
+    /*!
+      * \brief Stops the collision detection thread.
+      */
+    void stopSimulation();
 
     /*!
       * \brief Returns the manager that manages the Bullet physics engine.
@@ -160,6 +171,12 @@ public:
       */
     void assignLocalGrid(LocalGrid *local);
 
+    //TODO: document getNeighbor
+    PhysicsWorld *getNeighbor(const short neighborId) const;
+
+    //TODO: document messageNeighbor
+    bool messageNeighbor(const short neighborId, const char *method, QGenericArgument val0 = QGenericArgument(0), QGenericArgument val1 = QGenericArgument(), QGenericArgument val2 = QGenericArgument(), QGenericArgument val3 = QGenericArgument(), QGenericArgument val4 = QGenericArgument(), QGenericArgument val5 = QGenericArgument(), QGenericArgument val6 = QGenericArgument(), QGenericArgument val7 = QGenericArgument(), QGenericArgument val8 = QGenericArgument(), QGenericArgument val9 = QGenericArgument()) const;
+
     static const short NullWorldId;         //!< a value used when a world ID is needed but there is no corresponding world instance
     static const short UnknownWorldId;      //!< a value used when the owner world of an object is not known yet
     static const short IdBeingProcessed;    //!< a value used when the owner world of an object is being computed
@@ -194,6 +211,7 @@ private:
       */
     void _removeEntity(obEntityWrapper *obEnt);
 
+    const Simulation          &simulation;               /*!< the Simulation this world belongs to */
 
     static const int          NbColors = 12;             //!< number of available colors for the per-thread coloring of entities
     static const int          EntityColors[NbColors][3]; //!< table containing color codes used to distinguish entity thread owners
@@ -213,47 +231,52 @@ private:
 
     static short              WorldIdCounter;            //!< a counter to make sure world IDs are unique
 
-	/*! \class BulletFakeCCDThread
-	  * \brief A thread that is responsible of collision detection.
-	  * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
-	  *
-	  * This class is a QThread that launches collision detection passes continuously
-	  * until stopped, and writes its output in the CircularTransformBuffer associated
-	  * with its parent class.
-	  */
-	class BulletFakeCCDThread : public QThread {
-	public:
-		/*!
-		  * \brief Default constructor.
-		  * \param world the PhysicsWorld for which collision detection is being done.
-		  * \return a new BulletFakeCCDThread
-		  */
-		BulletFakeCCDThread(PhysicsWorld *world);
+    /*! \class BulletFakeCCDThread
+      * \brief A thread that is responsible of collision detection.
+      * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
+      *
+      * This class is a QThread that launches collision detection passes continuously
+      * until stopped, and writes its output in the CircularTransformBuffer associated
+      * with its parent class.
+      */
+    class BulletFakeCCDThread : public QThread {
+    public:
+        /*!
+          * \brief Default constructor.
+          * \param world the PhysicsWorld for which collision detection is being done.
+          * \return a new BulletFakeCCDThread
+          */
+        BulletFakeCCDThread(PhysicsWorld *world);
 
-		/*!
-		  * \brief Callback called whenever a CD pass is done by Bullet. Copies object positions to the buffer.
-		  * \param world pointer to the Bullet world
-		  * \param timeStep length of the time step being simulated
-		  */
-		static void myTickCallback(btDynamicsWorld *world, btScalar timeStep);
+        /*!
+          * \brief Callback called whenever a CD pass is done by Bullet. Copies object positions to the buffer.
+          * \param world pointer to the Bullet world
+          * \param timeStep length of the time step being simulated
+          */
+        static void myTickCallback(btDynamicsWorld *world, btScalar timeStep);
 
-		/*!
-		  * \brief Initializes the thread and sets the CD pass callback.
-		  */
-		void init();
+        /*!
+          * \brief Initializes the thread and sets the CD pass callback.
+          */
+        void init();
 
-		/*!
-		  * \brief Runs the infinite CD loop.
-		  *
-		  * \todo TODO makes sense to interrupt current CD iteration if new objects inserted, in order to avoid wasting computing time.
-		  */
-		void run();
+        /*!
+          * \brief Runs a pass of the CD loop.
+          */
+        void run();
 
-	private:
-        PhysicsWorld *world;  /**< The PhysicsWorld to which this thread belongs */
+    private:
+        PhysicsWorld *world; /*!< The PhysicsWorld to which this thread belongs */
+        QTimer timer;        /*!< A timer used to include runCollisionDetection in the event loop */
 
     } CDInterface;       //!< the thread in which collision detection is performed
 
+public slots:
+    void onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords);
 };
+
+//FIXME: temporary, must find proper location
+Q_DECLARE_METATYPE(PhysicsWorld *)
+Q_DECLARE_METATYPE(QVector<CellBorderCoordinates>)
 
 #endif // PHYSICSWORLD_H

@@ -121,15 +121,6 @@ public:
                     btCollisionShape* shape = NULL,
                     const bool randomColor = false) throw(EntityAlreadyExistsException);
 
-    /*! \brief Copy constructor.
-      * \param other the obEntityWrapper to copy
-      * \return a new obEntityWrapper with a new name
-      * \throw EntityAlreadyExistsException if the new name is already taken by another entity
-      *
-      * \warning Untested method
-      */
-    obEntityWrapper(const obEntityWrapper &other) throw(EntityAlreadyExistsException);
-
     /*! \brief Default destructor.
       */
 	virtual ~obEntityWrapper();

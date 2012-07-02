@@ -38,8 +38,18 @@ class LocalGrid;
 class CellBorderCoordinates : public btVector3
 {
 public:
+
     /*!
      * \brief Default constructor.
+     * \return a new empty CellBorderCoordinates
+     */
+    CellBorderCoordinates() :
+        btVector3()
+    {
+    }
+
+    /*!
+     * \brief Long constructor.
      * \param x the x component of the Cell coordinates
      * \param y the y component of the Cell coordinates
      * \param z the z component of the Cell coordinates

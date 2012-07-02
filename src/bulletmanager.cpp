@@ -422,46 +422,30 @@ void	BulletManagerWorld::performDiscreteCollisionDetection()
                 border->setStatus(obEntity::Overlapped);
             }
 
-//            const CellBorderCoordinates &coord = border->getCoordinates();
+            const CellBorderCoordinates &coord = border->getCoordinates();
+            otherSideCoords = coord;
 
-//            //TODO: use directionto compute realcords
+            if(coord.direction() == GridInformation::Top)
+                otherSideCoords += btVector3(0,1,0);
+            else if(coord.direction() == GridInformation::Bottom)
+                otherSideCoords += btVector3(0,-1,0);
+            else if(coord.direction() == GridInformation::Left)
+                otherSideCoords += btVector3(-1,0,0);
+            else if(coord.direction() == GridInformation::Right)
+                otherSideCoords += btVector3(1,0,0);
+            else if(coord.direction() == GridInformation::Back)
+                otherSideCoords += btVector3(0,0,-1);
+            else if(coord.direction() == GridInformation::Front)
+                otherSideCoords += btVector3(0,0,1);
 
-//            if(coord.direction() == GridInformation::Top)
-//            {
-//                otherSideCoords = btVector3(0,1,0);
-//                otherSideCoords += coord;
-//            }
-//            else if(coord.direction() == GridInformation::Bottom)
-//            {
-//                otherSideCoords = btVector3(0,-1,0);
-//                otherSideCoords += coord;
-//            }
-//            else if(coord.direction() == GridInformation::Left)
-//            {
-//                otherSideCoords = btVector3(-1,0,0);
-//                otherSideCoords += coord;
-//            }
-//            else if(coord.direction() == GridInformation::Right)
-//            {
-//                otherSideCoords = btVector3(1,0,0);
-//                otherSideCoords += coord;
-//            }
-//            else if(coord.direction() == GridInformation::Back)
-//            {
-//                otherSideCoords = btVector3(0,0,-1);
-//                otherSideCoords += coord;
-//            }
-//            else if(coord.direction() == GridInformation::Front)
-//            {
-//                otherSideCoords = btVector3(0,0,1);
-//                otherSideCoords += coord;
-//            }
-
-//            if(localGrid->getGridInformation()->isWithinWorldCellBounds(otherSideCoords))
-//            {
+            if(localGrid->getGridInformation()->isWithinWorldCellBounds(otherSideCoords))
+            {
 //                qDebug() << "performDiscreteCollisionDetection("<< world->getId() <<"): border overlap with" << localGrid->at(otherSideCoords).getOwnerId();
-//            }
-
+                world->messageNeighbor(localGrid->at(otherSideCoords).getOwnerId(),
+                                       "onTerritoryIntrusion",
+                                       Q_ARG(PhysicsWorld *, world),
+                                       Q_ARG(QVector<CellBorderCoordinates>, QVector<CellBorderCoordinates>(1, coord)));
+            }
 
             //TODO: its in this function that we check for border crossing and out of bounds objects, and we synchronize in BulletManagerWorld either way.
         }

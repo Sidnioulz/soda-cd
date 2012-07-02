@@ -81,20 +81,6 @@ obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &m
 		setRandomColor();
 }
 
-obEntityWrapper::obEntityWrapper(const obEntityWrapper &other) throw(EntityAlreadyExistsException)
-{
-    Ogre::String name = other.ogreEntity->getName()+Ogre::StringConverter::toString(nextInLine++);
-    obEntityWrapper(name,
-                    other.getMeshName(),
-                    Utils::vectorFromBullet(other.getPosition()),
-                    other.getOrientation(),
-                    other.hasStaticMesh(),
-                    other.getScale(),
-                    other.getMass(),
-                    other.getRigidBody()->getShape(),
-                    other.hasRandomColor());
-}
-
 obEntityWrapper::~obEntityWrapper()
 {
 	delete obBody;

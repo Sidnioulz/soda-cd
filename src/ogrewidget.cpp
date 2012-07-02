@@ -551,6 +551,7 @@ void OgreWidget::render()
     if(renderingPassQueued)
     {
         renderingPassQueued = false;
+        qDebug() << "Rendering is late!";
         render();
     }
     currentlyRendering = false;

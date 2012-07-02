@@ -29,6 +29,7 @@
 #include "obEntityWrapper.h"
 #include "ogreresources.h"
 #include "cellborderentity.h"
+#include "simulation.h"
 
 short PhysicsWorld::WorldIdCounter = 1;
 const short PhysicsWorld::NullWorldId = -500;
@@ -52,7 +53,8 @@ const int PhysicsWorld::EntityColors[PhysicsWorld::NbColors][3] = {
     {201, 192, 187} // Pale Silver
 };
 
-PhysicsWorld::PhysicsWorld(const btScalar &targetTimeStep) :
+PhysicsWorld::PhysicsWorld(const Simulation &simulation, const btScalar &targetTimeStep) :
+    simulation(simulation),
     id(WorldIdCounter++), targetTimeStep(targetTimeStep), entities(), globalStaticEntities(),
     buffer(new CircularTransformBuffer()), currentTime(0),
     localGrid(0), bulletManager(new BulletManager()), entityMutex(),
@@ -96,6 +98,11 @@ void PhysicsWorld::startSimulation()
     CDInterface.start();
 }
 
+void PhysicsWorld::stopSimulation()
+{
+    CDInterface.quit();
+}
+
 BulletManager* PhysicsWorld::getBulletManager() const
 {
     return bulletManager;
@@ -121,6 +128,9 @@ void PhysicsWorld::addEntity(obEntityWrapper *obEnt, btScalar targetTime)
 
 void PhysicsWorld::_addEntity(obEntityWrapper *obEnt)
 {
+
+    qDebug() << "Adding entity '" << obEnt->getName().c_str() << "' to world"<< getId() << "at time" << currentTime;
+
     if(localGrid)
         localGrid->addEntity(obEnt);
     entities.append(obEnt);
@@ -152,7 +162,7 @@ void PhysicsWorld::removeEntity(obEntityWrapper *obEnt, btScalar targetTime)
 {
     entityMutex.lock();
     entityRemovalQueue.enqueue(TimedEntity(obEnt, targetTime));
-    qDebug() << "Marking entity '" << obEnt->getName().c_str() << "' for removal from world"<< getId() << "at time" << targetTime << "(" << currentTime << ")";
+    qDebug() << "Marking entity '" << obEnt->getName().c_str() << "' for removal from world" << getId() << "at time" << targetTime << "(" << currentTime << ")";
     entityMutex.unlock();
 }
 
@@ -280,7 +290,58 @@ void PhysicsWorld::createScene()
     globalStaticEntities.append(floorBody);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//TODO: document getNeighbor
+PhysicsWorld *PhysicsWorld::getNeighbor(const short neighborId) const
+{
+    return simulation.getWorldFromId(neighborId);
+}
+
+//TODO: document messageNeighbor
+bool PhysicsWorld::messageNeighbor(const short neighborId, const char *method, QGenericArgument val0, QGenericArgument val1, QGenericArgument val2, QGenericArgument val3, QGenericArgument val4, QGenericArgument val5, QGenericArgument val6, QGenericArgument val7, QGenericArgument val8, QGenericArgument val9) const
+{
+    PhysicsWorld *neighbor = getNeighbor(neighborId);
+
+    if(neighbor)
+    {
+        //FIXME: temporary registrations until specific messages written with proper parameters
+        qRegisterMetaType<PhysicsWorld *>("PhysicsWorld *");
+        qRegisterMetaType<QVector<CellBorderCoordinates> >("QVector<CellBorderCoordinates>");
+
+        QMetaObject::invokeMethod(neighbor, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
+        return true;
+    }
+    else
+        return false;
+}
+
+
+
+
+
+
+
 PhysicsWorld::BulletFakeCCDThread::BulletFakeCCDThread(PhysicsWorld *world) :
+    QThread(),
     world(world)
 {
 }
@@ -295,8 +356,8 @@ void PhysicsWorld::BulletFakeCCDThread::myTickCallback(btDynamicsWorld *world, b
     {
         list->addTransform(w->entities[i], w->entities[i]->getRigidBody()->getBulletBody()->getWorldTransform());
 
-        if(w->entities[i]->getStatus() & (obEntity::OutOfWorld | obEntity::OutOfSimulationSpace))
-            w->_removeEntity(w->entities[i]);
+//        if(w->entities[i]->getStatus() & (obEntity::OutOfWorld | obEntity::OutOfSimulationSpace))
+//            w->_removeEntity(w->entities[i]);
     }
 
     w->buffer->appendTimeStep(list);
@@ -304,22 +365,23 @@ void PhysicsWorld::BulletFakeCCDThread::myTickCallback(btDynamicsWorld *world, b
 
 void PhysicsWorld::BulletFakeCCDThread::init()
 {
-	world->getBulletManager()->getDynamicsWorld()->getDispatchInfo().m_useContinuous = true;
-        world->getBulletManager()->getDynamicsWorld()->setInternalTickCallback(myTickCallback, static_cast<void *>(this->world));
-}
+    world->getBulletManager()->getDynamicsWorld()->getDispatchInfo().m_useContinuous = true;
+    world->getBulletManager()->getDynamicsWorld()->setInternalTickCallback(myTickCallback, static_cast<void *>(this->world));
 
-//TODO: proper thread joining when quitting
-void PhysicsWorld::BulletFakeCCDThread::run()
-{
-    // Initialization
+    // Initial CircularTransformBuffer entry
     //FIXME: in this record, status's should be inserted? Use addRecord;
     obEntityTransformRecordList *initialPositions = new obEntityTransformRecordList(0);
     for(int i=0; i<world->entities.size(); ++i)
         initialPositions->addTransform(world->entities[i], world->entities[i]->getRigidBody()->getBulletBody()->getWorldTransform());
+}
 
+void PhysicsWorld::BulletFakeCCDThread::run()
+{
     // Stores the moment at which the simulation must be rewinded after an object insertion or removal
     btScalar rewindTime;
     bool rewind;
+
+    world->moveToThread(this);
 
     // Infinite CD loop
     for(;;)
@@ -337,34 +399,32 @@ void PhysicsWorld::BulletFakeCCDThread::run()
             rewindTime = qMin(rewindTime, entity.second);
             rewind = true;
         }
-//        while(!world->entityRemovalQueue.isEmpty())
-//        {
-//            QPair<obEntityWrapper *, btScalar> entity = world->entityRemovalQueue.dequeue();
-//            world->_removeEntity(entity.first);
-//            rewindTime = qMin(rewindTime, entity.second);
-//            rewind = true;
-//        }
+        while(!world->entityRemovalQueue.isEmpty())
+        {
+            QPair<obEntityWrapper *, btScalar> entity = world->entityRemovalQueue.dequeue();
+            world->_removeEntity(entity.first);
+            rewindTime = qMin(rewindTime, entity.second);
+            rewind = true;
+        }
         world->entityMutex.unlock();
 
         // Rollback to a given time step (not yet implemented)
         if(rewind && rewindTime < world->currentTime)
-            qDebug() << "Must rewind at time " << rewindTime;
-
-        //NOTE: show the density of cells at ground-level to assess quality of spatial subdivision cell size
-//        Array<Cell, 2> groundSlice = world->localGrid->operator ()(Range::all(), 0, Range::all());
-//        int sumDens = 0;
-//        for(LocalGrid::iterator it = world->localGrid->begin(); it != world->localGrid->end(); it++)
-//        {
-//            const QVector<obEntityWrapper *> *vect = (*it).getEntities();
-//            if(vect)
-//                sumDens += vect->size();
-//        }
-//        qDebug() << "Average ground density: " << (float) sumDens / groundSlice.size();
+            qDebug() << "World " << world->id << "added/removed entity at time" << rewindTime << "but is already at" << world->currentTime;
 
         // Simulate a step
         world->getBulletManager()->getDynamicsWorld()->stepSimulation(world->targetTimeStep);
 //        qDebug() << "Thread #" << world->id << " computed pass " << i << " at time " << world->currentTime;
+
     }
 
     this->exit();
+}
+
+
+void PhysicsWorld::onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords)
+{
+//    qDebug() << "Hello i'm thread" << getId() << "and i've been notified an intrusion from my neighbor" << neighbor->getId();
+
+
 }

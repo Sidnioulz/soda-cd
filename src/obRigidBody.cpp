@@ -78,7 +78,7 @@ void obRigidBody::createSceneNode()
 {
     node = OgreResources::getSceneManager()->getRootSceneNode()->createChildSceneNode(name, position, quaternion);
     node->scale(scale);
-//    node->showBoundingBox(true);
+    node->showBoundingBox(true);
 }
 
 Ogre::SceneNode* obRigidBody::getSceneNode() const

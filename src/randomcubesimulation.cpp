@@ -96,7 +96,7 @@ void RandomCubeSimulation::loadEntities()
         obEntityWrapper *obEnt = _createBox(btVector3(x, y, z), btVector3(scale, scale, scale), 10 + rand()%20);
 
         // Store it in the map that EKMeans will use
-        entitiesWithAssignments.append(QPair<obEntityWrapper *, int>(obEnt, PhysicsWorld::UnknownWorldId));
+        appendEntity(obEnt);
     }
 }
 

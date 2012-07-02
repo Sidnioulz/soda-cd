@@ -99,7 +99,7 @@ void Simulation::createPhysicsWorlds()
     // Create the physics worlds
      for(int i=0; i<numWorlds; ++i)
     {
-        worlds[i] = new PhysicsWorld(targetTimeStep);
+        worlds[i] = new PhysicsWorld(*this, targetTimeStep);
     }
 
     // Have the CircularTransformBuffer interfaces watch the worlds' buffers.
@@ -444,13 +444,6 @@ void Simulation::extendLocalGrids(const int &resolution, const QVector<btVector3
 //        }
 //    }
 
-
-
-
-
-
-
-
     // This vector contains a pair of coordinates used to define the rectangles within which each cluster exists
     QVector<QPair<btVector3, btVector3> > territoryBoundaries(numWorlds,
                                                               QPair<btVector3, btVector3>(sceneSize + btVector3(1, 1, 1),
@@ -492,15 +485,21 @@ void Simulation::extendLocalGrids(const int &resolution, const QVector<btVector3
 #endif
 }
 
+void Simulation::loadSimulationData()
+ {
+     // Setup environments
+     setupBasic3DEnvironment();
+     for(int i=0; i<numWorlds; ++i)
+         setupBasicPhysicsEnvironment(worlds[i]);
+
+     // Load the entities to simulate
+     loadEntities();
+}
+
 void Simulation::_init()
 {
-    // Setup environments
-    setupBasic3DEnvironment();
-    for(int i=0; i<numWorlds; ++i)
-        setupBasicPhysicsEnvironment(worlds[i]);
-
-    // Load the entities to simulate
-    loadEntities();
+    // Loads all the simulation data
+    loadSimulationData();
 
     // Create the GridInformation
     setupGridInformation();
@@ -529,6 +528,6 @@ void Simulation::_init()
     {
         worlds[i]->assignLocalGrid(grids[i]);
 //        worlds[i]->drawCells();
-//        worlds[i]->setupLocalGridBorders();
+        worlds[i]->setupLocalGridBorders();
     }
 }

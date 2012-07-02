@@ -121,7 +121,6 @@ LIBS += -lOgreMain \
     -lBulletDynamics \
     -lBulletCollision \
     -lBulletSoftBody \
-    -lBulletMultiThreaded \
 	-lLinearMath \
     -lblitz
 

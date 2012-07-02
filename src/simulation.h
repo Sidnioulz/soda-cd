@@ -98,6 +98,23 @@ public:
      */
     virtual GridInformation::WorldType getWorldType() const = 0;
 
+    /*!
+     * \brief Retrieves a PhysicsWorld from its identifier.
+     * \param id the identifier of the wanted PhysicsWorld
+     * \return the corresponding PhysicsWorld if it exists, or null otherwise
+     *
+     * \warning This method is temporary and to be supersed. In the future, PhysicsWorlds should hold pointers to their neighbors.
+     * \todo Implement the neighbor information as a local table in PhysicsWorlds.
+     */
+    inline PhysicsWorld *getWorldFromId(const short id) const
+    {
+        if(id<=0 || id>worlds.size())
+            return 0;
+        else
+            return worlds[id-1];
+    }
+
+
 protected:
 	/*!
      * \brief Setups the Ogre 3D environment in which the Simulation will occur (terrain, sky, fog, lights).
@@ -167,8 +184,7 @@ protected:
 	  * was computed in computeClusterAssignments(), using points and entitiesWithAssignments. Then, it
 	  * creates the LocalGrids, giving them an owner Id. The LocalGrids are assigned later to their PhysicsWorld.
 	  */
-    virtual void setupLocalGrids(const int &resolution, const QVector<btVector3> &points);
-
+    void setupLocalGrids(const int &resolution, const QVector<btVector3> &points);
 
 	/*!
 	  * \brief Computes the margin that should be given to a LocalGrid.
@@ -179,7 +195,7 @@ protected:
 	  *
 	  * \warning This function is not implemented yet and returns a zero margin.
 	  */
-    virtual QVector<int> computeMargin(const int &resolution, const btVector3 &minCoord, const btVector3 &maxCoord) const;
+    QVector<int> computeMargin(const int &resolution, const btVector3 &minCoord, const btVector3 &maxCoord) const;
 
 	/*!
 	  * \brief Sorts the entitiesWithAssignments vector by Cell coordinates.
@@ -189,27 +205,27 @@ protected:
 	  * using the lessThan class. The entities vector can then be browsed Cell
 	  * by Cell at this resolution.
 	  */
-    virtual void sortEntitiesPerCellCoordinates(const int &resolution);
+    void sortEntitiesPerCellCoordinates(const int &resolution);
 
 	/*!
 	  * \brief Browses entitiesWithAssignments to find the best owner for each entity-containing Cell, and updates LocalGrids.
 	  * \param resolution the resolution at which LocalGrids have been defined
 	  * \return a list of Cells that are empty and were not assigned
 	  */
-    virtual QVector<btVector3> computeCellOwnersAndLocateEmptyCells(const int &resolution);
+    QVector<btVector3> computeCellOwnersAndLocateEmptyCells(const int &resolution);
 
 	/*!
 	  * \brief Tells each LocalGrid to assign to self the Cells that are surrounded by already owned Cells.
 	  * \param emptyCells a list of coordinates of Cells that are still unassigned
 	  */
-	virtual void assignSurroundedCellsToOwners(QVector<btVector3> &emptyCells);
+    void assignSurroundedCellsToOwners(QVector<btVector3> &emptyCells);
 
 	/*!
 	  * \brief Uses a clustering algorithm to assign every unassigned empty Cell to a LocalGrid.
 	  * \param resolution the resolution at which LocalGrids have been defined
 	  * \param emptyCells a list of coordinates of Cells that are still unassigned
 	  */
-	virtual void assignEmptyCells(const int &resolution, const QVector<btVector3> &emptyCells);
+    void assignEmptyCells(const int &resolution, const QVector<btVector3> &emptyCells);
 
 	/*!
 	  * \brief Notifies a LocalGrid about the fact that a Cell is owned by another one.
@@ -218,7 +234,7 @@ protected:
 	  * \param owner the id of the LocalGrid to which this Cell was assigned
 	  * \param entities the entities whose coordinates are in the given Cell, if any
 	  */
-	virtual void notifyCellAssignment(LocalGrid *local, const btVector3 &coords, const short &owner, const QVector<obEntityWrapper *> *entities = 0);
+    void notifyCellAssignment(LocalGrid *local, const btVector3 &coords, const short &owner, const QVector<obEntityWrapper *> *entities = 0);
 
 	/*!
 	  * \brief Extends LocalGrids in order for them to be able to contain all the points assigned to them in the parameters.
@@ -228,10 +244,24 @@ protected:
 	  */
 	void extendLocalGrids(const int &resolution, const QVector<btVector3> &points, const QVector<int> &assignments);
 
+    /*!
+      * \brief Appends an entity to the Simulation. For use from loadEntities() in child classes.
+      * \param obEnt the obEntityWrapper to append
+      */
+    inline void appendEntity(obEntityWrapper *obEnt)
+    {
+        entitiesWithAssignments.append(QPair<obEntityWrapper *, int>(obEnt, PhysicsWorld::UnknownWorldId));
+    }
+
+    /*!
+     * \brief Initializes Simulation data (by default, calls setupBasic3DEnvironment(), setupBasicPhysicsEnvironment() and loadEntities())
+     */
+    virtual void loadSimulationData();
+
 	/*!
 	 * \brief Initializes the Simulation so that it can be started.
 	 */
-	virtual void _init();
+    void _init();
 
 private:
 	/*!

@@ -57,18 +57,53 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
         {
             if(grid->cellNotOwnedBySelf(coords))
             {
+
+                // Cell coordinates are outside of the simulation scene boundaries (because margin ensures we don't run out of bounds when there is a neighbor)
                 if(grid->cellOutOfBounds(coords))
+                {
                     qDebug() << "Entity '" << parentBody->getName().c_str() << "' in Grid '" << grid->getOwnerId() << "' is out of bounds\t(" << coords.x()<<"," << coords.y()<<"," << coords.z() << ", LG bounds:\t" << grid->displayBoundsInfo() << ")";
+
+                    parentBody->setStatus(obEntity::OutOfSimulationSpace);
+                    grid->at(lastCellCoords).removeEntity(parentBody);
+                    unsetLocalGrid();
+
+                    //TODO: manage object's future
+                }
+
+
+
+
+                // Cell coordinates correspond to another PhysicsWorld: transfer object
                 else
-                    qDebug() << "Entity '" << parentBody->getName().c_str() << "' in Grid '" << grid->getOwnerId() << "' is in a foreign cell (" << grid->at(coords).getOwnerId() << ").";
+                {
+//                    qDebug() << "Entity '" << parentBody->getName().c_str() << "' in Grid '" << grid->getOwnerId() << "' is in a foreign cell (" << grid->at(coords).getOwnerId() << ").";
 
-                //FIXME: temporary hack to avoid segfaults
-                //TODO: start sync with neighbour
 
-                //TODO: Set the new status of the entity depending on where it landed
-                parentBody->setStatus(obEntity::OutOfWorld);
-                grid->at(lastCellCoords).removeEntity(parentBody);
-                unsetLocalGrid();
+                    PhysicsWorld *newParent = parentBody->getOwnerWorld()->getNeighbor(grid->at(coords).getOwnerId());
+                    qDebug() << "Entity '" << parentBody->getName().c_str() << "' in Grid '" << grid->getOwnerId() << "' to be transferred to " << newParent << ".";
+
+                    if(newParent)
+                    {
+                        // Update status
+                        parentBody->setStatus(obEntity::OutOfWorld);
+
+                        const btScalar &eventTime = parentBody->getOwnerWorld()->getCurrentTime();
+
+                        // Update owner world
+                        parentBody->getOwnerWorld()->removeEntity(parentBody, eventTime);
+                        newParent->addEntity(parentBody, eventTime);
+
+                        // Update local grid pointer
+                        unsetLocalGrid();
+                        setLocalGrid(newParent->getLocalGrid());
+                    }
+                    else
+                    {
+                        qWarning() << "Error on transferring'" << parentBody->getName().c_str() << "' to new parent world" << grid->at(coords).getOwnerId();
+                    }
+
+
+                }
             }
             else
             {
