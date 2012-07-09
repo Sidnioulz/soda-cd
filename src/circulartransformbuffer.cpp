@@ -119,6 +119,28 @@ QSharedPointer<obEntityTransformRecordList> CircularTransformBuffer::processNext
 //    }
 }
 
+btScalar CircularTransformBuffer::getClosestAvailableTime(const btScalar &targetTime)
+{
+    btScalar browseIndex = latestPastIndex;
+
+    // Find closest, already rendered future
+    while(getEntryState(nextIndex(browseIndex)) != CT_STATE_EMPTY)
+    {
+        // If still too far behind, move the rendering index
+        if(targetTime < at(nextIndex(browseIndex))->getTimeStep())
+            return at(nextIndex(browseIndex))->getTimeStep();
+
+        browseIndex = nextIndex(browseIndex);
+    }
+
+    // No future entry, use latest past
+    if(getEntryState(browseIndex) != CT_STATE_EMPTY)
+        return at(browseIndex)->getTimeStep();
+    // Case when there is no entry: just ignore this buffer
+    else
+        return targetTime;
+}
+
 void CircularTransformBuffer::dropPastIndex()
 {
 //    QSharedPointer<obEntityTransformRecordList> ptr = at(latestPastIndex);

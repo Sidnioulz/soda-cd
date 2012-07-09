@@ -57,6 +57,16 @@ public:
     static Ogre::MaterialPtr createMaterialFromParent(const Ogre::String &materialName, const Ogre::String &parentName = Ogre::String());
 
     /*!
+      * \brief Creates a colored material, possibly transparent, or retrieves it if already existing.
+      * \param r the red component of the new color of the material
+      * \param g the green component of the new color of the material
+      * \param b the blue component of the new color of the material
+      * \param f the alpha transparency parameter
+      * \return a pointer to the new (or existing) Ogre::Material
+      */
+    static Ogre::MaterialPtr createColoredMaterial(const float &r, const float &g, const float &b, const float &f = 1.0f);
+
+    /*!
       * \brief Locks the mutex used to restrict access to the Ogre SceneManager.
       *
       * This function locks the mutex used to restrict

@@ -485,28 +485,27 @@ bool OgreWidget::frameRenderingQueued(const Ogre::FrameEvent &evt)
     return true;
 }
 
-//TODO: optimize render()
 void OgreWidget::render()
 {
-    // An internal variable
+    // Internal clock of the rendering loop
     static btScalar simulationRunTime = 0;
 
-    // Indicate that rendering started
+    // Indicates that rendering started
     currentlyRendering = true;
 
-    // Compute the time step to render
+    // Variable used to store the time that is queried, and actually retrieved
     btScalar currentTimeStep = simulationRunTime;// + getTargetTimeStep()/2.0f;
 
-    // Already has a buffer interface registered
+    // If there is no buffer interface, directly skip to rendering
     if(hasBufferInterface())
     {
-        // Get the btTransforms
+        // Get the btTransforms as a pointer. currentTimeStep will indicate the time actually retrieved
         QSharedPointer<obEntityTransformRecordList> ptr = bufferInterface->processNext(currentTimeStep);   //((double)ogreRoot->getNextFrameNumber())*(1000.0f/targetFPS));
-//        qDebug() << "I asked " << currentTimeStep;
+
         if(!ptr.isNull() && bufferInterface->getBufferType()==CircularTransformBuffer::DiscreteCollisionDetection)
         {
-//            qDebug() << "I got " << ptr->getTimeStep();
-            simulationRunTime = ptr->getTimeStep() + getTargetTimeStep();
+            // Update simulationRunTime for the next query to perform
+            simulationRunTime = currentTimeStep + getTargetTimeStep();
 
             // Update Ogre objects
             obEntityTransformRecordListIterator it(*ptr);
@@ -515,17 +514,25 @@ void OgreWidget::render()
                 const obEntityTransformRecord &record = it.next();
                 Ogre::Node *node = ogreSceneManager->getSceneNode(record.obEnt->getName());
 
-        //        btTransform interpolatedTrans;
+
+
+
+
+
+                //        btTransform interpolatedTrans;
         //        btTransformUtil::integrateTransform(myNinjaBody->getWorldTransform(),myNinjaBody->getLinearVelocity(),myNinjaBody->getAngularVelocity(),1/600.f,interpolatedTrans);
         //    //    w->entities["ninja"]->getRigidBody()->setTransformation(interpolatedTrans);
 
         //        qDebug() << interpolatedTrans.getOrigin().x() << ", "<< interpolatedTrans.getOrigin().y() << ", "<< interpolatedTrans.getOrigin().z();
         //        qDebug() << myNinjaBody->getWorldTransform().getOrigin().x() << ", "<< myNinjaBody->getWorldTransform().getOrigin().y()<< ", "<< myNinjaBody->getWorldTransform().getOrigin().z();
 
+
+
+
+
                 node->setPosition(Utils::vectorFromBullet(record.transform.getOrigin()));
                 node->setOrientation(Utils::quaternionFromBullet(record.transform.getRotation()));
 
-#ifndef NDEBUG
                 // Update color according to status for debug
                 if(record.status == obEntity::CrossingBorder)
                 {
@@ -537,10 +544,8 @@ void OgreWidget::render()
 //                    qDebug() << "Deleting eEntity '" << record.obEnt->getName().c_str() << "at time" << ptr->getTimeStep();
 //                    delete record.obEnt;
                 }
-#endif
             }
         }
-
     }
 
     // Render
@@ -551,7 +556,7 @@ void OgreWidget::render()
     if(renderingPassQueued)
     {
         renderingPassQueued = false;
-        qDebug() << "Rendering is late!";
+        qWarning() << "The rendering loop took more than a time step to render.";
         render();
     }
     currentlyRendering = false;

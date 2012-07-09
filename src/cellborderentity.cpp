@@ -27,7 +27,11 @@ CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates 
 	obBody(0),
 //    ogreEntity(0),
     grid(grid),
-    coords(coords)
+    coords(coords),
+    red(1),
+    green(1),
+    blue(1),
+    alpha(0.2)
 {
     Ogre::String name = "cell_id:" + Ogre::StringConverter::toString(grid->getOwnerId()) +
             "x:" + Ogre::StringConverter::toString(coords.x()) +
@@ -99,8 +103,7 @@ CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates 
         }
 
         ogreEntity = OgreResources::getSceneManager()->createEntity(name, name);
-        ogreEntity->setMaterialName("Examples/Smoke");
-        ogreEntity->setVisible(false);
+        updateColor();
         obBody->getSceneNode()->attachObject(ogreEntity);
 
         // Setup a user pointer for later use within the Bullet manager
@@ -118,24 +121,22 @@ CellBorderEntity::~CellBorderEntity()
 	delete obBody;
 }
 
+void CellBorderEntity::updateColor()
+{
+    // Get (or create) the colored version of the default CellBorderEntity material
+    ogreEntity->setMaterial(OgreResources::createColoredMaterial(red, green, blue, alpha));
+}
+
 void CellBorderEntity::setColor(const float &r, const float &g, const float &b)
 {
-    // Get the prefix of the entity's material, and then add a suffix for this color
-//    Ogre::String prefix;
-//    prefix.append(QString(materialName.c_str()).split(":").first().toAscii());
+    red = r;
+    green = g;
+    blue = b;
+    updateColor();
+}
 
-    // For now, the material name is hardcoded for all CellBorderEntities rather than having a materialName attribute
-    Ogre::String materialName = "Examples/Smoke";
-    materialName.append(QString("color#%1#%2#%3").arg(r).arg(g).arg(b).toAscii());
-
-    // Get (or create) the corresponding material
-    Ogre::MaterialPtr mat = OgreResources::createOrRetrieveMaterial(materialName);
-
-    // Set lighting according to the color
-    mat->setAmbient(r*1.4,g*1.4,b*1.4);
-    mat->setDiffuse(r,g,b,1);
-    mat->setSpecular(0,0,0,1);
-
-    // Have the entity use the new material
-    ogreEntity->setMaterial(mat);
+void CellBorderEntity::setAlpha(const float &f)
+{
+    alpha = f;
+    updateColor();
 }

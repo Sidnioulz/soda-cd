@@ -55,6 +55,9 @@ BulletManagerWorld::BulletManagerWorld(btCollisionDispatcher *&dispatcher, btLoc
 
 int BulletManagerWorld::stepSimulation(btScalar timeStep, int maxSubSteps, btScalar fixedTimeStep)
 {
+
+//    qDebug() << "stepSimulation" << QThread::currentThreadId();
+
     startProfiling(timeStep);
 
     BT_PROFILE("stepSimulation");
@@ -124,6 +127,7 @@ int BulletManagerWorld::stepSimulation(btScalar timeStep, int maxSubSteps, btSca
 
 void BulletManagerWorld::internalSingleStepSimulation(btScalar timeStep)
 {
+//    qDebug() << "internalSingleStepSimulation" << QThread::currentThreadId();
     BT_PROFILE("internalSingleStepSimulation");
 
     if(0 != m_internalPreTickCallback)
@@ -278,6 +282,7 @@ void BulletManagerWorld::internalSingleStepSimulation(btScalar timeStep)
 
 void BulletManagerWorld::addCollisionObject(btCollisionObject *collisionObject, short int collisionFilterGroup, short int collisionFilterMask)
 {
+//    qDebug() << "addCollisionObject" << QThread::currentThreadId();
     btAssert(collisionObject);
 
     //check that the object isn't already added
@@ -306,6 +311,7 @@ void BulletManagerWorld::addCollisionObject(btCollisionObject *collisionObject, 
 
 void BulletManagerWorld::removeCollisionObject(btCollisionObject *collisionObject)
 {
+//    qDebug() << "removeCollisionObject" << QThread::currentThreadId();
     //bool removeFromBroadphase = false;
 
     {

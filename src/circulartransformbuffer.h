@@ -122,7 +122,7 @@ public:
 
     /*!
       * \brief Returns the obEntityTransformRecordList closest to the target time of the caller.
-      * \param targetTime the time step for which obEntityTransformRecord objects are wanted.
+      * \param targetTime the time step for which obEntityTransformRecord objects are wanted
       * \return the closest obEntityTransformRecord data available
       *
       * \warning When using continuous collision detection, you should not
@@ -131,6 +131,12 @@ public:
       */
     QSharedPointer<obEntityTransformRecordList> processNext(const btScalar &targetTime);
 
+    /*!
+     * \brief Returns the closest time that is available for processing. It is the time that will be used if processNext() is called with targetTime
+     * \param targetTime the time step for which a closest time is wanted
+     * \return the closest entry time available
+     */
+    btScalar getClosestAvailableTime(const btScalar &targetTime);
 
 private:
     /*!

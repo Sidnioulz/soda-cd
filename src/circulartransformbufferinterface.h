@@ -55,11 +55,10 @@ public:
 
     /*!
       * \brief Retrieves the positions and rotations of each buffer's objects for a given target time.
-      * \param targetTime the time for which object information is wanted
-      * \return a pointed to a list containing the information of all objects within watched buffers
+      * \param targetTime the time for which transforms are wanted, that will be updated with the actually retrieved time
+      * \return a pointer to a list containing the information of all objects within watched buffers
       */
-    //FIXME: must return latest available time for ALL CTRLs and not only for the slow ones! Must fix!
-    QSharedPointer<obEntityTransformRecordList> processNext(const btScalar &targetTime);
+    QSharedPointer<obEntityTransformRecordList> processNext(btScalar &targetTime);
 
     /*!
       * \brief Tells whether the buffer interface is for continuous or discrete CD.

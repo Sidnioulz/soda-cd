@@ -351,7 +351,7 @@ public:
       */
 	inline void setColor(const float r, const float g, const float b)
 	{
-		setColor(r, g, b, false);
+        setColor(r, g, b, false);
 	}
 
 protected:

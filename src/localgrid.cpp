@@ -119,7 +119,8 @@ void LocalGrid::removeEntity(obEntityWrapper *obEnt)
 	// Remove the entity from the Cell, if it was actually inside it
 	if(!cell.removeEntity(obEnt))
 	{
-        qWarning() << "Entity '" << obEnt->getName().c_str() << "' is not present within the Cell that matches its coordinates (" << cellCoords.x() << ", " << cellCoords.y() << ", " << cellCoords.z() << ").";
+        if(cell.getOwnerId() == this->ownerId)
+            qWarning() << "Entity '" << obEnt->getName().c_str() << "' is not present within the Cell that matches its coordinates (" << cellCoords.x() << ", " << cellCoords.y() << ", " << cellCoords.z() << ").";
 	}
 
     obEnt->getRigidBody()->getMotionState()->unsetLocalGrid();

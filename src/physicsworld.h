@@ -175,6 +175,9 @@ public:
     PhysicsWorld *getNeighbor(const short neighborId) const;
 
     //TODO: document messageNeighbor
+    bool messageNeighbor(PhysicsWorld *neighbor, const char *method, QGenericArgument val0 = QGenericArgument(0), QGenericArgument val1 = QGenericArgument(), QGenericArgument val2 = QGenericArgument(), QGenericArgument val3 = QGenericArgument(), QGenericArgument val4 = QGenericArgument(), QGenericArgument val5 = QGenericArgument(), QGenericArgument val6 = QGenericArgument(), QGenericArgument val7 = QGenericArgument(), QGenericArgument val8 = QGenericArgument(), QGenericArgument val9 = QGenericArgument()) const;
+
+    //TODO: document messageNeighbor
     bool messageNeighbor(const short neighborId, const char *method, QGenericArgument val0 = QGenericArgument(0), QGenericArgument val1 = QGenericArgument(), QGenericArgument val2 = QGenericArgument(), QGenericArgument val3 = QGenericArgument(), QGenericArgument val4 = QGenericArgument(), QGenericArgument val5 = QGenericArgument(), QGenericArgument val6 = QGenericArgument(), QGenericArgument val7 = QGenericArgument(), QGenericArgument val8 = QGenericArgument(), QGenericArgument val9 = QGenericArgument()) const;
 
     static const short NullWorldId;         //!< a value used when a world ID is needed but there is no corresponding world instance
@@ -273,10 +276,13 @@ private:
 
 public slots:
     void onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords);
+    void onOwnershipTransfer(const PhysicsWorld *&neighbor, const obEntityWrapper *&object, const btScalar &time);
 };
 
 //FIXME: temporary, must find proper location
 Q_DECLARE_METATYPE(PhysicsWorld *)
 Q_DECLARE_METATYPE(QVector<CellBorderCoordinates>)
+Q_DECLARE_METATYPE(obEntityWrapper *)
+Q_DECLARE_METATYPE(btScalar)
 
 #endif // PHYSICSWORLD_H

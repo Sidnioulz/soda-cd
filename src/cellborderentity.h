@@ -153,20 +153,37 @@ public:
         return obBody->getBulletBody()->getBroadphaseProxy();
     }
 
-    /*! \brief Sets a definite color for the entity.
-      * \param r the amount of red in the color to set
-      * \param g the amount of green in the color to set
-      * \param b the amount of blue in the color to set
+    /*! \brief Sets a color for the entity.
+      * \param r the amount of red in the color between 0 and 1
+      * \param g the amount of green in the color between 0 and 1
+      * \param b the amount of blue in the color between 0 and 1
       */
     void setColor(const float &r, const float &g, const float &b);
 
-private:
-	obRigidBody				*obBody;			 /*!< The Ogre-Bullet rigid body of this Cell border */
-    Ogre::Entity            *ogreEntity;         /*!< Ogre entity */
-    LocalGrid               *grid;               /*!< The grid of which this CellBorderEntity is a border */
 
-    CellBorderCoordinates	coords;		         /*!< Cell coordinates of the border entity, with a direction parameter */
-	short					direction;			 /*!< Direction of the border entity on the Cell */
+    /*! \brief Sets a transparency for the entity.
+      * \param f the amount of transparency between 0 and 1
+      */
+    void setAlpha(const float &f);
+
+protected:
+    /*!
+     * \brief Updates the material of the CellBorderEntity depending on its color and transparency.
+     */
+    void updateColor();
+
+private:
+    obRigidBody                     *obBody;			 /*!< The Ogre-Bullet rigid body of this Cell border */
+    Ogre::Entity                    *ogreEntity;         /*!< Ogre entity */
+    LocalGrid                       *grid;               /*!< The grid of which this CellBorderEntity is a border */
+
+    CellBorderCoordinates           coords;		         /*!< Cell coordinates of the border entity, with a direction parameter */
+    short                           direction;			 /*!< Direction of the border entity on the Cell */
+
+    float                           red;                 /*!< Red component of the CellBorderEntity's color */
+    float                           green;               /*!< Green component of the CellBorderEntity's color */
+    float                           blue;                /*!< Blue component of the CellBorderEntity's color */
+    float                           alpha;               /*!< Transparency of the CellBorderEntity */
 };
 
 #endif // CELLBORDERENTITY_H

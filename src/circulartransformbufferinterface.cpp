@@ -27,10 +27,17 @@ CircularTransformBufferInterface::CircularTransformBufferInterface() :
 {
 }
 
-QSharedPointer<obEntityTransformRecordList> CircularTransformBufferInterface::processNext(const btScalar &targetTime)
+QSharedPointer<obEntityTransformRecordList> CircularTransformBufferInterface::processNext(btScalar &targetTime)
 {
+    // Update the target time with what's actually possible to get in all worlds
+    for(int i=0; i<size(); ++i)
+        targetTime = qMin(targetTime, at(i)->getClosestAvailableTime(targetTime));
+
+    // A map that contains the merged buffer entries. This has to be changed to something more efficient.
+    //TODO: mergeMap should be replaced with a list of QSharedPointers to all worlds' maps with a special iterator to browse it transparently
     QSharedPointer<obEntityTransformRecordList> mergeMap = QSharedPointer<obEntityTransformRecordList>(new obEntityTransformRecordList(targetTime));
 
+    // Actually perform querying
     for(int i=0; i<size(); ++i)
     {
         QSharedPointer<obEntityTransformRecordList> ptr = at(i)->processNext(targetTime);

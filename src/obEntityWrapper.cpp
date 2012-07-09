@@ -84,7 +84,7 @@ obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &m
         throw EntityAlreadyExistsException(name);
     }
 
-    obBody->getBulletBody()->getWorldTransform().setOrigin(btVector3(pos.x, pos.y, pos.z));
+    obBody->getBulletBody()->getWorldTransform().setOrigin(Utils::btVectorFromOgre(pos));
     obBody->getBulletBody()->getWorldTransform().setRotation(Utils::btQuaternionFromOgre(quat));
 
 	// Assign a random color to the object if not static

@@ -86,8 +86,8 @@ void RandomCubeSimulation::loadEntities()
     for(int i=0; i<numEntities; ++i)
     {
         // Get random coordinates and scale
-        //scale=(rand() % 11 + 1.9) * 0.1; //NOTE: disabled for experiments
-        scale=1;
+        scale=(rand() % 11 + 1.9) * 0.1; //NOTE: disabled for experiments
+//        scale=1;
         x=qMax(-sceneSize.x()/2 + defaultBoxSize.x()*scale, qMin(sceneSize.x()/2 - defaultBoxSize.x()*scale -1, rand() % (int)(sceneSize.x()) - sceneSize.x()/2));
         y=qMax((int)(defaultBoxSize.x()*scale), qMin((int)(sceneSize.y() - defaultBoxSize.x()*scale -1), rand() % (int)(sceneSize.y())));
         z=qMax(-sceneSize.z()/2 + defaultBoxSize.z()*scale, qMin(sceneSize.z()/2 - defaultBoxSize.z()*scale -1, rand() % (int)(sceneSize.z()) - sceneSize.z()/2));
@@ -108,6 +108,9 @@ obEntityWrapper *RandomCubeSimulation::_createBox(const btVector3 &position, con
     Ogre::Vector3 ogreScale = Utils::vectorFromBullet(scale);
 
     obEntityWrapper *obEnt = new obEntityWrapper(entityName, "cube.mesh", ogrePos, Ogre::Quaternion::IDENTITY, false, ogreScale, mass);
+//    obEntityWrapper *obEnt = new obEntityWrapper(entityName, "penguin.mesh", ogrePos, Ogre::Quaternion::IDENTITY, false, ogreScale, mass);
+//    obEntityWrapper *obEnt = new obEntityWrapper(entityName, "sphere.mesh", ogrePos, Ogre::Quaternion::IDENTITY, false, ogreScale, mass);
+//    obEntityWrapper *obEnt = new obEntityWrapper(entityName, "ogrehead.mesh", ogrePos, Ogre::Quaternion::IDENTITY, false, ogreScale, mass);
     obEnt->setMaterialName("Surfaces/RockDirt");
 //    obEnt->getRigidBody()->setTransformation(Ogre::Vector3(0,4,0), Ogre::Vector3(0, -1000, 0));
 

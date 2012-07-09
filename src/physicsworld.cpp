@@ -121,6 +121,7 @@ CircularTransformBuffer* PhysicsWorld::getCircularBuffer() const
 //TODO: modify queue to add/remove objects according to targetTime and to store targetTime // ROLLBACK&PROPAGATE
 void PhysicsWorld::addEntity(obEntityWrapper *obEnt, btScalar targetTime)
 {
+    qDebug() << "###addEntity w" << id << QThread::currentThreadId();
     entityMutex.lock();
     entityAdditionQueue.enqueue(TimedEntity(obEnt, targetTime));
 	entityMutex.unlock();
@@ -128,6 +129,7 @@ void PhysicsWorld::addEntity(obEntityWrapper *obEnt, btScalar targetTime)
 
 void PhysicsWorld::_addEntity(obEntityWrapper *obEnt)
 {
+    qDebug() << "_addEntity w" << id << QThread::currentThreadId();
 
     qDebug() << "Adding entity '" << obEnt->getName().c_str() << "' to world"<< getId() << "at time" << currentTime;
 
@@ -160,6 +162,7 @@ void PhysicsWorld::_entityVectoryRemovalMethod(QVector<obEntityWrapper *> &conta
 
 void PhysicsWorld::removeEntity(obEntityWrapper *obEnt, btScalar targetTime)
 {
+    qDebug() << "###removeEntity w" << id << QThread::currentThreadId();
     entityMutex.lock();
     entityRemovalQueue.enqueue(TimedEntity(obEnt, targetTime));
     qDebug() << "Marking entity '" << obEnt->getName().c_str() << "' for removal from world" << getId() << "at time" << targetTime << "(" << currentTime << ")";
@@ -168,6 +171,7 @@ void PhysicsWorld::removeEntity(obEntityWrapper *obEnt, btScalar targetTime)
 
 void PhysicsWorld::_removeEntity(obEntityWrapper *obEnt)
 {
+    qDebug() << "_removeEntity w" << id << QThread::currentThreadId();
     qDebug() << "Removing entity '" << obEnt->getName().c_str() << "' from world"<< getId() << "at time" << currentTime;
 
     // Remove the entity from the grid if it still is within a grid cell (entity knows better, it may be outside of the grid if the deletion is a result of it moving out of bounds)
@@ -317,6 +321,24 @@ PhysicsWorld *PhysicsWorld::getNeighbor(const short neighborId) const
 }
 
 //TODO: document messageNeighbor
+bool PhysicsWorld::messageNeighbor(PhysicsWorld *neighbor, const char *method, QGenericArgument val0, QGenericArgument val1, QGenericArgument val2, QGenericArgument val3, QGenericArgument val4, QGenericArgument val5, QGenericArgument val6, QGenericArgument val7, QGenericArgument val8, QGenericArgument val9) const
+{
+    if(neighbor)
+    {
+        //FIXME: temporary registrations until specific messages written with proper parameters
+        qRegisterMetaType<PhysicsWorld *>("PhysicsWorld *");
+        qRegisterMetaType<QVector<CellBorderCoordinates> >("QVector<CellBorderCoordinates>");
+        qRegisterMetaType<obEntityWrapper *>("obEntityWrapper *");
+        qRegisterMetaType<btScalar>("btScalar");
+
+        QMetaObject::invokeMethod(neighbor, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
+        return true;
+    }
+    else
+        return false;
+}
+
+//TODO: document messageNeighbor
 bool PhysicsWorld::messageNeighbor(const short neighborId, const char *method, QGenericArgument val0, QGenericArgument val1, QGenericArgument val2, QGenericArgument val3, QGenericArgument val4, QGenericArgument val5, QGenericArgument val6, QGenericArgument val7, QGenericArgument val8, QGenericArgument val9) const
 {
     PhysicsWorld *neighbor = getNeighbor(neighborId);
@@ -326,6 +348,7 @@ bool PhysicsWorld::messageNeighbor(const short neighborId, const char *method, Q
         //FIXME: temporary registrations until specific messages written with proper parameters
         qRegisterMetaType<PhysicsWorld *>("PhysicsWorld *");
         qRegisterMetaType<QVector<CellBorderCoordinates> >("QVector<CellBorderCoordinates>");
+        qRegisterMetaType<obEntityWrapper *>("obEntityWrapper *");
 
         QMetaObject::invokeMethod(neighbor, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
         return true;
@@ -386,26 +409,27 @@ void PhysicsWorld::BulletFakeCCDThread::run()
     // Infinite CD loop
     for(;;)
     {
+        qDebug() << "run w" << world->id << QThread::currentThreadId();
         rewindTime = std::numeric_limits<btScalar>::max();
         rewind=false;
 
         // Manage entity and grid queues before the next simulation
         //FIXME: the code to add/remove entities below is probably partly wrong now.
         world->entityMutex.lock();
-        while(!world->entityAdditionQueue.isEmpty())
-        {
-            QPair<obEntityWrapper *, btScalar> entity = world->entityAdditionQueue.dequeue();
-            world->_addEntity(entity.first);
-            rewindTime = qMin(rewindTime, entity.second);
-            rewind = true;
-        }
-        while(!world->entityRemovalQueue.isEmpty())
-        {
-            QPair<obEntityWrapper *, btScalar> entity = world->entityRemovalQueue.dequeue();
-            world->_removeEntity(entity.first);
-            rewindTime = qMin(rewindTime, entity.second);
-            rewind = true;
-        }
+//        while(!world->entityAdditionQueue.isEmpty())
+//        {
+//            QPair<obEntityWrapper *, btScalar> entity = world->entityAdditionQueue.dequeue();
+//            world->_addEntity(entity.first);
+//            rewindTime = qMin(rewindTime, entity.second);
+//            rewind = true;
+//        }
+//        while(!world->entityRemovalQueue.isEmpty())
+//        {
+//            QPair<obEntityWrapper *, btScalar> entity = world->entityRemovalQueue.dequeue();
+//            world->_removeEntity(entity.first);
+//            rewindTime = qMin(rewindTime, entity.second);
+//            rewind = true;
+//        }
         world->entityMutex.unlock();
 
         // Rollback to a given time step (not yet implemented)
@@ -425,6 +449,9 @@ void PhysicsWorld::BulletFakeCCDThread::run()
 void PhysicsWorld::onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords)
 {
 //    qDebug() << "Hello i'm thread" << getId() << "and i've been notified an intrusion from my neighbor" << neighbor->getId();
+}
 
-
+void PhysicsWorld::onOwnershipTransfer(const PhysicsWorld *&neighbor, const obEntityWrapper *&object, const btScalar &time)
+{
+    qDebug() << "Hello i'm thread" << getId() << "and i should now own entity" << object->getName().c_str() << "from time" << time;
 }
