@@ -541,7 +541,7 @@ void OgreWidget::render()
                 else if(record.status == obEntity::OutOfWorld)
                 {
                     record.obEnt->setColor(1, 0, 0);
-//                    qDebug() << "Deleting eEntity '" << record.obEnt->getName().c_str() << "at time" << ptr->getTimeStep();
+//                    qDebug() << "Deleting eEntity '" << record.obEnt->getDisplayName() << "at time" << ptr->getTimeStep();
 //                    delete record.obEnt;
                 }
             }

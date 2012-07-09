@@ -22,7 +22,7 @@
 #define MAIN_H
 
 #define APP_NAME    "SODA CD"
-#define VERSION     "0.2.0"
+#define VERSION     "0.2.8"
 
 #include <QMainWindow>
 #include "ogrewidget.h"
@@ -55,6 +55,12 @@
 //TODO: inlining
 //TODO: assertions on all function headers
 //TODO: when objects and cells too big to populate several worlds, don't!
+
+// IPC type declarations
+Q_DECLARE_METATYPE(PhysicsWorld *)
+Q_DECLARE_METATYPE(QVector<CellBorderCoordinates>)
+Q_DECLARE_METATYPE(obEntityWrapper *)
+Q_DECLARE_METATYPE(btScalar)
 
 namespace Ui {
     class MainAsapCdWindow;

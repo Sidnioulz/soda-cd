@@ -37,6 +37,12 @@ MainAsapCdWindow::MainAsapCdWindow(QWidget *parent) :
     ui->widget->setLayout(new QGridLayout());
     ui->widget->layout()->setMargin(0);
 
+    // IPC setup
+    qRegisterMetaType<PhysicsWorld *>("PhysicsWorld *");
+    qRegisterMetaType<QVector<CellBorderCoordinates> >("QVector<CellBorderCoordinates>");
+    qRegisterMetaType<obEntityWrapper *>("obEntityWrapper *");
+    qRegisterMetaType<btScalar>("btScalar");
+
     // Create the Ogre Widget
     ogreWidget = new OgreWidget(targetFPS);
     ui->widget->layout()->addWidget(ogreWidget);

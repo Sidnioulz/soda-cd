@@ -234,7 +234,7 @@ private:
 
     static short              WorldIdCounter;            //!< a counter to make sure world IDs are unique
 
-    /*! \class BulletFakeCCDThread
+    /*! \class BulletCollisionThread
       * \brief A thread that is responsible of collision detection.
       * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
       *
@@ -242,14 +242,14 @@ private:
       * until stopped, and writes its output in the CircularTransformBuffer associated
       * with its parent class.
       */
-    class BulletFakeCCDThread : public QThread {
+    class BulletCollisionThread : public QThread {
     public:
         /*!
           * \brief Default constructor.
           * \param world the PhysicsWorld for which collision detection is being done.
-          * \return a new BulletFakeCCDThread
+          * \return a new BulletCollisionThread
           */
-        BulletFakeCCDThread(PhysicsWorld *world);
+        BulletCollisionThread(PhysicsWorld *world);
 
         /*!
           * \brief Callback called whenever a CD pass is done by Bullet. Copies object positions to the buffer.
@@ -278,11 +278,5 @@ public slots:
     void onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords);
     void onOwnershipTransfer(const PhysicsWorld *&neighbor, const obEntityWrapper *&object, const btScalar &time);
 };
-
-//FIXME: temporary, must find proper location
-Q_DECLARE_METATYPE(PhysicsWorld *)
-Q_DECLARE_METATYPE(QVector<CellBorderCoordinates>)
-Q_DECLARE_METATYPE(obEntityWrapper *)
-Q_DECLARE_METATYPE(btScalar)
 
 #endif // PHYSICSWORLD_H

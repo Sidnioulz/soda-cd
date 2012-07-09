@@ -96,7 +96,7 @@ void LocalGrid::addEntity(obEntityWrapper *obEnt)
     Q_ASSERT(!cellOutOfBounds(cellCoords));
     Cell &cell = at(cellCoords);
 
-    qDebug() << "LocalGrid::addEntity(" << obEnt->getName().c_str() << "): to cell " << cellCoords.x() << cellCoords.y() << cellCoords.z();
+    qDebug() << "LocalGrid::addEntity(" << obEnt->getDisplayName() << "): to cell " << cellCoords.x() << cellCoords.y() << cellCoords.z();
 
     // Add the entity
     cell.addEntity(obEnt);
@@ -120,7 +120,7 @@ void LocalGrid::removeEntity(obEntityWrapper *obEnt)
 	if(!cell.removeEntity(obEnt))
 	{
         if(cell.getOwnerId() == this->ownerId)
-            qWarning() << "Entity '" << obEnt->getName().c_str() << "' is not present within the Cell that matches its coordinates (" << cellCoords.x() << ", " << cellCoords.y() << ", " << cellCoords.z() << ").";
+            qWarning() << "Entity '" << obEnt->getDisplayName() << "' is not present within the Cell that matches its coordinates (" << cellCoords.x() << ", " << cellCoords.y() << ", " << cellCoords.z() << ").";
 	}
 
     obEnt->getRigidBody()->getMotionState()->unsetLocalGrid();
@@ -206,12 +206,12 @@ void LocalGrid::setCellOwnedBy(const btVector3 &coords, const short id)
     {
         Cell &c = at(coords);
 
-        if(c.getOwnerId() != PhysicsWorld::NullWorldId && c.getOwnerId() != PhysicsWorld::UnknownWorldId)
-        {
-            qWarning() << "Warning, changed owner of Cell " << coords.x() << coords.y() << coords.z() << " while it already had one (" << c.getOwnerId() << ")" << " to " << id;
-            if(c.getEntities() != 0 && c.getEntities()->size() != 0)
-                qWarning() << "\t " << c.getEntities()->size() << "entities in this cell";
-        }
+//        if(c.getOwnerId() != PhysicsWorld::NullWorldId && c.getOwnerId() != PhysicsWorld::UnknownWorldId)
+//        {
+//            qWarning() << "Warning, changed owner of Cell " << coords.x() << coords.y() << coords.z() << " while it already had one (" << c.getOwnerId() << ")" << " to " << id;
+//            if(c.getEntities() != 0 && c.getEntities()->size() != 0)
+//                qWarning() << "\t " << c.getEntities()->size() << "entities in this cell";
+//        }
 
         c.setOwnerId(id);
 //        if(id != this->getOwnerId())

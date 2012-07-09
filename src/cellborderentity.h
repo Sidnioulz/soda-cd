@@ -133,6 +133,14 @@ public:
         return obBody;
     }
 
+    /*! \brief Gets the display name of this object's Ogre entity.
+      * \return the display name of this obEntityWrapper
+      */
+    inline const char *getDisplayName() const
+    {
+        return ogreEntity->getName().c_str();
+    }
+
     /*!
      * \brief Gets the Cell space coordinates of the entity.
      * \return a btVector3 containing the Cell coordinates of this entity

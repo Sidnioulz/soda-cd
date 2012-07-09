@@ -232,7 +232,7 @@ void BulletManagerWorld::internalSingleStepSimulation(btScalar timeStep)
 
 ////                obEntityWrapper *obEntA = dynamic_cast<obEntityWrapper *>(obA->getCollisionShape()->getUserPointer());
 ////                if(obEntA)
-////                    qDebug() << "obEntA is " << obEntA->getName().c_str();
+////                    qDebug() << "obEntA is " << obEntA->getDisplayName();
 ////                else
 ////                {
 ////                    CellBorderEntity *cbeA = dynamic_cast<CellBorderEntity *>(obA->getCollisionShape()->getUserPointer());
@@ -243,9 +243,9 @@ void BulletManagerWorld::internalSingleStepSimulation(btScalar timeStep)
 
 
 ////                obEntityWrapper *obEntB = dynamic_cast<obEntityWrapper *>(obB->getCollisionShape()->getUserPointer());
-////                qDebug() << "obEntB is " << obEntB->getName().c_str();
+////                qDebug() << "obEntB is " << obEntB->getDisplayName();
 ////                if(obEntB)
-////                    qDebug() << "obEntB is " << obEntB->getName().c_str();
+////                    qDebug() << "obEntB is " << obEntB->getDisplayName();
 ////                else
 ////                {
 ////                    CellBorderEntity *cbeB = dynamic_cast<CellBorderEntity *>(obB->getCollisionShape()->getUserPointer());
@@ -404,7 +404,7 @@ void	BulletManagerWorld::performDiscreteCollisionDetection()
             if(entity0->getType() == obEntity::obEntityWrapperType)
             {
                 obEnt = dynamic_cast<obEntityWrapper *>(entity0);
-//                qDebug() << "performDiscreteCollisionDetection("<< world->getId() <<"):" << obEnt->getName().c_str() << "collides with a border";
+//                qDebug() << "performDiscreteCollisionDetection("<< world->getId() <<"):" << obEnt->getDisplayName() << "collides with a border";
                 obEnt->setStatus(obEntity::CrossingBorder);
             }
             else
@@ -419,7 +419,7 @@ void	BulletManagerWorld::performDiscreteCollisionDetection()
             if(entity1->getType() == obEntity::obEntityWrapperType)
             {
                 obEnt = dynamic_cast<obEntityWrapper *>(entity1);
-//                qDebug() << "performDiscreteCollisionDetection("<< world->getId() <<"):" << obEnt->getName().c_str() << "collides with a border";
+//                qDebug() << "performDiscreteCollisionDetection("<< world->getId() <<"):" << obEnt->getDisplayName() << "collides with a border";
                 obEnt->setStatus(obEntity::CrossingBorder);
             }
             else

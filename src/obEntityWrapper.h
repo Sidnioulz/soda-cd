@@ -310,15 +310,23 @@ public:
 	inline Ogre::String getMeshName() const
 	{
 		return meshName;
-	}
+    }
 
     /*! \brief Gets the name of this object's Ogre entity.
       * \return the name of the Ogre::Entity associated to this obEntityWrapper
       */
-	inline Ogre::String getName() const
-	{
-		return ogreEntity->getName();
-	}
+    inline Ogre::String getName() const
+    {
+        return ogreEntity->getName();
+    }
+
+    /*! \brief Gets the display name of this object's Ogre entity.
+      * \return the display name of this obEntityWrapper
+      */
+    inline const char *getDisplayName() const
+    {
+        return getName().c_str();
+    }
 
 	/*! \brief Gets the mass of the entity.
 	  * \return the mass of the entity
