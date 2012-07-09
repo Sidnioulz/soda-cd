@@ -56,10 +56,22 @@ obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &m
         // If no shape is defined, create one from the mesh
         if(!shape)
         {
-            if (staticMesh)
-                obBody->createMeshCollider(ogreEntity->getMesh().getPointer());
+
+            if(meshName == "cube.mesh")
+                obBody->createCube(staticMesh);
+            else if(meshName == "sphere.mesh")
+                obBody->createSphere(staticMesh);
+            else if(meshName == "simplePlane.mesh")
+                obBody->createPlane(staticMesh);
+            else if(meshName == "cylinder.mesh")
+                obBody->createCylinder(staticMesh);
             else
-                obBody->createBody(ogreEntity->getMesh().getPointer());
+            {
+                if (staticMesh)
+                    obBody->createMeshCollider(ogreEntity->getMesh().getPointer());
+                else
+                    obBody->createBody(ogreEntity->getMesh().getPointer());
+            }
         }
         else
             obBody->createBodyWithShape(shape, staticMesh);
