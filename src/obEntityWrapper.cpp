@@ -56,22 +56,21 @@ obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &m
         // If no shape is defined, create one from the mesh
         if(!shape)
         {
-
-            if(meshName == "cube.mesh")
-                obBody->createCube(staticMesh);
-            else if(meshName == "sphere.mesh")
-                obBody->createSphere(staticMesh);
-            else if(meshName == "simplePlane.mesh")
-                obBody->createPlane(staticMesh);
-            else if(meshName == "cylinder.mesh")
-                obBody->createCylinder(staticMesh);
-            else
-            {
+//            if(meshName == "cube.mesh")
+//                obBody->createCube(staticMesh);
+//            else if(meshName == "sphere.mesh")
+//                obBody->createSphere(staticMesh);
+//            else if(meshName == "simplePlane.mesh")
+//                obBody->createPlane(staticMesh);
+//            else if(meshName == "cylinder.mesh")
+//                obBody->createCylinder(staticMesh);
+//            else
+//            {
                 if (staticMesh)
                     obBody->createMeshCollider(ogreEntity->getMesh().getPointer());
                 else
                     obBody->createBody(ogreEntity->getMesh().getPointer());
-            }
+//            }
         }
         else
             obBody->createBodyWithShape(shape, staticMesh);
@@ -85,8 +84,8 @@ obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &m
         throw EntityAlreadyExistsException(name);
     }
 
-	obBody->getBulletBody()->getWorldTransform().setOrigin(btVector3(pos.x, pos.y, pos.z));
-	obBody->getBulletBody()->getWorldTransform().setRotation(Utils::btQuaternionFromOgre(quat));
+    obBody->getBulletBody()->getWorldTransform().setOrigin(btVector3(pos.x, pos.y, pos.z));
+    obBody->getBulletBody()->getWorldTransform().setRotation(Utils::btQuaternionFromOgre(quat));
 
 	// Assign a random color to the object if not static
 	if(randomColor && !staticMesh)
