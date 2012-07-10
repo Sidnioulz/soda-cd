@@ -114,10 +114,11 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
                         unsetLocalGrid();
 
                         // Detach from current world and send to new world
-                        parentBody->getOwnerWorld()->removeEntity(parentBody, eventTime);
-                        parentBody->getOwnerWorld()->messageNeighbor(newParent,
+                        PhysicsWorld *oldOwner = parentBody->getOwnerWorld();
+                        oldOwner->removeEntity(parentBody, eventTime);
+                        oldOwner->messageNeighbor(newParent,
                                                "onOwnershipTransfer",
-                                               Q_ARG(PhysicsWorld *, parentBody->getOwnerWorld()),
+                                               Q_ARG(PhysicsWorld *, oldOwner),
                                                Q_ARG(obEntityWrapper *, parentBody),
                                                Q_ARG(btScalar, eventTime));
                     }

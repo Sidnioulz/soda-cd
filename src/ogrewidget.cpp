@@ -45,8 +45,8 @@ OgreWidget::OgreWidget(int targetFPS, QWidget *parent) :
 
     renderingTimer.setInterval(1000*getTargetTimeStep());
     renderingTimer.start();
-    globalTimer.start();
     connect(&renderingTimer, SIGNAL(timeout()), this, SLOT(onTimerTick()));
+    globalTimer.start();
 }
 
 OgreWidget::~OgreWidget()
@@ -494,8 +494,9 @@ void OgreWidget::render()
     // Indicates that rendering started
     currentlyRendering = true;
 
+    //FIXME: this still not working!
     // Variable used to store the time that is queried, and actually retrieved
-    btScalar currentTimeStep = simulationRunTime;// + getTargetTimeStep()/2.0f;
+    btScalar currentTimeStep = simulationRunTime + getTargetTimeStep();
 
     // If there is no buffer interface, directly skip to rendering
     if(hasBufferInterface())
@@ -506,7 +507,7 @@ void OgreWidget::render()
         if(!ptr.isNull() && bufferInterface->getBufferType()==CircularTransformBuffer::DiscreteCollisionDetection)
         {
             // Update simulationRunTime for the next query to perform
-            simulationRunTime = currentTimeStep + getTargetTimeStep();
+            simulationRunTime = currentTimeStep;
 
             // Update Ogre objects
             obEntityTransformRecordListIterator it(*ptr);
@@ -554,7 +555,7 @@ void OgreWidget::render()
     // Render
     ogreRoot->renderOneFrame();
 #ifndef NDEBUG
-    qDebug() << "OgreWidget::render(); Simulation runtime " << simulationRunTime * 1000 << " / Actual time spent" << globalTimer.elapsed() << "; Thread " << QString().sprintf("%p", QThread::currentThread());
+//    qDebug() << "OgreWidget::render(); Simulation runtime " << simulationRunTime * 1000 << " / Actual time spent" << globalTimer.elapsed() << "; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
     update();
 

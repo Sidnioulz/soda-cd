@@ -30,9 +30,8 @@
 #include "obRigidBody.h"
 #include "obEntityWrapper.h"
 
-// Forward references
+// Forward reference
 class Simulation;
-class GarbageWorld;
 
 //! An obEntityWrapper instance associated with a time unit that represents a temporal event.
 typedef QPair<obEntityWrapper *, btScalar> TimedEntity;
@@ -181,9 +180,6 @@ public:
     //TODO: document messageNeighbor
     bool messageNeighbor(const short neighborId, const char *method, QGenericArgument val0 = QGenericArgument(0), QGenericArgument val1 = QGenericArgument(), QGenericArgument val2 = QGenericArgument(), QGenericArgument val3 = QGenericArgument(), QGenericArgument val4 = QGenericArgument(), QGenericArgument val5 = QGenericArgument(), QGenericArgument val6 = QGenericArgument(), QGenericArgument val7 = QGenericArgument(), QGenericArgument val8 = QGenericArgument(), QGenericArgument val9 = QGenericArgument()) const;
 
-	//TODO: document messageNeighbor
-	bool messageGarbageWorld(const char *method, QGenericArgument val0 = QGenericArgument(0), QGenericArgument val1 = QGenericArgument(), QGenericArgument val2 = QGenericArgument(), QGenericArgument val3 = QGenericArgument(), QGenericArgument val4 = QGenericArgument(), QGenericArgument val5 = QGenericArgument(), QGenericArgument val6 = QGenericArgument(), QGenericArgument val7 = QGenericArgument(), QGenericArgument val8 = QGenericArgument(), QGenericArgument val9 = QGenericArgument()) const;
-
     static const short NullWorldId;         //!< a value used when a world ID is needed but there is no corresponding world instance
     static const short UnknownWorldId;      //!< a value used when the owner world of an object is not known yet
     static const short IdBeingProcessed;    //!< a value used when the owner world of an object is being computed
@@ -218,6 +214,43 @@ private:
       */
     void _removeEntity(obEntityWrapper *obEnt);
 
+    /*!
+     * \brief Callback called whenever a CD pass is done by Bullet. Copies object transforms to the buffer.
+     * \param world pointer to the Bullet world
+     * \param timeStep length of the time step being simulated
+     */
+    static void _tickCallback(btDynamicsWorld *world, btScalar timeStep);
+
+    /*! \class PhysicsWorldThread
+      * \brief A thread with a public event loop starting method.
+      * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
+      *
+      * This class is a QThread with a running event loop.
+      */
+    class PhysicsWorldThread : public QThread
+    {
+    public:
+
+        /*!
+          * \brief Default constructor.
+          * \param parent the parent QObject of this thread
+          * \return a new PhysicsWorldThread
+          */
+        explicit PhysicsWorldThread(QObject *parent) :
+            QThread(parent)
+        {
+        }
+
+        /*!
+         * \brief Run method of the thread, that just runs an event loop.
+         */
+        inline void run()
+        {
+            QThread::exec();
+        }
+    };
+
+
     const Simulation          &simulation;               /*!< the Simulation this world belongs to */
 
     static const int          NbColors = 12;             //!< number of available colors for the per-thread coloring of entities
@@ -236,47 +269,13 @@ private:
     TimedEntityQueue          entityAdditionQueue;       //!< a queue for objects to be added between next iterations of the collision detection algorithm
     TimedEntityQueue          entityRemovalQueue;        //!< a queue for objects to be removed between next iterations of the collision detection algorithm
 
+    PhysicsWorldThread        worldThread;               /*!< The thread in which CD passes run, and in which messages are received */
+    QTimer                    timer;                     /*!< A timer used to spam runOnePass() events in the event loop */
+
     static short              WorldIdCounter;            //!< a counter to make sure world IDs are unique
 
-    /*! \class BulletCollisionThread
-      * \brief A thread that is responsible of collision detection.
-      * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
-      *
-      * This class is a QThread that launches collision detection passes continuously
-      * until stopped, and writes its output in the CircularTransformBuffer associated
-      * with its parent class.
-      */
-    class BulletCollisionThread : public QThread {
-    public:
-        /*!
-          * \brief Default constructor.
-          * \param world the PhysicsWorld for which collision detection is being done.
-          * \return a new BulletCollisionThread
-          */
-        BulletCollisionThread(PhysicsWorld *world);
-
-        /*!
-          * \brief Callback called whenever a CD pass is done by Bullet. Copies object positions to the buffer.
-          * \param world pointer to the Bullet world
-          * \param timeStep length of the time step being simulated
-          */
-        static void myTickCallback(btDynamicsWorld *world, btScalar timeStep);
-
-        /*!
-          * \brief Initializes the thread and sets the CD pass callback.
-          */
-        void init();
-
-        /*!
-          * \brief Runs a pass of the CD loop.
-          */
-        void run();
-
-    private:
-        PhysicsWorld *world; /*!< The PhysicsWorld to which this thread belongs */
-        QTimer timer;        /*!< A timer used to include runCollisionDetection in the event loop */
-
-	} CDInterface;           //!< the thread in which collision detection is performed
+protected slots:
+    void runOnePass();
 
 public slots:
     void onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords);

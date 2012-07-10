@@ -58,17 +58,37 @@ PhysicsWorld::PhysicsWorld(const Simulation &simulation, const btScalar &targetT
     id(WorldIdCounter++), targetTimeStep(targetTimeStep), entities(), globalStaticEntities(),
     buffer(new CircularTransformBuffer()), currentTime(0),
     localGrid(0), bulletManager(new BulletManager()), entityMutex(),
-    entityAdditionQueue(), entityRemovalQueue(), CDInterface(this)
+    entityAdditionQueue(), entityRemovalQueue(), worldThread(this), timer()
 {
-    CDInterface.init();
-    moveToThread(&CDInterface);
+#ifndef NDEBUG
+    qDebug() << "PhysicsWorld(" << id << ")::PhysicsWorld();";
+#endif
+
+//    moveToThread(&worldThread);
     bulletManager->setBroadphaseWorld(this);
+
+//    getBulletManager()->getDynamicsWorld()->getDispatchInfo().m_useContinuous = true;
+    getBulletManager()->getDynamicsWorld()->setInternalTickCallback(_tickCallback, static_cast<void *>(this));
+
+    // Initial CircularTransformBuffer entry
+    //FIXME: in this record, status's should be inserted? Use addRecord;
+    obEntityTransformRecordList *initialPositions = new obEntityTransformRecordList(0);
+    for(int i=0; i<entities.size(); ++i)
+        initialPositions->addTransform(entities[i], entities[i]->getRigidBody()->getBulletBody()->getWorldTransform());
+    buffer->appendTimeStep(initialPositions);
+
+    timer.setInterval(0);
+    connect(&timer, SIGNAL(timeout()), this, SLOT(runOnePass()));
+    worldThread.start();
+#ifndef NDEBUG
+    qDebug() << "PhysicsWorld(" << id << ")::PhysicsWorld(); Constructed.";
+#endif
 }
 
 PhysicsWorld::~PhysicsWorld()
 {
-    if(CDInterface.isRunning())
-        CDInterface.exit();
+    if(worldThread.isRunning())
+        worldThread.exit();
 
     QListIterator<TimedEntity> addIt(entityAdditionQueue);
     while(addIt.hasNext())
@@ -96,12 +116,12 @@ PhysicsWorld::~PhysicsWorld()
 
 void PhysicsWorld::startSimulation()
 {
-    CDInterface.start();
+    timer.start();
 }
 
 void PhysicsWorld::stopSimulation()
 {
-    CDInterface.quit();
+    timer.stop();
 }
 
 BulletManager* PhysicsWorld::getBulletManager() const
@@ -351,11 +371,22 @@ bool PhysicsWorld::messageNeighbor(PhysicsWorld *neighbor, const char *method, Q
 
     if(neighbor)
     {
+#ifndef NDEBUG
+        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", " << method << "); Invoking method; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
         QMetaObject::invokeMethod(neighbor, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
+#ifndef NDEBUG
+        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", " << method << "); Message sent; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
         return true;
     }
     else
+    {
+#ifndef NDEBUG
+        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", " << method << "); Could not find neighbor, aborting; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
         return false;
+    }
 }
 
 //TODO: document messageNeighbor
@@ -368,37 +399,25 @@ bool PhysicsWorld::messageNeighbor(const short neighborId, const char *method, Q
 	PhysicsWorld *neighbor = getNeighbor(neighborId);
 	if(neighbor)
 	{
-		QMetaObject::invokeMethod(neighbor, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
-		return true;
-	}
-	else
-		return false;
-}
-
-//TODO: document messageNeighbor
-bool PhysicsWorld::messageGarbageWorld(const char *method, QGenericArgument val0, QGenericArgument val1, QGenericArgument val2, QGenericArgument val3, QGenericArgument val4, QGenericArgument val5, QGenericArgument val6, QGenericArgument val7, QGenericArgument val8, QGenericArgument val9) const
-{
 #ifndef NDEBUG
-	qDebug() << "PhysicsWorld(" << id << ")::messageGarbageWorld(" << method << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Invoking method; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
-
-	QObject *garbage = new QObject(); /*simulation.getGarbageWorld();*/
-	if(garbage)
-	{
-		QMetaObject::invokeMethod(garbage, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
+		QMetaObject::invokeMethod(neighbor, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
+#ifndef NDEBUG
+        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Message sent; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
 		return true;
 	}
 	else
-		return false;
+    {
+#ifndef NDEBUG
+        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Could not find neighbor, aborting; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+        return false;
+    }
 }
 
-PhysicsWorld::BulletCollisionThread::BulletCollisionThread(PhysicsWorld *world) :
-    QThread(),
-    world(world)
-{
-}
-
-void PhysicsWorld::BulletCollisionThread::myTickCallback(btDynamicsWorld *world, btScalar timeStep)
+void PhysicsWorld::_tickCallback(btDynamicsWorld *world, btScalar timeStep)
 {
     PhysicsWorld *w = static_cast<PhysicsWorld *>(world->getWorldUserInfo());
     w->currentTime += timeStep;
@@ -415,86 +434,54 @@ void PhysicsWorld::BulletCollisionThread::myTickCallback(btDynamicsWorld *world,
     w->buffer->appendTimeStep(list);
 }
 
-void PhysicsWorld::BulletCollisionThread::init()
+void PhysicsWorld::runOnePass()
 {
 #ifndef NDEBUG
-    qDebug() << "PhysicsWorld(" << world->id << ")::BulletCollisionThread::init(); Thread " << QString().sprintf("%p", QThread::currentThread());
+    qDebug() << "PhysicsWorld(" << id << ")::runOnePass(" << currentTime << "); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
-    world->getBulletManager()->getDynamicsWorld()->getDispatchInfo().m_useContinuous = true;
-    world->getBulletManager()->getDynamicsWorld()->setInternalTickCallback(myTickCallback, static_cast<void *>(this->world));
-
-    // Initial CircularTransformBuffer entry
-    //FIXME: in this record, status's should be inserted? Use addRecord;
-    obEntityTransformRecordList *initialPositions = new obEntityTransformRecordList(0);
-    for(int i=0; i<world->entities.size(); ++i)
-        initialPositions->addTransform(world->entities[i], world->entities[i]->getRigidBody()->getBulletBody()->getWorldTransform());
-}
-
-void PhysicsWorld::BulletCollisionThread::run()
-{
-    world->moveToThread(this);
-
-#ifndef NDEBUG
-    qDebug() << "BulletCollisionThread(" << world->id << ")::run(); Thread " << QString().sprintf("%p", QThread::currentThread());
-
-#endif
     // Stores the moment at which the simulation must be rewinded after an object insertion or removal
-    btScalar rewindTime;
-    bool rewind;
+    btScalar  rewindTime = std::numeric_limits<btScalar>::max();
+    bool rewind=false;
 
-    // Infinite CD loop
-    for(;;)
-    {
-
-#ifndef NDEBUG
-        qDebug() << "BulletCollisionThread(" << world->id << ")::run(" << world->currentTime << "); Thread " << QString().sprintf("%p", QThread::currentThread());
-#endif
-
-        rewindTime = std::numeric_limits<btScalar>::max();
-        rewind=false;
-
-        // Manage entity and grid queues before the next simulation
-        //FIXME: the code to add/remove entities below is probably partly wrong now.
-        world->entityMutex.lock();
-//        while(!world->entityAdditionQueue.isEmpty())
+    // Manage entity and grid queues before the next simulation
+    //FIXME: the code to add/remove entities below is probably partly wrong now.
+    entityMutex.lock();
+//        while(!entityAdditionQueue.isEmpty())
 //        {
-//            QPair<obEntityWrapper *, btScalar> entity = world->entityAdditionQueue.dequeue();
-//            world->_addEntity(entity.first);
+//            QPair<obEntityWrapper *, btScalar> entity = entityAdditionQueue.dequeue();
+//            _addEntity(entity.first);
 //            rewindTime = qMin(rewindTime, entity.second);
 //            rewind = true;
 //        }
-        while(!world->entityRemovalQueue.isEmpty())
-        {
-            QPair<obEntityWrapper *, btScalar> entity = world->entityRemovalQueue.dequeue();
-            world->_removeEntity(entity.first);
-            rewindTime = qMin(rewindTime, entity.second);
-            rewind = true;
-        }
-        world->entityMutex.unlock();
+    while(!entityRemovalQueue.isEmpty())
+    {
+        QPair<obEntityWrapper *, btScalar> entity = entityRemovalQueue.dequeue();
+        _removeEntity(entity.first);
+        rewindTime = qMin(rewindTime, entity.second);
+        rewind = true;
+    }
+    entityMutex.unlock();
 
-        // Rollback to a given time step (not yet implemented)
-        if(rewind && rewindTime < world->currentTime)
-        {
+    // Rollback to a given time step (not yet implemented)
+    if(rewind && rewindTime < currentTime)
+    {
 #ifndef NDEBUG
-            qDebug() << "BulletCollisionThread(" << world->id << ")::run(" << world->currentTime << "); " << "World " << world->id << "added/removed entity at time" << rewindTime << "but is already at" << world->currentTime << "; Thread " << QString().sprintf("%p", QThread::currentThread());
+        qDebug() << "PhysicsWorld(" << id << ")::runOnePass(" << currentTime << "); " << "World " << id << "added/removed entity at time" << rewindTime << "but is already at" << currentTime << "; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
-        }
-
-        // Simulate a step
-        world->getBulletManager()->getDynamicsWorld()->stepSimulation(world->targetTimeStep);
-
     }
 
-    this->exit();
+    // Simulate a step
+    getBulletManager()->getDynamicsWorld()->stepSimulation(targetTimeStep);
 }
-
 
 void PhysicsWorld::onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords)
 {
 #ifndef NDEBUG
-    qDebug() << "PhysicsWorld(" << id << ")::onTerritoryIntrusion(" << neighbor->getId() << ", Vector[" << coords.size() << "]); Thread " << QString().sprintf("%p", QThread::currentThread());
+    qDebug() << "PhysicsWorld(" << id << ")::onTerritoryIntrusion(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", Vector[" << coords.size() << "]); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
+
+    //TODO
 }
 
 void PhysicsWorld::onOwnershipTransfer(const PhysicsWorld *&neighbor, const obEntityWrapper *&object, const btScalar &time)
@@ -504,6 +491,6 @@ void PhysicsWorld::onOwnershipTransfer(const PhysicsWorld *&neighbor, const obEn
 #endif
 
 	obEntityWrapper *obEnt = const_cast<obEntityWrapper *>(object);
-	obEnt->setStatus(obEntity::NormalStatus);
-	_addEntity(obEnt);
+    obEnt->setStatus(obEntity::NormalStatus);
+    _addEntity(obEnt);
 }

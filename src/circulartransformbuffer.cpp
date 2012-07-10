@@ -90,9 +90,9 @@ QSharedPointer<obEntityTransformRecordList> CircularTransformBuffer::processNext
 
         // If arriving here, then target time is ahead of the latest available positions
         // Or, the cell next to latestPastIndex is being filled by the physics thread
-        qWarning() << "Simulation is late on rendering. Asked for time step " << targetTime <<
-                      " but the latest available past is " << (at(latestPastIndex).isNull() ? 0 : at(latestPastIndex)->getTimeStep()) <<
-                      ". This means simulation does not cope with the pace of rendering.";
+#ifndef NDEBUG
+    qDebug() << "CircularTransformBuffer()::processNext(" << targetTime << "); Simulation late: latest past is " << (at(latestPastIndex).isNull() ? 0 : at(latestPastIndex)->getTimeStep()) << "; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
         return at(latestPastIndex);
     }
 
