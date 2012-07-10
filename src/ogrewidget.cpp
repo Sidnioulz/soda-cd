@@ -45,6 +45,7 @@ OgreWidget::OgreWidget(int targetFPS, QWidget *parent) :
 
     renderingTimer.setInterval(1000*getTargetTimeStep());
     renderingTimer.start();
+    globalTimer.start();
     connect(&renderingTimer, SIGNAL(timeout()), this, SLOT(onTimerTick()));
 }
 
@@ -552,6 +553,9 @@ void OgreWidget::render()
 
     // Render
     ogreRoot->renderOneFrame();
+#ifndef NDEBUG
+    qDebug() << "OgreWidget::render(); Simulation runtime " << simulationRunTime * 1000 << " / Actual time spent" << globalTimer.elapsed() << "; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
     update();
 
     // Render again if we missed a tick. This may cause stack overflow in extreme cases.

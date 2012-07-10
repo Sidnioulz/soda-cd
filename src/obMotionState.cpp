@@ -103,10 +103,11 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
                         parentBody->setStatus(obEntity::OutOfWorld);
                         const btScalar &eventTime = parentBody->getOwnerWorld()->getCurrentTime();
 
-                        //FIXME: check that what's below is good
-                        // Update owner world
-                        // Update local grid pointer
+                        // Remove entity from Cell, remove pointer to LocalGrid
+                        grid->at(lastCellCoords).removeEntity(parentBody);
                         unsetLocalGrid();
+
+                        // Detach from current world and send to new world
                         parentBody->getOwnerWorld()->removeEntity(parentBody, eventTime);
                         parentBody->getOwnerWorld()->messageNeighbor(newParent,
                                                "onOwnershipTransfer",

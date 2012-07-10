@@ -48,8 +48,8 @@ public:
     RandomCubeSimulation(const btScalar &targetTimeStep = 1.0f/60,
 						 const int &numWorlds = QThread::idealThreadCount(),
                          const int &numInterfaces = 1,
-						 const btVector3 &sceneSize = btVector3(500, 200, 500),
-						 const int &numEntities = 100);
+                         const btVector3 &sceneSize = btVector3(4000, 2000, 4000),
+                         const int &numEntities = 500);
 
 
     /*!

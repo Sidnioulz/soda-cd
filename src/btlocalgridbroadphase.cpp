@@ -89,7 +89,9 @@ bool btLocalGridBroadphase::aabbOverlap(const btVector3 &aabb0Min, const btVecto
 
 void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
 {
-//    qDebug() << "calculateOverlappingPairs("<<world->getId()<<")  BEGIN:" << m_pairCache->getNumOverlappingPairs() << "E-E \t&" << m_borderCache->getNumOverlappingPairs() << "E-B";
+#ifndef NDEBUG
+    qDebug() << "btLocalGridBroadphase(" << world->getId() << ")::calculateOverlappingPairs(" << world->getCurrentTime() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
 
 //    m_pairCache->getOverlappingPairArray().clear();
 //    m_borderCache->getOverlappingPairArray().clear();

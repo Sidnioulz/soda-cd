@@ -203,6 +203,7 @@ protected:
     CircularTransformBufferInterface *bufferInterface;      //!< The interface to read buffers that contain positions to render
     int                              targetFPS;             //!< Maximum FPS that the Ogre engine should reach
     QTimer                           renderingTimer;        //!< Emits ticks when rendering is needed to reach FPS
+    QElapsedTimer                    globalTimer;           //!< Global timer that helps measuring the time actually spent (for statistics)
     bool                             currentlyRendering;    //!< Tells whether the rendering function is currently running
     bool                             renderingPassQueued;   //!< Tells whether a tick was emitted during a pass, which means another one is needed to keep up
 

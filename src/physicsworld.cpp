@@ -160,11 +160,19 @@ void PhysicsWorld::_addCellBorder(CellBorderEntity *cbEnt)
 
 void PhysicsWorld::_entityVectoryRemovalMethod(QVector<obEntityWrapper *> &container, obEntityWrapper *obEnt)
 {
+#ifndef NDEBUG
+    qDebug() << "PhysicsWorld(" << id << ")::_entityVectoryRemovalMethod(" << obEnt->getDisplayName() << "); Start; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
     Q_ASSERT(obEnt != 0);
+    qDebug() << "BEGIN CONTAINER " << container.size();
 
     for(int i=0; i<container.size(); ++i)
         if(container[i]->getName() == obEnt->getName())
             container.remove(i--);
+
+#ifndef NDEBUG
+    qDebug() << "PhysicsWorld(" << id << ")::_entityVectoryRemovalMethod(" << obEnt->getDisplayName() << "); End; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
 }
 
 void PhysicsWorld::removeEntity(obEntityWrapper *obEnt, btScalar targetTime)
@@ -203,9 +211,9 @@ void PhysicsWorld::_removeEntity(obEntityWrapper *obEnt)
 	if(obEnt->getStatus() == obEntity::OutOfSimulationSpace)
 	{
 #ifndef NDEBUG
-		qDebug() << "PhysicsWorld(" << id << ")::_removeEntity(" << obEnt->getDisplayName() << "); Entity removed and about to be deleted; Thread " << QString().sprintf("%p", QThread::currentThread());
+        qDebug() << "PhysicsWorld(" << id << ")::_removeEntity(" << obEnt->getDisplayName() << "); Entity removed and about to be deleted; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
-		delete obEnt;
+        delete obEnt;
 	}
 #ifndef NDEBUG
 	else
@@ -457,13 +465,13 @@ void PhysicsWorld::BulletCollisionThread::run()
 //            rewindTime = qMin(rewindTime, entity.second);
 //            rewind = true;
 //        }
-		while(!world->entityRemovalQueue.isEmpty())
-		{
-			QPair<obEntityWrapper *, btScalar> entity = world->entityRemovalQueue.dequeue();
-			world->_removeEntity(entity.first);
-			rewindTime = qMin(rewindTime, entity.second);
-			rewind = true;
-		}
+        while(!world->entityRemovalQueue.isEmpty())
+        {
+            QPair<obEntityWrapper *, btScalar> entity = world->entityRemovalQueue.dequeue();
+            world->_removeEntity(entity.first);
+            rewindTime = qMin(rewindTime, entity.second);
+            rewind = true;
+        }
         world->entityMutex.unlock();
 
         // Rollback to a given time step (not yet implemented)

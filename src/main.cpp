@@ -99,8 +99,6 @@ int main(int argc, char *argv[])
    // Create the QApplicationbuffer[
    QApplication app(argc, argv);
 
-//   qDebug() << "Ideal thread count on this machine: " << QThread::idealThreadCount();
-
    // Initialize the window and Ogre rendering system
    MainAsapCdWindow* window = new MainAsapCdWindow();
    window->show();
