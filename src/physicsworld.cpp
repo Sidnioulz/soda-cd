@@ -195,11 +195,21 @@ void PhysicsWorld::_removeEntity(obEntityWrapper *obEnt)
     // Remove the entity from the world's vector
     _entityVectoryRemovalMethod(entities, obEnt);
 
+	// Remove the entity from the BulletWorld
     getBulletManager()->getDynamicsWorld()->removeRigidBody(obEnt->getRigidBody()->getBulletBody());
     obEnt->unsetOwnerWorld();
 
+	// Delete the object if it is not in the simulation space anymore
+	if(obEnt->getStatus() == obEntity::OutOfSimulationSpace)
+	{
 #ifndef NDEBUG
-    qDebug() << "PhysicsWorld(" << id << ")::_removeEntity(" << obEnt->getDisplayName() << "); Entity effectively removed; Thread " << QString().sprintf("%p", QThread::currentThread());
+		qDebug() << "PhysicsWorld(" << id << ")::_removeEntity(" << obEnt->getDisplayName() << "); Entity removed and about to be deleted; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+		delete obEnt;
+	}
+#ifndef NDEBUG
+	else
+		qDebug() << "PhysicsWorld(" << id << ")::_removeEntity(" << obEnt->getDisplayName() << "); Entity effectively removed; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 }
 
@@ -345,17 +355,34 @@ bool PhysicsWorld::messageNeighbor(PhysicsWorld *neighbor, const char *method, Q
 bool PhysicsWorld::messageNeighbor(const short neighborId, const char *method, QGenericArgument val0, QGenericArgument val1, QGenericArgument val2, QGenericArgument val3, QGenericArgument val4, QGenericArgument val5, QGenericArgument val6, QGenericArgument val7, QGenericArgument val8, QGenericArgument val9) const
 {
 #ifndef NDEBUG
-    qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+	qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
-    PhysicsWorld *neighbor = getNeighbor(neighborId);
-    if(neighbor)
-    {
-        QMetaObject::invokeMethod(neighbor, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
-        return true;
-    }
-    else
-        return false;
+	PhysicsWorld *neighbor = getNeighbor(neighborId);
+	if(neighbor)
+	{
+		QMetaObject::invokeMethod(neighbor, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
+		return true;
+	}
+	else
+		return false;
+}
+
+//TODO: document messageNeighbor
+bool PhysicsWorld::messageGarbageWorld(const char *method, QGenericArgument val0, QGenericArgument val1, QGenericArgument val2, QGenericArgument val3, QGenericArgument val4, QGenericArgument val5, QGenericArgument val6, QGenericArgument val7, QGenericArgument val8, QGenericArgument val9) const
+{
+#ifndef NDEBUG
+	qDebug() << "PhysicsWorld(" << id << ")::messageGarbageWorld(" << method << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+
+	QObject *garbage = new QObject(); /*simulation.getGarbageWorld();*/
+	if(garbage)
+	{
+		QMetaObject::invokeMethod(garbage, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
+		return true;
+	}
+	else
+		return false;
 }
 
 PhysicsWorld::BulletCollisionThread::BulletCollisionThread(PhysicsWorld *world) :
@@ -430,13 +457,13 @@ void PhysicsWorld::BulletCollisionThread::run()
 //            rewindTime = qMin(rewindTime, entity.second);
 //            rewind = true;
 //        }
-//        while(!world->entityRemovalQueue.isEmpty())
-//        {
-//            QPair<obEntityWrapper *, btScalar> entity = world->entityRemovalQueue.dequeue();
-//            world->_removeEntity(entity.first);
-//            rewindTime = qMin(rewindTime, entity.second);
-//            rewind = true;
-//        }
+		while(!world->entityRemovalQueue.isEmpty())
+		{
+			QPair<obEntityWrapper *, btScalar> entity = world->entityRemovalQueue.dequeue();
+			world->_removeEntity(entity.first);
+			rewindTime = qMin(rewindTime, entity.second);
+			rewind = true;
+		}
         world->entityMutex.unlock();
 
         // Rollback to a given time step (not yet implemented)
@@ -469,5 +496,7 @@ void PhysicsWorld::onOwnershipTransfer(const PhysicsWorld *&neighbor, const obEn
     qDebug() << "PhysicsWorld(" << id << ")::onOwnershipTransfer(" << neighbor->getId() << ", " << object->getDisplayName() << ", " << time << "); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
-    _addEntity(const_cast<obEntityWrapper *>(object));
+	obEntityWrapper *obEnt = const_cast<obEntityWrapper *>(object);
+	obEnt->setStatus(obEntity::NormalStatus);
+	_addEntity(obEnt);
 }

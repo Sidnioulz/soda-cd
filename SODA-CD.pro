@@ -77,7 +77,8 @@ HEADERS += \
     src/randomcubesimulation.h \
     src/obghostentity.h \
     src/obentity.h \
-    src/btlocalgridbroadphase.h
+    src/btlocalgridbroadphase.h \
+    src/garbageworld.h
 
 SOURCES += \
     src/ogrewidget.cpp \
@@ -114,7 +115,8 @@ SOURCES += \
     src/randomcubesimulation.cpp \
     src/obghostentity.cpp \
     src/obentity.cpp \
-    src/btlocalgridbroadphase.cpp
+    src/btlocalgridbroadphase.cpp \
+    src/garbageworld.cpp
 
 LIBS += -lOgreMain \
     -lOgreTerrain \

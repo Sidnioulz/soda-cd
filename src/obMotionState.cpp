@@ -64,9 +64,8 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
         {
             if(grid->cellNotOwnedBySelf(coords))
             {
-
                 // Cell coordinates are outside of the simulation scene boundaries (because margin ensures we don't run out of bounds when there is a neighbor)
-                if(grid->cellOutOfBounds(coords))
+				if(!grid->getGridInformation()->isWithinWorldCellBounds(coords))
                 {
                     qDebug() << "setWorldTransform(" << (parentBody? parentBody->getOwnerId() : PhysicsWorld::NullWorldId) << ")::setWorldTransform(" << worldTrans.getOrigin().x() << worldTrans.getOrigin().y() << worldTrans.getOrigin().z() << ");" <<
                           "Entity '" << parentBody->getDisplayName() <<
@@ -102,7 +101,6 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
 
                         // Update status
                         parentBody->setStatus(obEntity::OutOfWorld);
-
                         const btScalar &eventTime = parentBody->getOwnerWorld()->getCurrentTime();
 
                         //FIXME: check that what's below is good
@@ -128,6 +126,8 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
                     }
                 }
             }
+
+			// Entity still within world's control, transfer it to new Cell
             else
             {
                 grid->at(lastCellCoords).removeEntity(parentBody);

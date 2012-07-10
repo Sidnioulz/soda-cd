@@ -30,8 +30,9 @@
 #include "obRigidBody.h"
 #include "obEntityWrapper.h"
 
-// Forward reference
+// Forward references
 class Simulation;
+class GarbageWorld;
 
 //! An obEntityWrapper instance associated with a time unit that represents a temporal event.
 typedef QPair<obEntityWrapper *, btScalar> TimedEntity;
@@ -57,12 +58,12 @@ public:
       * \param targetTimeStep the duration of a simulation time step
       * \return a new PhysicsWorld
       */
-    PhysicsWorld(const Simulation &simulation, const btScalar &targetTimeStep);
+	explicit PhysicsWorld(const Simulation &simulation, const btScalar &targetTimeStep);
 
-    /*!
-      * \brief Default destructor.
-      */
-    virtual ~PhysicsWorld();
+	/*!
+	  * \brief Default destructor.
+	  */
+	virtual ~PhysicsWorld();
 
     /*!
       * \brief Starts the collision detection thread.
@@ -180,6 +181,9 @@ public:
     //TODO: document messageNeighbor
     bool messageNeighbor(const short neighborId, const char *method, QGenericArgument val0 = QGenericArgument(0), QGenericArgument val1 = QGenericArgument(), QGenericArgument val2 = QGenericArgument(), QGenericArgument val3 = QGenericArgument(), QGenericArgument val4 = QGenericArgument(), QGenericArgument val5 = QGenericArgument(), QGenericArgument val6 = QGenericArgument(), QGenericArgument val7 = QGenericArgument(), QGenericArgument val8 = QGenericArgument(), QGenericArgument val9 = QGenericArgument()) const;
 
+	//TODO: document messageNeighbor
+	bool messageGarbageWorld(const char *method, QGenericArgument val0 = QGenericArgument(0), QGenericArgument val1 = QGenericArgument(), QGenericArgument val2 = QGenericArgument(), QGenericArgument val3 = QGenericArgument(), QGenericArgument val4 = QGenericArgument(), QGenericArgument val5 = QGenericArgument(), QGenericArgument val6 = QGenericArgument(), QGenericArgument val7 = QGenericArgument(), QGenericArgument val8 = QGenericArgument(), QGenericArgument val9 = QGenericArgument()) const;
+
     static const short NullWorldId;         //!< a value used when a world ID is needed but there is no corresponding world instance
     static const short UnknownWorldId;      //!< a value used when the owner world of an object is not known yet
     static const short IdBeingProcessed;    //!< a value used when the owner world of an object is being computed
@@ -272,7 +276,7 @@ private:
         PhysicsWorld *world; /*!< The PhysicsWorld to which this thread belongs */
         QTimer timer;        /*!< A timer used to include runCollisionDetection in the event loop */
 
-    } CDInterface;       //!< the thread in which collision detection is performed
+	} CDInterface;           //!< the thread in which collision detection is performed
 
 public slots:
     void onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords);
