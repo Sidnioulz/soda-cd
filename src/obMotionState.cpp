@@ -75,9 +75,15 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
                           "  is out of bounds (" << coords.x() << "," << coords.y() << "," << coords.z() << ", LG bounds: " << grid->displayBoundsInfo() << ")" <<
                           "; Thread " << QString().sprintf("%p", QThread::currentThread());
 
+                    // Update status
                     parentBody->setStatus(obEntity::OutOfSimulationSpace);
-                    parentBody->getOwnerWorld()->removeEntity(parentBody, parentBody->getOwnerWorld()->getCurrentTime());
+
+                    // Remove entity from Cell, remove pointer to LocalGrid
+                    grid->at(lastCellCoords).removeEntity(parentBody);
                     unsetLocalGrid();
+
+                    // Detach from current world
+                    parentBody->getOwnerWorld()->removeEntity(parentBody, parentBody->getOwnerWorld()->getCurrentTime());
 
                     //TODO: manage object's future
                 }

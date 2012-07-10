@@ -96,7 +96,9 @@ void LocalGrid::addEntity(obEntityWrapper *obEnt)
     Q_ASSERT(!cellOutOfBounds(cellCoords));
     Cell &cell = at(cellCoords);
 
-    qDebug() << "LocalGrid::addEntity(" << obEnt->getDisplayName() << "): to cell " << cellCoords.x() << cellCoords.y() << cellCoords.z();
+#ifndef NDEBUG
+    qDebug() << "LocalGrid(" << ownerId << ")::addEntity(" << obEnt->getDisplayName() << "); in (" << cellCoords.x() << cellCoords.y() << cellCoords.z() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
 
     // Add the entity
     cell.addEntity(obEnt);
@@ -116,12 +118,21 @@ void LocalGrid::removeEntity(obEntityWrapper *obEnt)
     btVector3 cellCoords = gridInfo->toCellCoordinates(gridInfo->getBestTerritoryResolution(), obEnt->getCenteredPosition());
     Cell &cell = at(cellCoords);
 
+#ifndef NDEBUG
+    qDebug() << "LocalGrid(" << ownerId << ")::removeEntity(" << obEnt->getDisplayName() << "); from (" << cellCoords.x() << cellCoords.y() << cellCoords.z() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+
 	// Remove the entity from the Cell, if it was actually inside it
 	if(!cell.removeEntity(obEnt))
 	{
         if(cell.getOwnerId() == this->ownerId)
             qWarning() << "Entity '" << obEnt->getDisplayName() << "' is not present within the Cell that matches its coordinates (" << cellCoords.x() << ", " << cellCoords.y() << ", " << cellCoords.z() << ").";
 	}
+
+#ifndef NDEBUG
+    else
+        qDebug() << "LocalGrid(" << ownerId << ")::removeEntity(" << obEnt->getDisplayName() << "); Successfully removed from (" << cellCoords.x() << cellCoords.y() << cellCoords.z() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
 
     obEnt->getRigidBody()->getMotionState()->unsetLocalGrid();
 }

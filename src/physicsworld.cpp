@@ -193,7 +193,7 @@ void PhysicsWorld::removeEntity(obEntityWrapper *obEnt, btScalar targetTime)
 void PhysicsWorld::_removeEntity(obEntityWrapper *obEnt)
 {
 #ifndef NDEBUG
-    qDebug() << "PhysicsWorld(" << id << ")::_removeEntity(" << obEnt->getDisplayName() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+    qDebug() << "PhysicsWorld(" << id << ")::_removeEntity(" << obEnt->getDisplayName() << "); at " << currentTime << "; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
     // Remove the entity from the grid if it still is within a grid cell (entity knows better, it may be outside of the grid if the deletion is a result of it moving out of bounds)
@@ -208,16 +208,15 @@ void PhysicsWorld::_removeEntity(obEntityWrapper *obEnt)
     obEnt->unsetOwnerWorld();
 
 	// Delete the object if it is not in the simulation space anymore
-	if(obEnt->getStatus() == obEntity::OutOfSimulationSpace)
+    if(obEnt->getStatus() == obEntity::OutOfSimulationSpace && simulation.getWorldType() != GridInformation::ClosedWorld)
 	{
 #ifndef NDEBUG
-        qDebug() << "PhysicsWorld(" << id << ")::_removeEntity(" << obEnt->getDisplayName() << "); Entity removed and about to be deleted; Thread " << QString().sprintf("%p", QThread::currentThread());
+        qDebug() << "PhysicsWorld(" << id << ")::_removeEntity(" << obEnt->getDisplayName() << "); Entity has left simulation space, should do something about it (ignore if object went below floor in SidewiseOpenWorld); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
-        delete obEnt;
 	}
+
 #ifndef NDEBUG
-	else
-		qDebug() << "PhysicsWorld(" << id << ")::_removeEntity(" << obEnt->getDisplayName() << "); Entity effectively removed; Thread " << QString().sprintf("%p", QThread::currentThread());
+    qDebug() << "PhysicsWorld(" << id << ")::_removeEntity(" << obEnt->getDisplayName() << "); Entity effectively removed; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 }
 
