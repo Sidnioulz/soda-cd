@@ -115,8 +115,6 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
                                                Q_ARG(PhysicsWorld *, parentBody->getOwnerWorld()),
                                                Q_ARG(obEntityWrapper *, parentBody),
                                                Q_ARG(btScalar, eventTime));
-
-//                        TODO ensure that this runs in the new world's thread after _addEntity(): setLocalGrid(newParent->getLocalGrid());
                     }
                     else
                     {

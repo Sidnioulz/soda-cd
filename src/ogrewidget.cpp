@@ -543,6 +543,8 @@ void OgreWidget::render()
                     record.obEnt->setColor(1, 0, 0);
 //                    qDebug() << "Deleting eEntity '" << record.obEnt->getDisplayName() << "at time" << ptr->getTimeStep();
 //                    delete record.obEnt;
+
+                    //TODO either use a better status system or use smart pointers for deleting obEnts; // or code a garbage collector that is messaged, and that runs in the main thread.
                 }
             }
         }
