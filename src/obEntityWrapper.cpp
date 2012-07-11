@@ -38,6 +38,9 @@ obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &m
     shape(shape),
     obBody(0),
     world(0),
+    red(0),
+    green(0),
+    blue(0),
     staticMesh(staticMesh),
     animation(0),
     frameStart(0)
@@ -217,6 +220,15 @@ int obEntityWrapper::getFrameStart() const
 
 void obEntityWrapper::setColor(const float r, const float g, const float b)
 {
+    // Don't re-set an already set color
+    if(r == red && g == green && b == blue)
+        return;
+
+    red = r;
+    green = g;
+    blue = b;
+
+
     // Get the prefix of the entity's material, and then add a suffix for this color
     Ogre::String prefix;
     prefix.append(QString(materialName.c_str()).split(":").first().toAscii());
@@ -228,6 +240,7 @@ void obEntityWrapper::setColor(const float r, const float g, const float b)
     Ogre::MaterialPtr mat = OgreResources::createOrRetrieveMaterial(materialName);
 
     // Set lighting according to the color
+    //FIXME: more efficient to just do this if material did NOT exist before (i.e. make a createOrRetrieveColoredFromParent())
     mat->setAmbient(r,g,b);
     mat->setDiffuse(r,g,b,1);
     mat->setSpecular(0,0,0,1);

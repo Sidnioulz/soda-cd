@@ -93,7 +93,10 @@ public:
       * \brief Gets the Bullet version of the rigid body.
       * \return the btRigidBody of the body
       */
-    btRigidBody* getBulletBody() const;
+    inline btRigidBody* getBulletBody() const
+    {
+        return btBody;
+    }
 
     /*!
       * \brief Gets the Bullet collision shape of the body.

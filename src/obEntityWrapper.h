@@ -377,6 +377,10 @@ private:
     obDynamicRigidBody              *obBody;             //!< Bullet rigid body of the entity
     PhysicsWorld                    *world;              //!< Bullet physics world that manages the entity's collisions
 
+    float                           red;                 /*!< Red component of the obEntityWrapper's color */
+    float                           green;               /*!< Green component of the obEntityWrapper's color */
+    float                           blue;                /*!< Blue component of the obEntityWrapper's color */
+
     // PhysicsWorld specific parameters, not used yet
     bool                            staticMesh;          //!< Tells whether the entity is static or dynamic
     Animation                       *animation;          //!< Current animation of the entity wrapper (not used yet)

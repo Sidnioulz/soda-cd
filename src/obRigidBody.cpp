@@ -97,11 +97,6 @@ obRigidBody::~obRigidBody()
     delete btBody;
 }
 
-btRigidBody* obRigidBody::getBulletBody() const
-{
-    return btBody;
-}
-
 btCollisionShape* obRigidBody::getShape() const
 {
     return btShape;

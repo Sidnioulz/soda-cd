@@ -657,6 +657,7 @@ void PhysicsWorld::_tickCallback(btDynamicsWorld *world, btScalar timeStep)
     obEntityTransformRecordList *list = new obEntityTransformRecordList(w->currentTime);
     for(int i=0; i<w->entities.size(); ++i)
     {
+        //TODO: optimize this call (use a reference for entities)
         list->addTransform(w->entities[i], w->entities[i]->getRigidBody()->getBulletBody()->getWorldTransform());
 
 //        if(w->entities[i]->getStatus() & (obEntity::OutOfWorld | obEntity::OutOfSimulationSpace))

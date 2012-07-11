@@ -134,9 +134,9 @@ QWidget::showEvent(e);
 
 void OgreWidget::paintEvent(QPaintEvent *e)
 {
-    ogreRoot->_fireFrameStarted();
+//    ogreRoot->_fireFrameStarted();
         ogreRenderWindow->update();
-    ogreRoot->_fireFrameEnded();
+//    ogreRoot->_fireFrameEnded();
 
     e->accept();
 }
