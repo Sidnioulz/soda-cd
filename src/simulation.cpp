@@ -20,10 +20,10 @@
  */
 #include "simulation.h"
 
-Simulation::Simulation(const btScalar &targetTimeStep, const int &numWorlds, const btVector3 &sceneSize, const int &numEntities) :
+Simulation::Simulation(const btScalar &targetTimeStep, const int &declNumWorlds, const btVector3 &sceneSize, const int &numEntities) :
     status(Simulation::STOPPED),
     targetTimeStep(targetTimeStep),
-    numWorlds((numWorlds == 0 ? QThread::idealThreadCount() : numWorlds)),
+    numWorlds((declNumWorlds == 0 ? QThread::idealThreadCount() : declNumWorlds)),
     sceneSize(sceneSize),
     numEntities(numEntities),
     grid(0),
@@ -39,7 +39,10 @@ Simulation::Simulation(const btScalar &targetTimeStep, const int &numWorlds, con
 
 Simulation::~Simulation()
 {
-    //TODO: destroy stuff
+    for(int i=0; i<numWorlds; ++i)
+        delete worlds[i];
+
+    delete bufferInterface;
 }
 
 
@@ -77,11 +80,27 @@ void Simulation::pause()
 
 void Simulation::stop()
 {
-    if(status != RUNNING)
+    if(status != STOPPED)
     {
-        //TODO: cleanup the simulation
+#ifndef NDEBUG
+        qDebug() << "Simulation::stop(); Simulation about to be stopped; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+
+        for(int i=0; i<numWorlds; ++i)
+        {
+#ifndef NDEBUG
+            qDebug() << "Simulation::stop(); Stopping world " << worlds[i]->getId() << "; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+            worlds[i]->stopSimulation();
+#ifndef NDEBUG
+            qDebug() << "Simulation::stop(); Stopped world " << worlds[i]->getId() << "; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+        }
 
         status = STOPPED;
+#ifndef NDEBUG
+        qDebug() << "Simulation::stop(); Simulation is now stopped; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
     }
 }
 
@@ -94,7 +113,7 @@ void Simulation::createBufferInterface()
 void Simulation::createPhysicsWorlds()
 {
     // Create the physics worlds
-     for(int i=0; i<numWorlds; ++i)
+    for(int i=0; i<numWorlds; ++i)
     {
         worlds[i] = new PhysicsWorld(*this, targetTimeStep);
     }

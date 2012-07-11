@@ -75,8 +75,25 @@ obRigidBody::obRigidBody(obEntity *parent, const obRigidBody &other) :
 
 obRigidBody::~obRigidBody()
 {
-    delete triangleMesh;
+    // Check that the shape isn't compound (it is if created in createBody). If it is, delete child shapes
+    btCompoundShape *cShape = dynamic_cast<btCompoundShape *>(btShape);
+    if(cShape)
+    {
+        for(int i=0; i<cShape->getNumChildShapes(); ++i)
+            delete cShape->getChildShape(i);
+    }
+
+    // Delete the shape either way
+    delete btShape;
+
+    // Delete any triangle mesh that was used for the shape
+    if(triangleMesh)
+        delete triangleMesh;
+
+    // Delete the motion state
     delete btBody->getMotionState();
+
+    // Delete the rigid body
     delete btBody;
 }
 
@@ -305,14 +322,14 @@ void obRigidBody::createMeshCollider(Ogre::Mesh *ptr)
         }
         srcBuf->unlock();
     }
-    btShape = new btBvhTriangleMeshShape(triMesh,true);
+
+    triangleMesh = triMesh;
+    btShape = new btBvhTriangleMeshShape(triMesh, true);
 
 	btBody = new btRigidBody(0.0, _createMotionState(), btShape);
     btBody->setRestitution(StaticBodyRestitution);
     btBody->setFriction(StaticBodyFriction);
     btBody->getCollisionShape()->setUserPointer(parent);
-
-    btBody->getCollisionShape()->setUserPointer(this);
 }
 
 btMotionState *obRigidBody::_createMotionState()

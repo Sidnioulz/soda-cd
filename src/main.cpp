@@ -70,9 +70,20 @@ MainAsapCdWindow::MainAsapCdWindow(QWidget *parent) :
 
 MainAsapCdWindow::~MainAsapCdWindow()
 {
+#ifndef NDEBUG
+        qDebug() << "MainAsapCdWindow::~MainAsapCdWindow(); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+
+    simulation->stop();
+    ogreWidget->clearBufferInterface();
+
     delete simulation;
-    delete ogreWidget;
+
+    delete ogreWidget; // should be done by magic
     delete ui;
+#ifndef NDEBUG
+        qDebug() << "MainAsapCdWindow::~MainAsapCdWindow(); Destroyed; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
 }
 
 void MainAsapCdWindow::onOgreReady()
@@ -98,5 +109,10 @@ int main(int argc, char *argv[])
    MainAsapCdWindow* window = new MainAsapCdWindow();
    window->show();
 
-   return app.exec();
+   // Run the application
+   int r = app.exec();
+
+   // Memory cleanup and exit
+   delete window;
+   return r;
 }

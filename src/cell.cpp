@@ -36,3 +36,7 @@ Cell::Cell(const short ownerId) :
     ownerId(ownerId)
 {
 }
+
+Cell::~Cell()
+{
+}

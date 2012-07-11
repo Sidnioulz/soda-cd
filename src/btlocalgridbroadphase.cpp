@@ -112,8 +112,8 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
     borderVectors[0][0][0] = 0;
 
     // Pointers to the current Cell's entities and borders
-    const QVector<obEntityWrapper *> *entities;
-    const QVector<CellBorderEntity *> *borders;
+    const QVector<obEntityWrapper *> *entities = 0;
+    const QVector<CellBorderEntity *> *borders = 0;
 
     // Grid size information used to browse the grid
     const btVector3 &offset = grid->getOffset();

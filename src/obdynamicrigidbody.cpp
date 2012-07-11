@@ -39,10 +39,6 @@ obDynamicRigidBody::obDynamicRigidBody(obEntityWrapper *parent, const obDynamicR
 {
 }
 
-obDynamicRigidBody::~obDynamicRigidBody()
-{
-}
-
 btMotionState *obDynamicRigidBody::_createMotionState()
 {
 	mState = new obMotionState(parent);

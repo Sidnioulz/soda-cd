@@ -27,6 +27,9 @@
 #include <QSharedPointer>
 #include "obentitytransformrecordlist.h"
 
+// Forward declaration
+class PhysicsWorld;
+
 /*! \class CircularTransformBuffer
   * \brief Implements a circular buffer containing information on transforms for all objects at given time steps.
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
@@ -42,16 +45,17 @@
   * the buffer with fresh btTransform information.
   *
   * \warning Do not share a CircularTransformBuffer object between
-  * two writer or reader threads! This class is not thread-safe.
+  * two writer or reader threads! This class is not entirely thread-safe.
   */
 class CircularTransformBuffer : protected QVector<QSharedPointer<obEntityTransformRecordList> >
 {
 public:
     /*!
       * \brief Default constructor.
+      * \param world the parent PhysicsWorld of this CircularTransformBuffer
       * \return a new CircularTransformBuffer
       */
-    CircularTransformBuffer();
+    CircularTransformBuffer(PhysicsWorld *world);
 
     /*!
       * \brief Default destructor.
@@ -138,6 +142,11 @@ public:
      */
     btScalar getClosestAvailableTime(const btScalar &targetTime);
 
+    /*!
+     * \brief Aborts all current blocking calls for writes, and forbids any writing to the CircularTransformBuffer.
+     */
+    void abortAllWrites();
+
 private:
     /*!
       * \brief Increases the latest past index and frees the previous cell.
@@ -166,6 +175,11 @@ private:
 
     QWaitCondition bufferNotFull;           //!< An object to wait for "buffer not full" signals
     QMutex fullBufferMutex;                 //!< A mutex for internal use within the wait condition
+
+    QMutex writeMutex;                      //!< A mutex for write operations
+    bool writeAborted;                      //!< A boolean flag to abort all write operations on the buffer (prevents appending time steps)
+
+    PhysicsWorld *world;                    //!< Parent PhysicsWorld of this CircularTransformBuffer, used to retrieve world status on wait condition interrupt
 };
 
 #endif // CIRCULARTRANSFORMBUFFER_H

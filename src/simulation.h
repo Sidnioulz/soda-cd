@@ -47,13 +47,13 @@ public:
 	/*!
 	  * \brief Default constructor.
 	  * \param targetTimeStep the duration of a simulation time step
-      * \param numWorlds the number of PhysicsWorld to run in the Simulation (0 = automatic)
+      * \param declNumWorlds the number of PhysicsWorld to run in the Simulation (0 = automatic)
 	  * \param sceneSize the size of the simulated area
 	  * \param numEntities the number of simulated entities
 	  * \return a new Simulation
 	  */
     Simulation(const btScalar &targetTimeStep = 1.0f/60,
-               const int &numWorlds = 0,
+               const int &declNumWorlds = 0,
                const btVector3 &sceneSize = btVector3(0, 0, 0),
                const int &numEntities = 0);
 

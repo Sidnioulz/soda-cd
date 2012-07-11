@@ -38,6 +38,9 @@ OgreWidget::OgreWidget(int targetFPS, QWidget *parent) :
     currentlyRendering(false),
     renderingPassQueued(false)
 {
+#ifndef NDEBUG
+        qDebug() << "OgreWidget::OgreWidget(); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
     setAttribute(Qt::WA_OpaquePaintEvent);
     setAttribute(Qt::WA_PaintOnScreen);
     setFocusPolicy(Qt::StrongFocus);
@@ -47,15 +50,50 @@ OgreWidget::OgreWidget(int targetFPS, QWidget *parent) :
     renderingTimer.start();
     connect(&renderingTimer, SIGNAL(timeout()), this, SLOT(onTimerTick()));
     globalTimer.start();
+
+#ifndef NDEBUG
+        qDebug() << "OgreWidget::OgreWidget(); Constructed; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
 }
 
 OgreWidget::~OgreWidget()
 {
-    if(mTrayMgr)
-        delete mTrayMgr;
+#ifndef NDEBUG
+        qDebug() << "OgreWidget::~OgreWidget(); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+
+    // Get rid of frame listener
+    ogreRoot->removeFrameListener(this);
+
+    // Inform that the window is not in use anymore
     windowClosed(ogreRenderWindow);
 
-    OgreResources::deleteRoot();
+    // Destroy tray manager
+    if(mTrayMgr)
+        delete mTrayMgr;
+
+    // Destroy viewport
+    ogreRenderWindow->removeAllViewports();
+//    delete ogreViewport;
+
+    // Destroy camera
+    ogreSceneManager->destroyAllCameras();
+
+    // Destroy render window
+    ogreRoot->destroyRenderTarget(ogreRenderWindow);
+
+    //TODO: for each resource group in rgs = Ogre::ResourceGroupManager::getSingleton().getResourceGroups();
+    //      Ogre::ResourceGroupManager::getSingleton().destroyResourceGroup(rgs[i]);
+
+    // Destroy scene manager
+//    ogreRoot->destroySceneManager(ogreSceneManager); //FIXME: crashes on SceneManager::destroyAllMovableObjects
+
+    // Destroy root
+//    OgreResources::deleteRoot(); //FIXME: crashes on SceneManager::destroyAllMovableObjects
+
+#ifndef NDEBUG
+        qDebug() << "OgreWidget::OgreWidget(); Destroyed; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
 }
 
 Ogre::SceneManager* OgreWidget::getSceneManager() const

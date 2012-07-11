@@ -31,6 +31,210 @@
 #include "cellborderentity.h"
 #include "simulation.h"
 
+
+PhysicsWorldThread::PhysicsWorldThread(QObject *parent) :
+    QThread(parent)
+{
+#ifndef NDEBUG
+    qWarning() << "PhysicsWorldThread()::PhysicsWorldThread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+
+    // Setup an object that will queue a termination signal when we want to leave the thread
+    // Better than leaving the thread directly, which could cause memory corruptions
+    shutDownHelper = new QSignalMapper;
+    shutDownHelper->setMapping(this, 0);
+    connect(this, SIGNAL(aboutToStop()), shutDownHelper, SLOT(map()));
+    connect(shutDownHelper, SIGNAL(mapped(int)), this, SLOT(_exitEventLoop()), Qt::DirectConnection);
+
+#ifndef NDEBUG
+    qWarning() << "PhysicsWorldThread()::PhysicsWorldThread constructed; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+}
+
+void PhysicsWorldThread::startAndAttachWorker(PhysicsWorldWorker *worker)
+{
+#ifndef NDEBUG
+    qWarning() << "PhysicsWorldThread()::launchWorker(" << worker << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+
+    // Make sure to leave this function only upon actual thread starting
+    connect(this, SIGNAL(started()), this, SLOT(setReadyStatus()), Qt::DirectConnection);
+
+    // Start the thread
+    start();
+
+    // Make sure that the worker and the shutdown helper run their events on this thread
+    worker->moveToThread(this);
+    shutDownHelper->moveToThread(this);
+
+    // Make sure the worker will be aware of the thread shutting down (so that it aborts its events left to run)
+    connect(this, SIGNAL(aboutToStop()), worker, SLOT(onThreadStopping()));
+
+    // Wait for the thread to be actually started
+    mutex.lock();
+    waitCondition.wait(&mutex);
+
+#ifndef NDEBUG
+    qWarning() << "PhysicsWorldThread()::launchWorker(" << worker << "); Worker launched and thread started; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+}
+
+void PhysicsWorldThread::exitEventLoop()
+{
+#ifndef NDEBUG
+    qWarning() << "PhysicsWorldThread()::exitEventLoop(); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+
+    emit aboutToStop();
+}
+
+PhysicsWorldThread::~PhysicsWorldThread()
+{
+#ifndef NDEBUG
+    qWarning() << "PhysicsWorldThread()::~PhysicsWorldThread(); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+
+    delete shutDownHelper;
+}
+
+void PhysicsWorldThread::run()
+{
+    QThread::exec();
+}
+
+void PhysicsWorldThread::_exitEventLoop()
+{
+#ifndef NDEBUG
+    qWarning() << "PhysicsWorldThread()::_exitEventLoop(); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+
+    exit();
+}
+
+void PhysicsWorldThread::setReadyStatus()
+{
+    waitCondition.wakeAll();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PhysicsWorldWorker::PhysicsWorldWorker(PhysicsWorld *parent) :
+        QObject(),
+        parent(parent),
+        _shuttingDown(false)
+{
+}
+
+PhysicsWorldWorker::~PhysicsWorldWorker()
+{
+    qDebug() << "PhysicsWorldWorker(" << parent->id << ")::~PhysicsWorldWorker(); Thread " << QString().sprintf("%p", QThread::currentThread());
+}
+
+void PhysicsWorldWorker::onThreadStopping()
+{
+    qDebug() << "PhysicsWorldWorker(" << parent->id << ")::onThreadStopping(); Shutdown flag now set, will abort future events as much as possible; Thread " << QString().sprintf("%p", QThread::currentThread());
+    _shuttingDown = true;
+}
+
+void PhysicsWorldWorker::runOnePass()
+{
+    // Avoid additional computations due to non-empty event queue upon thread shutting down
+    if(_shuttingDown)
+        return;
+
+#ifndef NDEBUG
+    qDebug() << "PhysicsWorld(" << parent->id << ")::runOnePass(" << parent->currentTime << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+
+    // Stores the moment at which the simulation must be rewinded after an object insertion or removal
+    btScalar rewindTime = std::numeric_limits<btScalar>::max();
+    bool rewind=false;
+
+    // Manage entity and grid queues before the next simulation
+    //FIXME: the code to add/remove entities below is probably partly wrong now.
+    parent->entityMutex.lock();
+//        while(!parent->entityAdditionQueue.isEmpty())
+//        {
+//            QPair<obEntityWrapper *, btScalar> entity = parent->entityAdditionQueue.dequeue();
+//            parent->_addEntity(entity.first);
+//            rewindTime = qMin(rewindTime, entity.second);
+//            rewind = true;
+//        }
+    while(!parent->entityRemovalQueue.isEmpty())
+    {
+        QPair<obEntityWrapper *, btScalar> entity = parent->entityRemovalQueue.dequeue();
+        parent->_removeEntity(entity.first);
+        rewindTime = qMin(rewindTime, entity.second);
+        rewind = true;
+    }
+    parent->entityMutex.unlock();
+
+    // Rollback to a given time step (not yet implemented)
+    if(rewind && rewindTime < parent->currentTime)
+    {
+#ifndef NDEBUG
+        qDebug() << "PhysicsWorld(" << parent->id << ")::runOnePass(" << parent->currentTime << "); " << "World " << parent->id << "added/removed entity at time" << rewindTime << "but is already at" << parent->currentTime << "; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+    }
+
+    // Simulate a step
+    parent->getBulletManager()->getDynamicsWorld()->stepSimulation(parent->targetTimeStep);
+
+    // While the application is not stopping, queue another pass
+    if(!_shuttingDown)
+        QMetaObject::invokeMethod(this, "runOnePass", Qt::QueuedConnection);
+#ifndef NDEBUG
+    else
+        qDebug() << "PhysicsWorld(" << parent->id << ")::runOnePass(" << parent->currentTime << "); Did not queue next pass, shutting down; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+}
+
+void PhysicsWorldWorker::onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords)
+{
+#ifndef NDEBUG
+    qDebug() << "PhysicsWorld(" << parent->id << ")::onTerritoryIntrusion(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", Vector[" << coords.size() << "]); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+
+    //TODO
+}
+
+void PhysicsWorldWorker::onOwnershipTransfer(const PhysicsWorld *&neighbor, const obEntityWrapper *&object, const btScalar &time)
+{
+#ifndef NDEBUG
+    qDebug() << "PhysicsWorld(" <<  parent->id << ")::onOwnershipTransfer(" << neighbor->getId() << ", " << object->getDisplayName() << ", " << time << "); FOR NOW WE IGNORE TIME!; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+
+    obEntityWrapper *obEnt = const_cast<obEntityWrapper *>(object);
+//    obEnt->setStatus(obEntity::NormalStatus);
+//     parent->_addEntity(obEnt);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 short PhysicsWorld::WorldIdCounter = 1;
 const short PhysicsWorld::NullWorldId = -500;
 const short PhysicsWorld::UnknownWorldId = -1;
@@ -56,7 +260,7 @@ const int PhysicsWorld::EntityColors[PhysicsWorld::NbColors][3] = {
 PhysicsWorld::PhysicsWorld(const Simulation &simulation, const btScalar &targetTimeStep) :
     simulation(simulation),
     id(WorldIdCounter++), targetTimeStep(targetTimeStep), entities(), globalStaticEntities(),
-    buffer(new CircularTransformBuffer()), currentTime(0),
+    buffer(new CircularTransformBuffer(this)), currentTime(0),
     localGrid(0), bulletManager(new BulletManager()), entityMutex(),
     entityAdditionQueue(), entityRemovalQueue(), worldThread(this), timer()
 {
@@ -64,10 +268,10 @@ PhysicsWorld::PhysicsWorld(const Simulation &simulation, const btScalar &targetT
     qDebug() << "PhysicsWorld(" << id << ")::PhysicsWorld();";
 #endif
 
-    moveToThread(&worldThread);
+    // Setup broadphase
     bulletManager->setBroadphaseWorld(this);
 
-//    getBulletManager()->getDynamicsWorld()->getDispatchInfo().m_useContinuous = true;
+    // Set tick callback that will be called to write transforms to the buffer
     getBulletManager()->getDynamicsWorld()->setInternalTickCallback(_tickCallback, static_cast<void *>(this));
 
     // Initial CircularTransformBuffer entry
@@ -77,9 +281,9 @@ PhysicsWorld::PhysicsWorld(const Simulation &simulation, const btScalar &targetT
         initialPositions->addTransform(entities[i], entities[i]->getRigidBody()->getBulletBody()->getWorldTransform());
     buffer->appendTimeStep(initialPositions);
 
-    timer.setInterval(0);
-    connect(&timer, SIGNAL(timeout()), this, SLOT(runOnePass()));
-    worldThread.start();
+    // Build the worker object that will run in this PhysicsWorld's thread
+    worker = new PhysicsWorldWorker(this);
+
 #ifndef NDEBUG
     qDebug() << "PhysicsWorld(" << id << ")::PhysicsWorld(); Constructed.";
 #endif
@@ -87,21 +291,30 @@ PhysicsWorld::PhysicsWorld(const Simulation &simulation, const btScalar &targetT
 
 PhysicsWorld::~PhysicsWorld()
 {
-    if(worldThread.isRunning())
-        worldThread.exit();
+    stopSimulation();
+    delete worker;
 
     QListIterator<TimedEntity> addIt(entityAdditionQueue);
     while(addIt.hasNext())
     {
         obEntityWrapper *obEnt = addIt.next().first;
-        _entityVectoryRemovalMethod(entities, obEnt);
         delete obEnt;
     }
     entityAdditionQueue.clear();
 
-    for(int i=0; i<entities.size(); ++i)
-        delete entities[i];
-    entities.clear();
+    QListIterator<TimedEntity> remIt(entityRemovalQueue);
+    while(remIt.hasNext())
+    {
+        obEntityWrapper *obEnt = remIt.next().first;
+        _removeEntity(obEnt);
+    }
+    entityRemovalQueue.clear();
+
+    while(!entities.isEmpty())
+        _removeEntity(entities[0]);
+
+    if(bulletManager)
+        delete bulletManager;
 
     for(int i=0; i<globalStaticEntities.size(); ++i)
         delete globalStaticEntities[i];
@@ -109,19 +322,33 @@ PhysicsWorld::~PhysicsWorld()
 
     if(localGrid)
         delete localGrid;
-
-    if(bulletManager)
-        delete bulletManager;
 }
 
 void PhysicsWorld::startSimulation()
 {
-    timer.start();
+    // Start the thread with the worker attached to it
+    worldThread.startAndAttachWorker(worker);
+
+    //TODO: re-enable writes on the CircularTransformBuffer
+
+    // Call runOnePass, which will automatically trigger the next one until shutting down
+    QMetaObject::invokeMethod(worker, "runOnePass", Qt::QueuedConnection);
 }
 
 void PhysicsWorld::stopSimulation()
 {
-    timer.stop();
+    if(worldThread.isRunning())
+    {
+        // Tell the worker to shutdown and queue a thread shutdown event that will stop the thread once its event queue is emptied
+        worldThread.exitEventLoop();
+
+        // Stop all potential blocking calls that might prevent the worker from finishing
+        // Remember that this is called from the main thread, so race conditions must be properly managed
+        buffer->abortAllWrites();
+
+        // Wait for the worker to return from the last pass, and for the event queue to reach the thread shutdown event
+        worldThread.wait();
+    }
 }
 
 BulletManager* PhysicsWorld::getBulletManager() const
@@ -374,7 +601,7 @@ bool PhysicsWorld::messageNeighbor(PhysicsWorld *neighbor, const char *method, Q
 #ifndef NDEBUG
         qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", " << method << "); Invoking method; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
-        QMetaObject::invokeMethod(neighbor, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
+        QMetaObject::invokeMethod(neighbor->worker, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
 #ifndef NDEBUG
         qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", " << method << "); Message sent; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
@@ -402,7 +629,7 @@ bool PhysicsWorld::messageNeighbor(const short neighborId, const char *method, Q
 #ifndef NDEBUG
         qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Invoking method; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
-		QMetaObject::invokeMethod(neighbor, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
+        QMetaObject::invokeMethod(neighbor->worker, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
 #ifndef NDEBUG
         qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Message sent; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
@@ -420,6 +647,11 @@ bool PhysicsWorld::messageNeighbor(const short neighborId, const char *method, Q
 void PhysicsWorld::_tickCallback(btDynamicsWorld *world, btScalar timeStep)
 {
     PhysicsWorld *w = static_cast<PhysicsWorld *>(world->getWorldUserInfo());
+
+#ifndef NDEBUG
+    qDebug() << "PhysicsWorld(" << w->id << ")::_tickCallback(" << w->currentTime << ", " << timeStep << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+
     w->currentTime += timeStep;
 
     obEntityTransformRecordList *list = new obEntityTransformRecordList(w->currentTime);
@@ -432,65 +664,4 @@ void PhysicsWorld::_tickCallback(btDynamicsWorld *world, btScalar timeStep)
     }
 
     w->buffer->appendTimeStep(list);
-}
-
-void PhysicsWorld::runOnePass()
-{
-#ifndef NDEBUG
-    qDebug() << "PhysicsWorld(" << id << ")::runOnePass(" << currentTime << "); Thread " << QString().sprintf("%p", QThread::currentThread());
-#endif
-
-    // Stores the moment at which the simulation must be rewinded after an object insertion or removal
-    btScalar  rewindTime = std::numeric_limits<btScalar>::max();
-    bool rewind=false;
-
-    // Manage entity and grid queues before the next simulation
-    //FIXME: the code to add/remove entities below is probably partly wrong now.
-    entityMutex.lock();
-//        while(!entityAdditionQueue.isEmpty())
-//        {
-//            QPair<obEntityWrapper *, btScalar> entity = entityAdditionQueue.dequeue();
-//            _addEntity(entity.first);
-//            rewindTime = qMin(rewindTime, entity.second);
-//            rewind = true;
-//        }
-    while(!entityRemovalQueue.isEmpty())
-    {
-        QPair<obEntityWrapper *, btScalar> entity = entityRemovalQueue.dequeue();
-        _removeEntity(entity.first);
-        rewindTime = qMin(rewindTime, entity.second);
-        rewind = true;
-    }
-    entityMutex.unlock();
-
-    // Rollback to a given time step (not yet implemented)
-    if(rewind && rewindTime < currentTime)
-    {
-#ifndef NDEBUG
-        qDebug() << "PhysicsWorld(" << id << ")::runOnePass(" << currentTime << "); " << "World " << id << "added/removed entity at time" << rewindTime << "but is already at" << currentTime << "; Thread " << QString().sprintf("%p", QThread::currentThread());
-#endif
-    }
-
-    // Simulate a step
-    getBulletManager()->getDynamicsWorld()->stepSimulation(targetTimeStep);
-}
-
-void PhysicsWorld::onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords)
-{
-#ifndef NDEBUG
-    qDebug() << "PhysicsWorld(" << id << ")::onTerritoryIntrusion(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", Vector[" << coords.size() << "]); Thread " << QString().sprintf("%p", QThread::currentThread());
-#endif
-
-    //TODO
-}
-
-void PhysicsWorld::onOwnershipTransfer(const PhysicsWorld *&neighbor, const obEntityWrapper *&object, const btScalar &time)
-{
-#ifndef NDEBUG
-    qDebug() << "PhysicsWorld(" << id << ")::onOwnershipTransfer(" << neighbor->getId() << ", " << object->getDisplayName() << ", " << time << "); Thread " << QString().sprintf("%p", QThread::currentThread());
-#endif
-
-	obEntityWrapper *obEnt = const_cast<obEntityWrapper *>(object);
-//    obEnt->setStatus(obEntity::NormalStatus);
-//    _addEntity(obEnt);
 }

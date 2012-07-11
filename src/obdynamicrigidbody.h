@@ -73,11 +73,6 @@ public:
                        const obDynamicRigidBody &other);
 
 	/*!
-	  * \brief Default destructor.
-	  */
-	virtual ~obDynamicRigidBody();
-
-	/*!
 	  * \brief Returns the parent obEntityWrapper of this rigid body
 	  * \return the parent obEntityWrapper of this object
 	  */

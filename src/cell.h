@@ -21,6 +21,7 @@
 #ifndef CELL_H
 #define CELL_H
 
+#include <QSharedPointer>
 #include <QVector>
 #include "obEntityWrapper.h"
 #include "cellborderentity.h"
@@ -51,6 +52,11 @@ public:
       */
     Cell(const short ownerId);
 
+    /*!
+     * \brief Destructor.
+     */
+    ~Cell();
+
     /*! \brief Changes the owner id of this Cell.
       * \param id the new owner id
       */
@@ -74,8 +80,8 @@ public:
     {
         Q_ASSERT(entity != NULL);
 
-        if(entities == NULL)
-            entities = new QVector<obEntityWrapper *>(1, entity);
+        if(entities.isNull())
+            entities = QSharedPointer<QVector<obEntityWrapper *> >(new QVector<obEntityWrapper *>(1, entity));
         else
         {
             Q_ASSERT(!entities->contains(entity));
@@ -90,8 +96,8 @@ public:
     {
         Q_ASSERT(entity != NULL);
 
-        if(borders == NULL)
-            borders = new QVector<CellBorderEntity *>(1, entity);
+        if(borders.isNull())
+            borders = QSharedPointer<QVector<CellBorderEntity *> >(new QVector<CellBorderEntity *>(1, entity));
         else
         {
             Q_ASSERT(!borders->contains(entity));
@@ -105,18 +111,10 @@ public:
       */
     inline bool containsEntity(obEntityWrapper *entity)
     {
-        if(entities == NULL)
+        if(entities.isNull())
             return false;
         else
             return entities->contains(entity);
-    }
-
-    /*! \brief Removes all entities from the Cell, without deleting the entities vector.
-      */
-    inline void clearEntities()
-    {
-        if(entities)
-            entities->clear();
     }
 
     /*! \brief Remove an entity from this Cell.
@@ -125,27 +123,19 @@ public:
 	  */
 	inline bool removeEntity(obEntityWrapper *entity)
 	{
-        if(entities)
+        if(!entities.isNull())
             for(int i=0; i<entities->size(); ++i)
                 if(entity == entities->at(i))
                 {
                     entities->remove(i);
+
+                    if(entities->isEmpty())
+                        entities.clear();
+
                     return true;
                 }
 
 		return false;
-	}
-
-    /*! \brief Deletes the entities vector of the Cell.
-      */
-    inline void removeEntities()
-    {
-        if(entities)
-        {
-            entities->clear();
-            delete entities;
-            entities = 0;
-        }
     }
 
     /*! \brief Returns the entities of the Cell.
@@ -153,7 +143,7 @@ public:
       */
     inline const QVector<obEntityWrapper *> *getEntities() const
     {
-        return entities;
+        return entities.data();
     }
 
     /*! \brief Returns the entities of the Cell. The dummy parameter indicates the returned vector can be modified.
@@ -161,7 +151,7 @@ public:
       */
     inline QVector<obEntityWrapper *> *getEntities(int)
     {
-        return entities;
+        return entities.data();
     }
 
     /*! \brief Returns the borders of the Cell.
@@ -169,7 +159,7 @@ public:
       */
     inline const QVector<CellBorderEntity *> *getBorders() const
     {
-        return borders;
+        return borders.data();
     }
 
     /*! \brief Returns the borders of the Cell. The dummy parameter indicates the returned vector can be modified.
@@ -177,12 +167,12 @@ public:
       */
     inline QVector<CellBorderEntity *> *getBorders(int)
     {
-        return borders;
+        return borders.data();
     }
 
 private:
-    QVector<obEntityWrapper *> *entities; //!< A container for the entities whose center point is within the Cell.
-    QVector<CellBorderEntity *> *borders; //!< A container for entities that simulate a physics border for a Cell.
-    short ownerId;                        //!< Id of the PhysicsWorld that owns entities within this Cell.
+    QSharedPointer<QVector<obEntityWrapper *> >    entities; //!< A container for the entities whose center point is within the Cell.
+    QSharedPointer<QVector<CellBorderEntity *> >   borders;  //!< A container for entities that simulate a physics border for a Cell.
+    short                                          ownerId;  //!< Id of the PhysicsWorld that owns entities within this Cell.
 };
 #endif // CELL_H

@@ -20,15 +20,19 @@
  */
 #include <QtDebug>
 #include "circulartransformbuffer.h"
+#include "physicsworld.h"
 
-CircularTransformBuffer::CircularTransformBuffer() :
+CircularTransformBuffer::CircularTransformBuffer(PhysicsWorld *world) :
     QVector<QSharedPointer<obEntityTransformRecordList> >(CircularTransformBuffer::BufferSize),
     latestPastIndex(0),
     currentPhysicsIndex(0),
 	physicsRefTime(0),
     bufferType(DiscreteCollisionDetection),
     bufferNotFull(),
-	fullBufferMutex()
+    fullBufferMutex(),
+    writeMutex(),
+    writeAborted(false),
+    world(world)
 {
 }
 
@@ -54,20 +58,38 @@ void CircularTransformBuffer::appendTimeStep(obEntityTransformRecordList *simul)
     fullBufferMutex.tryLock();
 
     // Make sure that next cell is empty, otherwise wait till it is
-    while(getEntryState(nextIndex(currentPhysicsIndex)) != CT_STATE_EMPTY)
+    while(getEntryState(nextIndex(currentPhysicsIndex)) != CT_STATE_EMPTY && !writeAborted)
+    {
+#ifndef NDEBUG
+        qDebug() << "CircularTransformBuffer()::appendTimeStep(" << simul->getTimeStep() << "); About to wait; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
         bufferNotFull.wait(&fullBufferMutex);
+    }
 
     // Insert the btTransforms computed
-    this->operator [](currentPhysicsIndex) = QSharedPointer<obEntityTransformRecordList>(simul);
+    writeMutex.lock();
+    if(!writeAborted)
+    {
+#ifndef NDEBUG
+        qDebug() << "CircularTransformBuffer()::appendTimeStep(" << simul->getTimeStep() << "); Writing time step; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+        this->operator [](currentPhysicsIndex) = QSharedPointer<obEntityTransformRecordList>(simul);
 
-    // Update the physics reference time
-//    if(physicsRefTime == 0)
-//        physicsRefTime = simul->getTimeStep();
+//        // Update the physics reference time
+//        if(physicsRefTime == 0)
+//            physicsRefTime = simul->getTimeStep();
+//
+//        qDebug() << "Included TSTM with time=" << simul->getTimeStep();
 
-//    qDebug() << "Included TSTM with time=" << simul->getTimeStep();
+        // Increase the physics pointer
+        currentPhysicsIndex = nextIndex(currentPhysicsIndex);
+    }
+#ifndef NDEBUG
+    else
+        qDebug() << "CircularTransformBuffer()::appendTimeStep(" << simul->getTimeStep() << "); Writes are aborted; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
 
-    // Increase the physics pointer
-    currentPhysicsIndex = nextIndex(currentPhysicsIndex);
+    writeMutex.unlock();
 }
 
 QSharedPointer<obEntityTransformRecordList> CircularTransformBuffer::processNext(const btScalar &targetTime)
@@ -139,6 +161,19 @@ btScalar CircularTransformBuffer::getClosestAvailableTime(const btScalar &target
     // Case when there is no entry: just ignore this buffer
     else
         return targetTime;
+}
+
+void CircularTransformBuffer::abortAllWrites()
+{
+    writeMutex.lock();
+
+    // Forbid future writes
+    writeAborted = true;
+
+    // Make sure to exit any currently writing function
+    bufferNotFull.wakeAll();
+
+    writeMutex.unlock();
 }
 
 void CircularTransformBuffer::dropPastIndex()

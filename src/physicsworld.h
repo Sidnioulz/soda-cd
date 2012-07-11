@@ -30,14 +30,174 @@
 #include "obRigidBody.h"
 #include "obEntityWrapper.h"
 
-// Forward reference
+// Forward declarations
 class Simulation;
+class PhysicsWorldThread;
+class PhysicsWorldWorker;
+class PhysicsWorld;
 
 //! An obEntityWrapper instance associated with a time unit that represents a temporal event.
 typedef QPair<obEntityWrapper *, btScalar> TimedEntity;
 
 //! Queue of TimedEntity instances.
 typedef QQueue<TimedEntity > TimedEntityQueue;
+
+
+
+
+/*! \class PhysicsWorldThread
+  * \brief A thread with a public event loop starting method.
+  * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
+  *
+  * This class is a QThread with a running event loop.
+  */
+class PhysicsWorldThread : public QThread
+{
+    Q_OBJECT
+
+public:
+    /*!
+      * \brief Default constructor.
+      * \param parent the parent QObject of this thread
+      * \return a new PhysicsWorldThread
+      */
+    explicit PhysicsWorldThread(QObject *parent=0);
+
+    /*!
+      * \brief Default destructor.
+      */
+    ~PhysicsWorldThread();
+
+    /*!
+     * \brief Starts the thread and attaches a PhysicsWorldWorker to it.
+     * \param worker the PhysicsWorldWorker that will run in this PhysicsWorldThread
+     */
+    void startAndAttachWorker(PhysicsWorldWorker *worker);
+
+    /*!
+     * \brief Tells the worker to abort its jobs, and adds an exit event to the event loop.
+     */
+    void exitEventLoop();
+
+public slots:
+    /*!
+     * \brief Run method of the thread, that just runs an event loop.
+     */
+    void run();
+
+private slots:
+    /*!
+     * \brief Actually exits the event loop, should be called by the last event of the loop.
+     */
+    void _exitEventLoop();
+
+    /*!
+     * \brief Informs that the thread is ready to run, and allows leaving the startAndAttachWorker() method.
+     */
+    void setReadyStatus();
+
+signals:
+    /*!
+     * \brief A signal to which the PhysicsWorldThread's shutdown helper and the PhysicsWorldWorker are connected.
+     */
+    void aboutToStop();
+
+private:
+    QSignalMapper   *shutDownHelper;    /*!< An object to help shutting the thread down properly */
+    QWaitCondition  waitCondition;      /*!< A wait condition that makes sure the startAndAttachWorker() method leaves only when the thread is actually started */
+    QMutex          mutex;              /*!< A mutex that makes sure the startAndAttachWorker() method leaves only when the thread is actually started */
+};
+
+
+
+
+
+
+
+
+
+/*! \class PhysicsWorldWorker
+  * \brief A worker that contains methods executed in a PhysicsWorldThread.
+  * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
+  *
+  * This class contains utilities that are run within a PhysicsWorldThread.
+  * These methods must respect the obligation to shut down when a given flag is set
+  * in the object, and they all run sequentially within the same thread.
+  *
+  * When a method from PhysicsWorldWorker contains a blocking call, it should be
+  * possible to unblock this call from a parent PhysicsWorld object running in
+  * the main thread. See CircularTransformBuffer for an example.
+  */
+class PhysicsWorldWorker: public QObject
+{
+    Q_OBJECT
+
+public:
+    /*!
+      * \brief Default constructor.
+      * \param parent the PhysicsWorld this worker operates on
+      * \return a new PhysicsWorldWorker
+      */
+    explicit PhysicsWorldWorker(PhysicsWorld *parent);
+
+    /*!
+      * \brief Default destructor.
+      */
+    ~PhysicsWorldWorker();
+
+public slots:
+    /*!
+     * \brief Called when the PhysicsWorldThread will shutdown soon, raises a shutdown flag within the PhysicsWorldWorker.
+     */
+    void onThreadStopping();
+
+    /*!
+     * \brief Runs one pass of simulation, and schedules another one in the event loop if the shutdown flag isn't raised.
+     */
+    void runOnePass();
+
+    /*!
+     * \brief Called when a neighbor's entity overlaps the border between that neighbor and the parent PhysicsWorld.
+     * \param neighbor the neighbor whose object overlaps
+     * \param coords the area(s) of overlapping
+     */
+    void onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords);
+
+    /*!
+     * \brief Called when an obEntityWrapper's ownership is transfered to this PhysicsWorldWorker's parent.
+     * \param neighbor the PhysicsWorld that gave the obEntityWrapper
+     * \param object the givenobEntityWrapper
+     * \param time the timestamp from which the obEntityWrapper should be included in the physics engine
+     */
+    void onOwnershipTransfer(const PhysicsWorld *&neighbor, const obEntityWrapper *&object, const btScalar &time);
+
+private:
+    PhysicsWorld    *parent;
+    bool            _shuttingDown;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*! \class PhysicsWorld
   * \brief The class that manages a Physics rendering engine for a subset of the Simulation.
@@ -49,6 +209,8 @@ typedef QQueue<TimedEntity > TimedEntityQueue;
 class PhysicsWorld : public QObject
 {
     Q_OBJECT
+
+    friend class PhysicsWorldWorker;
 
 public:
     /*!
@@ -65,12 +227,12 @@ public:
 	virtual ~PhysicsWorld();
 
     /*!
-      * \brief Starts the collision detection thread.
+      * \brief Starts the simulation thread.
       */
     void startSimulation();
 
     /*!
-      * \brief Stops the collision detection thread.
+      * \brief Stops the simulation thread.
       */
     void stopSimulation();
 
@@ -225,36 +387,6 @@ private:
      */
     static void _tickCallback(btDynamicsWorld *world, btScalar timeStep);
 
-    /*! \class PhysicsWorldThread
-      * \brief A thread with a public event loop starting method.
-      * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
-      *
-      * This class is a QThread with a running event loop.
-      */
-    class PhysicsWorldThread : public QThread
-    {
-    public:
-
-        /*!
-          * \brief Default constructor.
-          * \param parent the parent QObject of this thread
-          * \return a new PhysicsWorldThread
-          */
-        explicit PhysicsWorldThread(QObject *parent) :
-            QThread(parent)
-        {
-        }
-
-        /*!
-         * \brief Run method of the thread, that just runs an event loop.
-         */
-        inline void run()
-        {
-            QThread::exec();
-        }
-    };
-
-
     const Simulation          &simulation;               /*!< the Simulation this world belongs to */
 
     static const int          NbColors = 12;             //!< number of available colors for the per-thread coloring of entities
@@ -274,16 +406,10 @@ private:
     TimedEntityQueue          entityRemovalQueue;        //!< a queue for objects to be removed between next iterations of the collision detection algorithm
 
     PhysicsWorldThread        worldThread;               /*!< The thread in which CD passes run, and in which messages are received */
+    PhysicsWorldWorker        *worker;                   /*!< The worker object that contains the CD passes code and that is run in worldThread */
     QTimer                    timer;                     /*!< A timer used to spam runOnePass() events in the event loop */
 
     static short              WorldIdCounter;            //!< a counter to make sure world IDs are unique
-
-protected slots:
-    void runOnePass();
-
-public slots:
-    void onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords);
-    void onOwnershipTransfer(const PhysicsWorld *&neighbor, const obEntityWrapper *&object, const btScalar &time);
 };
 
 #endif // PHYSICSWORLD_H

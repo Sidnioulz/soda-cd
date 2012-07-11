@@ -28,8 +28,8 @@
 #include "localgrid.h"
 #include "ogreresources.h"
 
-RandomCubeSimulation::RandomCubeSimulation(const btScalar &targetTimeStep, const int &numWorlds, const btVector3 &sceneSize, const int &numEntities) :
-    Simulation(targetTimeStep, numWorlds, sceneSize, numEntities)
+RandomCubeSimulation::RandomCubeSimulation(const btScalar &targetTimeStep, const int &declNumWorlds, const btVector3 &sceneSize, const int &numEntities) :
+    Simulation(targetTimeStep, declNumWorlds, sceneSize, numEntities)
 {
 }
 

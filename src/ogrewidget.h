@@ -122,6 +122,14 @@ public:
     }
 
     /*!
+     * \brief Removes any registered CircularTransformBufferInterface for this OgreWidget.
+     */
+    inline void clearBufferInterface()
+    {
+        bufferInterface = 0;
+    }
+
+    /*!
      * \brief Tells whether a CircularTransformBufferInterface was registered for this OgreWidget.
      * \return true if the OgreWidget has a CircularTransformBufferInterface to read, false otherwise
      */
