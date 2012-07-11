@@ -21,8 +21,8 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#define APP_NAME    "SODA CD"
-#define VERSION     "0.2.8"
+#define APP_NAME    "PEPSI's"
+#define VERSION     "0.3.0"
 
 #include <QMainWindow>
 #include "ogrewidget.h"
