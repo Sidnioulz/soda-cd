@@ -121,6 +121,9 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
                                                Q_ARG(PhysicsWorld *, oldOwner),
                                                Q_ARG(obEntityWrapper *, parentBody),
                                                Q_ARG(btScalar, eventTime));
+
+
+
                     }
                     else
                     {

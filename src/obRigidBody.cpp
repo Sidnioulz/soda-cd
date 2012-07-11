@@ -40,7 +40,6 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 #include "obRigidBody.h"
-#include "utils.h"
 
 #include <QtDebug>
 #include "ogreresources.h"
@@ -50,13 +49,11 @@ const float obRigidBody::StaticBodyFriction     = 0.8f;
 const float obRigidBody::DynamicBodyRestitution = 0.6f;
 const float obRigidBody::DynamicBodyFriction    = 0.6f;
 
-obRigidBody::obRigidBody(obEntity *parent, const Ogre::String &name, const Ogre::Vector3 &pos, const Ogre::Quaternion &quat, const Ogre::Vector3 &scale, const int mass) :
+obRigidBody::obRigidBody(obEntity *parent, const btVector3 &pos, const btQuaternion &quat, const btVector3 &scale, const int mass) :
     parent(parent),
-    node(0),
     btBody(0),
 	triangleMesh(0),
     btShape(0),
-    name(name),
     position(pos),
     scale(scale),
     mass(mass),
@@ -64,27 +61,23 @@ obRigidBody::obRigidBody(obEntity *parent, const Ogre::String &name, const Ogre:
 {
 }
 
+obRigidBody::obRigidBody(obEntity *parent, const obRigidBody &other) :
+    parent(parent),
+    btBody(0),
+    triangleMesh(0),
+    btShape(0),
+    position(other.position),
+    scale(other.scale),
+    mass(other.mass),
+    quaternion(other.quaternion)
+{
+}
+
 obRigidBody::~obRigidBody()
 {
     delete triangleMesh;
-    node->removeAndDestroyAllChildren();
-    delete node;
-
     delete btBody->getMotionState();
     delete btBody;
-}
-
-void obRigidBody::createSceneNode()
-{
-    node = OgreResources::getSceneManager()->getRootSceneNode()->createChildSceneNode(name, position, quaternion);
-    node->scale(scale);
-    if(parent->getType() == obEntity::CellBorderEntityType)
-        node->showBoundingBox(true);
-}
-
-Ogre::SceneNode* obRigidBody::getSceneNode() const
-{
-    return node;
 }
 
 btRigidBody* obRigidBody::getBulletBody() const
@@ -96,26 +89,32 @@ btCollisionShape* obRigidBody::getShape() const
 {
     return btShape;
 }
+
 const btVector3 &obRigidBody::getPosition() const
 {
     return btBody->getWorldTransform().getOrigin();
 }
 
+const btQuaternion obRigidBody::getRotation() const
+{
+    return btBody->getWorldTransform().getRotation();
+}
+
 void obRigidBody::createCube(const bool staticMesh)
 {
-    btShape = new btBoxShape(Utils::btVectorFromOgre(scale));
+    btShape = new btBoxShape(scale);
     createBodyWithShape(btShape, staticMesh);
 }
 
 void obRigidBody::createSphere(const bool staticMesh)
 {
-    btShape = new btSphereShape(btScalar(scale.x));
+    btShape = new btSphereShape(btScalar(scale.x()));
     createBodyWithShape(btShape, staticMesh);
 }
 
 void obRigidBody::createCylinder(const bool staticMesh)
 {
-    btShape = new btCylinderShape(Utils::btVectorFromOgre(scale));
+    btShape = new btCylinderShape(scale);
     createBodyWithShape(btShape, staticMesh);
 }
 
@@ -211,7 +210,7 @@ void obRigidBody::createBody(Ogre::Mesh *ptr)
     btShape = cShape;
     btVector3 localInertiaTensor = btVector3(0,0,0);
     btShape->calculateLocalInertia(mass,localInertiaTensor);
-    btShape->setLocalScaling(Utils::btVectorFromOgre(scale));
+    btShape->setLocalScaling(scale);
 
 	btBody = new btRigidBody(mass, _createMotionState(), btShape, localInertiaTensor);
     btBody->setRestitution(DynamicBodyRestitution);
@@ -316,45 +315,7 @@ void obRigidBody::createMeshCollider(Ogre::Mesh *ptr)
     btBody->getCollisionShape()->setUserPointer(this);
 }
 
-void obRigidBody::setTransformation(const Ogre::Vector3 &rotation, const Ogre::Vector3 &direction)
-{
-    // Computing of the quaternion representing the motion
-    Ogre::Radian yRad, pRad, rRad, yDeg, pDeg, rDeg;
-    Ogre::Quaternion quat = Ogre::Quaternion::IDENTITY;
-    Ogre::Matrix3 mat;
-    quat.ToRotationMatrix(mat);
-    mat.ToEulerAnglesYXZ(yRad, pRad, rRad);
-    yDeg = yRad;
-    pDeg = pRad;
-    rDeg = rRad;
-
-    yDeg +=Ogre::Degree(rotation.y); //Valeur de la rotation sur l'axe Y
-    pDeg +=Ogre::Degree(rotation.x); //Valeur de la rotation sur l'axe X
-    rDeg +=Ogre::Degree(rotation.z); //Valeur de la rotation sur l'axe Z
-
-    // Apply the modifications to the rotation matrix
-    mat.FromEulerAnglesYXZ(yDeg, pDeg, rDeg);
-    // Forward this transformation information to the quaternion
-    quat.FromRotationMatrix(mat);
-
-    // Retrieve the btTransform and current quaternion of the Bullet node containing the entity
-    btTransform transf = getBulletBody()->getWorldTransform();
-    btQuaternion currentQuat = transf.getRotation();
-
-    // Apply the angle modification 'current quat * quat' to the physics engine
-    getBulletBody()->setWorldTransform(btTransform(currentQuat*Utils::btQuaternionFromOgre(quat), getPosition()));
-
-    // Apply the rotation to the Ogre scene node
-    if(node)
-        node->rotate(quat);
-
-    // Apply the direction vector to the btRigidBody and the scene node
-    getBulletBody()->translate(Utils::btVectorFromOgre(direction));
-    if(node)
-        node->translate(direction);
-}
-
 btMotionState *obRigidBody::_createMotionState()
 {
-    return new btDefaultMotionState(btTransform(Utils::btQuaternionFromOgre(quaternion), Utils::btVectorFromOgre(position)));
+    return new btDefaultMotionState(btTransform(quaternion, position));
 }

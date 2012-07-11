@@ -20,6 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <QSharedPointer>
 #include <OgreString.h>
 #include "obEntityWrapper.h"
 #include "physicsworld.h"
@@ -30,28 +31,33 @@
 
 unsigned int obEntityWrapper::nextInLine = 0;
 
-obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &meshName, const Ogre::Vector3 &pos, const Ogre::Quaternion &quat, const bool staticMesh, const Ogre::Vector3 &scale, const int mass, btCollisionShape *shape, const bool randomColor)  throw(EntityAlreadyExistsException) :
-    obBody(0),
+obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &meshName, const Ogre::Vector3 &pos, const Ogre::Quaternion &quat, const bool staticMesh, const Ogre::Vector3 &scale, const int mass, btCollisionShape *shape)  throw(EntityAlreadyExistsException) :
     ogreEntity(0),
+    ogreNode(0),
     meshName(meshName),
+    shape(shape),
+    obBody(0),
     world(0),
-	secWorlds(),
-	animation(0),
     staticMesh(staticMesh),
-	frameStart(0),
-    randomColor(randomColor)
-
+    animation(0),
+    frameStart(0)
 {
     // If the scene manager doesn't already have an entity with this name
     if (!OgreResources::getSceneManager()->hasEntity(name))
     {
-        // Create the rigid body and its Ogre entity
-        obBody = new obDynamicRigidBody(this, name, pos, quat, scale, mass);
-        obBody->createSceneNode();
+        // Create the rigid body
+        obBody = new obDynamicRigidBody(this,
+                                        Utils::btVectorFromOgre(pos),
+                                        Utils::btQuaternionFromOgre(quat),
+                                        Utils::btVectorFromOgre(scale),
+                                        mass);
 
-        ogreEntity = OgreResources::getSceneManager()->createEntity(name, meshName);
+        ogreEntity = QSharedPointer<Ogre::Entity>(OgreResources::getSceneManager()->createEntity(name, meshName));
         ogreEntity->setCastShadows(true);
-        obBody->getSceneNode()->attachObject(ogreEntity);
+
+        ogreNode = QSharedPointer<Ogre::SceneNode>(OgreResources::getSceneManager()->getRootSceneNode()->createChildSceneNode(name, pos, quat));
+        ogreNode->scale(scale);
+        getSceneNode()->attachObject(ogreEntity.data());
 
         // If no shape is defined, create one from the mesh
         if(!shape)
@@ -78,24 +84,68 @@ obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &m
         // Setup a user pointer for later use within the Bullet manager
         // This step is compulsory to be able to retrieve the entity from the broad-phase algorithm.
         obBody->getBulletBody()->getCollisionShape()->setUserPointer(this);
+
+        obBody->getBulletBody()->getWorldTransform().setOrigin(Utils::btVectorFromOgre(pos));
+        obBody->getBulletBody()->getWorldTransform().setRotation(Utils::btQuaternionFromOgre(quat));
     }
     else
     {
         throw EntityAlreadyExistsException(name);
     }
+}
 
-    obBody->getBulletBody()->getWorldTransform().setOrigin(Utils::btVectorFromOgre(pos));
-    obBody->getBulletBody()->getWorldTransform().setRotation(Utils::btQuaternionFromOgre(quat));
+obEntityWrapper::obEntityWrapper(const obEntityWrapper &other) throw(EntityAlreadyExistsException) :
+    ogreEntity(other.ogreEntity),
+    ogreNode(other.ogreNode),
+    meshName(other.getMeshName()),
+    shape(other.shape),
+    obBody(0),
+    world(0),
+    staticMesh(other.hasStaticMesh()),
+    animation(other.getAnimation()),
+    frameStart(other.getFrameStart())
+{
+    // Create the rigid body using a copy constructor
+    obBody = new obDynamicRigidBody(this, *other.obBody);
 
-	// Assign a random color to the object if not static
-	if(randomColor && !staticMesh)
-		setRandomColor();
+    // If no shape is defined, create one from the mesh
+    if(!shape)
+    {
+//            if(meshName == "cube.mesh")
+//                obBody->createCube(staticMesh);
+//            else if(meshName == "sphere.mesh")
+//                obBody->createSphere(staticMesh);
+//            else if(meshName == "simplePlane.mesh")
+//                obBody->createPlane(staticMesh);
+//            else if(meshName == "cylinder.mesh")
+//                obBody->createCylinder(staticMesh);
+//            else
+//            {
+            if (staticMesh)
+                obBody->createMeshCollider(ogreEntity->getMesh().getPointer());
+            else
+                obBody->createBody(ogreEntity->getMesh().getPointer());
+//            }
+    }
+    else
+        obBody->createBodyWithShape(shape, staticMesh);
+
+    // Setup a user pointer for later use within the Bullet manager
+    // This step is compulsory to be able to retrieve the entity from the broad-phase algorithm.
+    obBody->getBulletBody()->getCollisionShape()->setUserPointer(this);
+
+    obBody->getBulletBody()->getWorldTransform().setOrigin(obBody->getPosition());
+    obBody->getBulletBody()->getWorldTransform().setRotation(obBody->getRotation());
 }
 
 obEntityWrapper::~obEntityWrapper()
 {
-	delete obBody;
+    //FIXME: manage this
+//    ogreNode->removeAndDestroyAllChildren();
+//    delete ogreNode;
 //    delete ogreEntity;
+
+    delete obBody;
 	delete animation;
 }
 
@@ -132,25 +182,6 @@ PhysicsWorld* obEntityWrapper::unsetOwnerWorld()
     return oldWorld;
 }
 
-const QVector<PhysicsWorld*> *obEntityWrapper::getSecondaryWorlds() const
-{
-    //TODO: implement getSecondaryWorlds
-    qDebug("TODO");
-	return secWorlds;
-}
-
-void obEntityWrapper::addSecondaryWorld(PhysicsWorld *newSecWorld)
-{
-    //TODO: implement addSecondaryWorld
-    qDebug("TODO");
-}
-
-void obEntityWrapper::removeSecondaryWorld(PhysicsWorld *oldSecWorld)
-{
-    //TODO: implement removeSecondaryWorld
-    qDebug("TODO");
-}
-
 Animation* obEntityWrapper::getAnimation() const
 {
 	qDebug("TODO");
@@ -184,7 +215,7 @@ int obEntityWrapper::getFrameStart() const
 	return frameStart;
 }
 
-void obEntityWrapper::setColor(const float r, const float g, const float b, const bool randomColorFlag)
+void obEntityWrapper::setColor(const float r, const float g, const float b)
 {
     // Get the prefix of the entity's material, and then add a suffix for this color
     Ogre::String prefix;
@@ -203,9 +234,6 @@ void obEntityWrapper::setColor(const float r, const float g, const float b, cons
 
     // Have the entity use the new material
     ogreEntity->setMaterial(mat);
-
-    // Update the random color flag
-    randomColor = randomColorFlag;
 }
 
 void obEntityWrapper::setRandomColor()
@@ -215,5 +243,5 @@ void obEntityWrapper::setRandomColor()
     float g = (float)((float)rand() / ((float)RAND_MAX + 1));
     float b = (float)((float)rand() / ((float)RAND_MAX + 1));
 
-    setColor(r, g, b, true);
+    setColor(r, g, b);
 }

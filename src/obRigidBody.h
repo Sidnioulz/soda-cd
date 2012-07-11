@@ -43,18 +43,18 @@
 #define OGRERIGIDOBJECT_H
 
 #include <Ogre.h>
-#include <OgreVector3.h>
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
 #include "obentity.h"
 
 /*! \class obRigidBody
-  * \brief A dual Ogre-Bullet rigid body
+  * \brief A Bullet rigid body
   * \author Quentin Avril <quentin.avril@irisa.fr>
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
   *
-  * This class implements rigid bodies that are both Ogre::SceneNode and btRigidBody.
-  * It allows synchronous manipulation of rigid body representations in Ogre and Bullet.
+  * This class is an overlay to btRigidBody, that can be used to create a btRigidBody with various methods.
+  *
+  * \note For historical reasons, this class is named obRigidBody. It could be named sodaRigidBody.
   */
 class obRigidBody
 {
@@ -62,40 +62,33 @@ public:
     /*!
       * \brief Default constructor.
       * \param parent the parent entity of this rigid body
-      * \param name unique name of the body in the world
       * \param pos the initial position of the body
       * \param quat the initial rotation of the body
       * \param scale the scale of the body with regard to the mesh default size
       * \param mass the mass of the body
       * \return a new obRigidBody
-      *
-      * This constructor constructs an empty obRigidBody, without btRigidBody and
-      * without Ogre::SceneNode. Both objects must be created later using methods
-      * of the class.
       */
     obRigidBody(obEntity *parent,
-                const Ogre::String &name,
-                const Ogre::Vector3 &pos,
-                const Ogre::Quaternion &quat,
-                const Ogre::Vector3 &scale = Ogre::Vector3(1,1,1),
+                const btVector3 &pos,
+                const btQuaternion &quat,
+                const btVector3 &scale = btVector3(1,1,1),
 				const int mass = 0);
+    /*!
+      * \brief Shallow copy constructor.
+      * \param parent the parent obEntity of this instance
+      * \param other the obRigidBody whose parameters to copy
+      * \return a new obRigidBody
+      *
+      * \warning This constructor does not copy the other obRigidBody's btRigidBody.
+      * Clients still have to create the btRigidBody themselves after constructing the
+      * obDynamicRigidBody.
+      */
+    obRigidBody(obEntity *parent, const obRigidBody &other);
 
     /*!
       * \brief Default destructor.
       */
     virtual ~obRigidBody();
-
-    /*!
-      * \brief Creates the Ogre scene node of the rigid body.
-      */
-    void createSceneNode();
-
-    /*!
-      * \brief Gets the Ogre scene node of the rigid body.
-      * \return the SceneNode of the body
-      */
-    Ogre::SceneNode* getSceneNode() const;
-
     /*!
       * \brief Gets the Bullet version of the rigid body.
       * \return the btRigidBody of the body
@@ -113,6 +106,12 @@ public:
       * \return the position of the body
       */
     const btVector3 &getPosition() const;
+
+    /*!
+      * \brief Gets the orientation of the rigid body.
+      * \return the orientation of the body
+      */
+    const btQuaternion getRotation() const;
 
     /*!
       * \brief Creates a rigid body with a cube shape.
@@ -172,13 +171,6 @@ public:
     void createMeshCollider(Ogre::Mesh *ptr);
 
     /*!
-      * \brief Sets the rotation and motion of a rigid body to be those in parameter
-      * \param rotation the rotation to apply as a (x,y,z) vector
-      * \param direction the motion to apply as a (x,y,z) vector
-      */
-    void setTransformation(const Ogre::Vector3 &rotation, const Ogre::Vector3 &direction);
-
-    /*!
       * \brief Returns the parent obEntity of this rigid body
       * \return the parent obEntity of this object
       */
@@ -195,9 +187,6 @@ public:
 		return mass;
 	}
 
-    //FIXME reimplement with Quentin, using TestBulletOgre's code base.
-    //TODO: void setTransformation(Ogre::Real wQuat, Ogre::Real xQuat, Ogre::Real yQuat, Ogre::Real zQuat, Ogre::Real xTrans, Ogre::Real yTrans, Ogre::Real zTrans);
-
 private:
 	/*!
 	  * \brief Creates a motion state for the Bullet rigid body.
@@ -212,15 +201,13 @@ private:
     const static float DynamicBodyFriction;     /*!< Dynamic body friction (see Bullet documentation) */
 
     obEntity            *parent;        /**< Parent entity of this rigid body */
-    Ogre::SceneNode     *node;          /**< Ogre scene node of the body */
     btRigidBody         *btBody;        /**< Bullet rigid body */
     btTriangleMesh      *triangleMesh;  /**< Bullet polygonal mesh */
     btCollisionShape    *btShape;       /**< Bullet shape for collisions */
-    Ogre::String        name;           /**< Name of the rigid body */
-    Ogre::Vector3       position;       /**< Position of the object at creation time */
-    Ogre::Vector3       scale;          /**< Object scale compared to original mesh */
+    btVector3           position;       /**< Position of the object at creation time */
+    btVector3           scale;          /**< Object scale compared to original mesh */
 	int                 mass;           /**< Mass of the object */
-    Ogre::Quaternion    quaternion;     /**< Object rotation at creation time */
+    btQuaternion        quaternion;     /**< Object rotation at creation time */
 };
 
 #endif // OGRERIGIDBODY_H

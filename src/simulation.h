@@ -47,15 +47,13 @@ public:
 	/*!
 	  * \brief Default constructor.
 	  * \param targetTimeStep the duration of a simulation time step
-	  * \param numWorlds the number of PhysicsWorld to run in the Simulation (0 = automatic)
-	  * \param numInterfaces the number of rendering interfaces to use (0 = automatic)
+      * \param numWorlds the number of PhysicsWorld to run in the Simulation (0 = automatic)
 	  * \param sceneSize the size of the simulated area
 	  * \param numEntities the number of simulated entities
 	  * \return a new Simulation
 	  */
     Simulation(const btScalar &targetTimeStep = 1.0f/60,
-               const int &numWorlds = QThread::idealThreadCount(),
-               const int &numInterfaces = 1,
+               const int &numWorlds = 0,
                const btVector3 &sceneSize = btVector3(0, 0, 0),
                const int &numEntities = 0);
 
@@ -84,12 +82,12 @@ public:
 	virtual void stop();
 
 	/*!
-	 * \brief Returns the CircularTransformBufferInterfaces defined in this Simulation.
-	 * \return a copy of the CircularTransformBufferInterface vector of this Simulation
+     * \brief Returns the CircularTransformBufferInterface defined in this Simulation.
+     * \return a pointer to the CircularTransformBufferInterface of this Simulation
 	 */
-	inline QVector<CircularTransformBufferInterface *> getBufferInterfaces() const
+    inline CircularTransformBufferInterface *getBufferInterface() const
 	{
-		return bufferInterfaces;
+        return bufferInterface;
 	}
 
     /*!
@@ -128,11 +126,11 @@ protected:
     virtual void setupBasicPhysicsEnvironment(PhysicsWorld *world) = 0;
 
 	/*!
-	 * \brief Creates the CircularTransformBufferInterfaces that will be used in the Simulation.
+     * \brief Creates the CircularTransformBufferInterface that will be used in the Simulation.
 	 *
 	 * \note Called by the constructor.
 	 */
-    virtual void createBufferInterfaces();
+    virtual void createBufferInterface();
 
 	/*!
 	 * \brief Creates the PhysicsWorlds that will be used in the Simulation.
@@ -330,7 +328,6 @@ protected:
     // Simulation parameters - changes applied after Simulation restart
     btScalar targetTimeStep;                                         /*!< Framerate wanted for the Simulation */
     int numWorlds;                                                   /*!< Number of different PhysicsWorld instances */
-    int numInterfaces;                                               /*!< Number of different CircularTransformBufferInterface instances */
 
     // Information on the Simulation
     btVector3 sceneSize;                                             /*!< Size of the simulated space */
@@ -344,7 +341,7 @@ protected:
 
     // Pointers to simulation objects
     QVector<PhysicsWorld *> worlds;                                  /*!< Physics worlds for this Simulation */
-    QVector<CircularTransformBufferInterface *> bufferInterfaces;    /*!< CircularTransformBufferInterface instances for this Simulation */
+    CircularTransformBufferInterface *bufferInterface;               /*!< CircularTransformBufferInterface for this Simulation */
     QVector<QPair<obEntityWrapper *, int> > entitiesWithAssignments; /*!< List of simulated entities with the world they are assigned to */
     long entityIdCounter;                                            /*!< Number of entities created since the beginning of the Simulation (avoids name conflicts) */
 };

@@ -453,6 +453,7 @@ void	BulletManagerWorld::performDiscreteCollisionDetection()
                                        Q_ARG(QVector<CellBorderCoordinates>, QVector<CellBorderCoordinates>(1, coord)));
             }
 
+            //TODO: sending CBC's not enough. Should already join objects?
             //TODO: its in this function that we check for border crossing and out of bounds objects, and we synchronize in BulletManagerWorld either way.
         }
     }

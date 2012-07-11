@@ -64,7 +64,7 @@ PhysicsWorld::PhysicsWorld(const Simulation &simulation, const btScalar &targetT
     qDebug() << "PhysicsWorld(" << id << ")::PhysicsWorld();";
 #endif
 
-//    moveToThread(&worldThread);
+    moveToThread(&worldThread);
     bulletManager->setBroadphaseWorld(this);
 
 //    getBulletManager()->getDynamicsWorld()->getDispatchInfo().m_useContinuous = true;
@@ -143,11 +143,11 @@ CircularTransformBuffer* PhysicsWorld::getCircularBuffer() const
 void PhysicsWorld::addEntity(obEntityWrapper *obEnt, btScalar targetTime)
 {
 #ifndef NDEBUG
-    qDebug() << "PhysicsWorld(" << id << ")::addEntity(" << obEnt->getDisplayName() << "," << targetTime << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+    qWarning() << "PhysicsWorld(" << id << ")::addEntity(" << obEnt->getDisplayName() << "," << targetTime << "); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
     entityMutex.lock();
     entityAdditionQueue.enqueue(TimedEntity(obEnt, targetTime));
-	entityMutex.unlock();
+    entityMutex.unlock();
 }
 
 void PhysicsWorld::_addEntity(obEntityWrapper *obEnt)
@@ -198,7 +198,7 @@ void PhysicsWorld::_entityVectoryRemovalMethod(QVector<obEntityWrapper *> &conta
 void PhysicsWorld::removeEntity(obEntityWrapper *obEnt, btScalar targetTime)
 {
 #ifndef NDEBUG
-    qDebug() << "PhysicsWorld(" << id << ")::removeEntity(" << obEnt->getDisplayName() << "," << targetTime << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+    qWarning() << "PhysicsWorld(" << id << ")::removeEntity(" << obEnt->getDisplayName() << "," << targetTime << "); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
     entityMutex.lock();
@@ -216,15 +216,15 @@ void PhysicsWorld::_removeEntity(obEntityWrapper *obEnt)
     qDebug() << "PhysicsWorld(" << id << ")::_removeEntity(" << obEnt->getDisplayName() << "); at " << currentTime << "; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
-    // Remove the entity from the grid if it still is within a grid cell (entity knows better, it may be outside of the grid if the deletion is a result of it moving out of bounds)
+    // Remove the entity from the BulletWorld
+    getBulletManager()->getDynamicsWorld()->removeRigidBody(obEnt->getRigidBody()->getBulletBody());
+
+    // Remove the entity from the grid if it still is within a grid cell (it may be outside of the grid if the deletion is a result of it moving out of bounds)
     if(localGrid && obEnt->getRigidBody()->getMotionState()->getLocalGrid())
         localGrid->removeEntity(obEnt);
 
     // Remove the entity from the world's vector
     _entityVectoryRemovalMethod(entities, obEnt);
-
-	// Remove the entity from the BulletWorld
-    getBulletManager()->getDynamicsWorld()->removeRigidBody(obEnt->getRigidBody()->getBulletBody());
     obEnt->unsetOwnerWorld();
 
 	// Delete the object if it is not in the simulation space anymore
@@ -491,6 +491,6 @@ void PhysicsWorld::onOwnershipTransfer(const PhysicsWorld *&neighbor, const obEn
 #endif
 
 	obEntityWrapper *obEnt = const_cast<obEntityWrapper *>(object);
-    obEnt->setStatus(obEntity::NormalStatus);
-    _addEntity(obEnt);
+//    obEnt->setStatus(obEntity::NormalStatus);
+//    _addEntity(obEnt);
 }

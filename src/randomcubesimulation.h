@@ -39,17 +39,21 @@ public:
     /*!
      * \brief Default constructor.
      * \param targetTimeStep the duration of a simulation time step
-     * \param numWorlds the number of physics worlds to launch
-     * \param numInterfaces the number of rendering interfaces to use
+     * \param numWorlds the number of physics worlds to launch (0 = automatic)
      * \param sceneSize the dimensions of the simulation scene
      * \param numEntities the number of simulated entities
      * \return a new RandomCubeSimulation
      */
+// VERY NICE SIMULATION with 4 worlds that are not square, lots of border crossing (enable random scale)
+//    RandomCubeSimulation(const btScalar &targetTimeStep = 1.0f/60,
+//						 const int &numWorlds = 0,
+//                         const btVector3 &sceneSize = btVector3(4000, 2000, 4000),
+//                         const int &numEntities = 500);
+
     RandomCubeSimulation(const btScalar &targetTimeStep = 1.0f/60,
-						 const int &numWorlds = QThread::idealThreadCount(),
-                         const int &numInterfaces = 1,
-                         const btVector3 &sceneSize = btVector3(4000, 2000, 4000),
-                         const int &numEntities = 500);
+                         const int &numWorlds = 2,
+                         const btVector3 &sceneSize = btVector3(1000, 200, 1000),
+                         const int &numEntities = 10);
 
 
     /*!

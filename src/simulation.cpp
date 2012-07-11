@@ -20,29 +20,26 @@
  */
 #include "simulation.h"
 
-Simulation::Simulation(const btScalar &targetTimeStep, const int &numWorlds, const int &numInterfaces, const btVector3 &sceneSize, const int &numEntities) :
+Simulation::Simulation(const btScalar &targetTimeStep, const int &numWorlds, const btVector3 &sceneSize, const int &numEntities) :
     status(Simulation::STOPPED),
     targetTimeStep(targetTimeStep),
-    numWorlds(numWorlds),
-    numInterfaces(numInterfaces),
+    numWorlds((numWorlds == 0 ? QThread::idealThreadCount() : numWorlds)),
     sceneSize(sceneSize),
     numEntities(numEntities),
     grid(0),
     grids(numWorlds, 0),
     worlds(numWorlds, 0),
-    bufferInterfaces(),
+    bufferInterface(),
     entitiesWithAssignments(),
     entityIdCounter(0)
 {
-	if(numWorlds == 0 || numInterfaces == 0)
-		qFatal("Automatic number of worlds and interfaces is not supported yet.");
-
-    createBufferInterfaces();
+    createBufferInterface();
     createPhysicsWorlds();
 }
 
 Simulation::~Simulation()
 {
+    //TODO: destroy stuff
 }
 
 
@@ -88,10 +85,10 @@ void Simulation::stop()
     }
 }
 
-void Simulation::createBufferInterfaces()
+void Simulation::createBufferInterface()
 {
-    // For now, only one rendering thread exists so there is a single interface
-    bufferInterfaces.append(new CircularTransformBufferInterface());
+    // Create the rendering thread's interface
+    bufferInterface = new CircularTransformBufferInterface();
 }
 
 void Simulation::createPhysicsWorlds()
@@ -106,7 +103,7 @@ void Simulation::createPhysicsWorlds()
     // Later, several interfaces can be used and this loop changed
     for(int i=0; i<numWorlds; ++i)
     {
-        bufferInterfaces[0]->watchBuffer(worlds[i]->getCircularBuffer());
+        bufferInterface->watchBuffer(worlds[i]->getCircularBuffer());
     }
 }
 

@@ -25,7 +25,8 @@
 
 CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates &coords) throw(EntityAlreadyExistsException) :
 	obBody(0),
-//    ogreEntity(0),
+    ogreEntity(0),
+    ogreNode(0),
     grid(grid),
     coords(coords),
     red(1),
@@ -55,8 +56,9 @@ CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates 
             bodyLen.setZ(0.001);
 
         // Create the rigid body
-        obBody = new obRigidBody(this, name, Utils::vectorFromBullet(worldCoords), Ogre::Quaternion::IDENTITY);
-        obBody->createSceneNode();
+        obBody = new obRigidBody(this, worldCoords, btQuaternion::getIdentity());
+        ogreNode = OgreResources::getSceneManager()->getRootSceneNode()->createChildSceneNode(name, Utils::vectorFromBullet(worldCoords), Ogre::Quaternion::IDENTITY);
+        ogreNode->showBoundingBox(true);
         obBody->createBorder(bodyLen, true);
 
         //TODO: create a OgreResources method to get a plane for a given direction and bodyLen.
@@ -104,7 +106,7 @@ CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates 
 
         ogreEntity = OgreResources::getSceneManager()->createEntity(name, name);
         updateColor();
-        obBody->getSceneNode()->attachObject(ogreEntity);
+        ogreNode->attachObject(ogreEntity);
 
         // Setup a user pointer for later use within the Bullet manager
         // This step is compulsory to be able to retrieve the entity from the broad-phase algorithm.
@@ -118,6 +120,11 @@ CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates 
 
 CellBorderEntity::~CellBorderEntity()
 {
+    //FIXME: manage this
+//    ogreNode->removeAndDestroyAllChildren();
+//    delete ogreNode;
+//    delete ogreEntity;
+
 	delete obBody;
 }
 

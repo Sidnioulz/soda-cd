@@ -94,7 +94,6 @@ public:
 private:
     Ui::MainAsapCdWindow                          *ui;              //!< Pointer to file-defined Qt GUI widgets
     OgreWidget                                    *ogreWidget;      //!< Pointer to the Ogre rendering widget
-    QVector<CircularTransformBufferInterface *>   bufferInterface;  //!< Interfaces used by the Ogre rendering widgets to perform rendering
     Simulation                                    *simulation;      //!< A Simulation object
 
     int targetFPS;                                                  //!< target FPS of the simulation

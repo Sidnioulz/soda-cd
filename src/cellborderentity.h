@@ -114,13 +114,13 @@ public:
 
     /*! \brief Default destructor.
       */
-    virtual ~CellBorderEntity();
+    ~CellBorderEntity();
 
     /*!
      * \brief Returns the type of Entity this object is
      * \return CellBorderEntityType
      */
-    inline virtual short getType() const
+    inline short getType() const
     {
         return CellBorderEntityType;
     }
@@ -183,6 +183,7 @@ protected:
 private:
     obRigidBody                     *obBody;			 /*!< The Ogre-Bullet rigid body of this Cell border */
     Ogre::Entity                    *ogreEntity;         /*!< Ogre entity */
+    Ogre::SceneNode                 *ogreNode;           /*!< Ogre scene node */
     LocalGrid                       *grid;               /*!< The grid of which this CellBorderEntity is a border */
 
     CellBorderCoordinates           coords;		         /*!< Cell coordinates of the border entity, with a direction parameter */

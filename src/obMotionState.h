@@ -42,6 +42,8 @@ class LocalGrid;
   * It is used to match Bullet object coordinate changes (expressed as btMotionState objects) to
   * the Ogre versions of these objects, by overriding the methods of this class to use Ogre object
   * coordinates.
+  *
+  * \note For historical reasons, this class is named obMotionState. It could be named sodaMotionState.
   */
 class obMotionState : public btMotionState
 {

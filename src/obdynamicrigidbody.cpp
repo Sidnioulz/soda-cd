@@ -19,19 +19,23 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 #include "obdynamicrigidbody.h"
-#include "utils.h"
 #include "obEntityWrapper.h"
 #include "obMotionState.h"
 #include "obRigidBody.h"
 
 obDynamicRigidBody::obDynamicRigidBody(obEntityWrapper *parent,
-									   const Ogre::String &name,
-									   const Ogre::Vector3 &pos,
-									   const Ogre::Quaternion &quat,
-									   const Ogre::Vector3 &scale,
-									   int mass) :
-    obRigidBody(parent, name, pos, quat, scale, mass),
-	parent(parent)
+                                       const btVector3 &pos,
+                                       const btQuaternion &quat,
+                                       const btVector3 &scale,
+                                       int mass) :
+    obRigidBody(parent, pos, quat, scale, mass),
+    parent(parent)
+{
+}
+
+obDynamicRigidBody::obDynamicRigidBody(obEntityWrapper *parent, const obDynamicRigidBody &other) :
+    obRigidBody(parent, other),
+    parent(parent)
 {
 }
 

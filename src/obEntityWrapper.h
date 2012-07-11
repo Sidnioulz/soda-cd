@@ -93,7 +93,12 @@ private:
   * It allows synchronous manipulation of object representations in Ogre and Bullet.
   *
   * \note For historical reasons, this class is named obEntityWrapper. A more suitable
-  * name for it would be obDynamicEntity.
+  * name for it would be sodaDynamicEntity.
+  *
+  * \attention Ownership of an obEntityWrapper is not transferable from world to world.
+  * Any obEntityWrapper that is created within a world should be deleted within this world.
+  * The general practice when messaging an obEntityWrapper is to make a deep copy of it,
+  * and to let the recipient world decide what to do with it.
   */
 class obEntityWrapper : public obEntity
 {
@@ -118,18 +123,30 @@ public:
                     const bool staticMesh = false,
                     const Ogre::Vector3 &scale = Ogre::Vector3(1,1,1),
                     const int mass = 1,
-                    btCollisionShape* shape = NULL,
-                    const bool randomColor = false) throw(EntityAlreadyExistsException);
+                    btCollisionShape* shape = NULL) throw(EntityAlreadyExistsException);
+
+
+
+
+    /*! \brief Copy constructor. Creates a worldless obEntityWrapper.
+      * \param other the obEntityWrapper to copy
+      * \return a new obEntityWrapper
+      * \throw EntityAlreadyExistsException if the specified name is already taken by another entity
+      *
+      * This constructor copies an obEntityWrapper from another PhysicsWorld, but leaves it
+      * unattached to any PhysicsWorld. Both worlds also share a pointer to their Ogre::Entity.
+      */
+    obEntityWrapper(const obEntityWrapper &other) throw(EntityAlreadyExistsException);
 
     /*! \brief Default destructor.
       */
-	virtual ~obEntityWrapper();
+    ~obEntityWrapper();
 
     /*!
      * \brief Returns the type of Entity this object is
-     * \return CellBorderEntityType
+     * \return obEntityWrapperType
      */
-    inline virtual short getType() const
+    inline short getType() const
     {
         return obEntityWrapperType;
     }
@@ -193,17 +210,7 @@ public:
       */
 	const QVector<PhysicsWorld*> *getSecondaryWorlds() const;
 
-    /*! \brief Adds a physics world to the list of those in which the entity exists.
-      * \param newSecWorld the new secondary physics world
-      */
-    void addSecondaryWorld(PhysicsWorld *newSecWorld);
-
-    /*! \brief Removes a physics world from the list of those in which the entity exists.
-      * \param oldSecWorld the physics world to be removed
-      */
-    void removeSecondaryWorld(PhysicsWorld *oldSecWorld);
-
-    /*! \brief Gets the size of the entity's bounding box.
+      /*! \brief Gets the size of the entity's bounding box.
       * \return the size of the Ogre::Entity's bounding box scaled with the scale of the obEntityWrapper
       */
     inline btVector3 getSize() const
@@ -296,14 +303,6 @@ public:
         return obBody->getBulletBody()->getBroadphaseProxy();
     }
 
-    /*! \brief Gets the Ogre part of the entity.
-      * \return the Ogre::Entity of the entity
-      */
-	inline Ogre::Entity* getOgreEntity() const
-	{
-		return ogreEntity;
-	}
-
     /*! \brief Gets the name of the entity's mesh.
       * \return the mesh name of the entity
       */
@@ -334,43 +333,32 @@ public:
 	inline int getMass() const
 	{
 		return obBody->getMass();
-	}
+    }
+
+    /*!
+      * \brief Gets the Ogre scene node of the entity's rigid body.
+      * \return the SceneNode of the entity's body
+      */
+    inline Ogre::SceneNode* getSceneNode() const
+    {
+        return ogreNode.data();
+    }
 
     /*! \brief Gets the scale of the entity.
       * \return the vector representing the scale
       */
 	inline Ogre::Vector3 getScale() const
 	{
-		return obBody->getSceneNode()->getScale();
-	}
-
-    /*! \brief Tells whether the color of the entity was randomly chosen.
-      * \return whether the entity has a random color
-      */
-	inline bool hasRandomColor() const
-	{
-		return randomColor;
-	}
-
+        return getSceneNode()->getScale();
+    }
     /*! \brief Sets a definite color for the entity.
       * \param r the amount of red in the color to set
       * \param g the amount of green in the color to set
       * \param b the amount of blue in the color to set
       */
-	inline void setColor(const float r, const float g, const float b)
-	{
-        setColor(r, g, b, false);
-	}
+    void setColor(const float r, const float g, const float b);
 
 protected:
-    /*! \brief Sets a definite color for the entity.
-      * \param r the amount of red in the color to set
-      * \param g the amount of green in the color to set
-      * \param b the amount of blue in the color to set
-      * \param updateRandomColorFlag whether to set the randomColor flag to false
-      */
-    void setColor(const float r, const float g, const float b, const bool updateRandomColorFlag);
-
     /*! \brief Sets a random color for the entity.
       */
     void setRandomColor();
@@ -378,18 +366,21 @@ protected:
 private:
     static unsigned int nextInLine;              //!< A number used to generate unique names for objects
 
-	obDynamicRigidBody      *obBody;             //!< Ogre-Bullet rigid body of the entity
-    Ogre::Entity            *ogreEntity;         //!< Ogre entity
-    Ogre::String            meshName;            //!< Name of the entity's mesh
-    PhysicsWorld            *world;              //!< Bullet physics world that manages the entity's collisions
-    QVector<PhysicsWorld *> *secWorlds;          //!< Other worlds in which the entity is located
+    // Reference parameters, do not need to be copied over when an obEntityWrapper exists in several worlds
+    QSharedPointer<Ogre::Entity>    ogreEntity;          //!< Shared pointer to the Ogre entity of this obEntityWrapper
+    QSharedPointer<Ogre::SceneNode> ogreNode;            //!< Shared pointer to the Ogre Scene Node of this obEntityWrapper's rigid body
+    Ogre::String                    meshName;            //!< Name of the entity's mesh
+    Ogre::String                    materialName;        //!< Name of the entity's material
 
-	//FIXME: many probably useless parameters below. Clean it up.
-    Animation               *animation;          //!< Current animation of the entity wrapper (not used yet)
-    bool                    staticMesh;          //!< Tells whether the entity is static or dynamic
-    int                     frameStart;          //!< Starting frame number of the entity (not used yet)
-	Ogre::String            materialName;        //!< Name of the entity's material
-	bool                    randomColor;         //!< Whether the entity is randomly colored
+    // PhysicsWorld specific parameters
+    btCollisionShape                *shape;              //!< Bullet collision shape given to the obEntityWrapper's constructor
+    obDynamicRigidBody              *obBody;             //!< Bullet rigid body of the entity
+    PhysicsWorld                    *world;              //!< Bullet physics world that manages the entity's collisions
+
+    // PhysicsWorld specific parameters, not used yet
+    bool                            staticMesh;          //!< Tells whether the entity is static or dynamic
+    Animation                       *animation;          //!< Current animation of the entity wrapper (not used yet)
+    int                             frameStart;          //!< Starting frame number of the entity (not used yet)
 };
 
 #endif // ENTITYWRAPPER_H

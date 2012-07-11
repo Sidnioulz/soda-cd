@@ -71,19 +71,14 @@ MainAsapCdWindow::MainAsapCdWindow(QWidget *parent) :
 MainAsapCdWindow::~MainAsapCdWindow()
 {
     delete simulation;
-
     delete ogreWidget;
-
-    for(int i=0; i<bufferInterface.size(); ++i)
-        delete bufferInterface[i];
-
     delete ui;
 }
 
 void MainAsapCdWindow::onOgreReady()
 {
     simulation = new RandomCubeSimulation();
-    ogreWidget->registerBufferInterface(simulation->getBufferInterfaces()[0]);
+    ogreWidget->registerBufferInterface(simulation->getBufferInterface());
     simulation->start();
 }
 

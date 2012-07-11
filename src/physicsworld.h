@@ -98,6 +98,8 @@ public:
       * \param targetTime the time at which the entity should start existing
 	  *
 	  * \see _addEntity();
+      *
+      * \deprecated Please use _addEntity() directly whenever possible.
       */
     void addEntity(obEntityWrapper *obEnt, btScalar targetTime);
 
@@ -107,6 +109,8 @@ public:
       * \param targetTime the time at which the entity should stop existing
 	  *
 	  * \see _removeEntity();
+      *
+      * \deprecated Please use _removeEntity() directly whenever possible.
       */
     void removeEntity(obEntityWrapper *obEnt, btScalar targetTime);
 

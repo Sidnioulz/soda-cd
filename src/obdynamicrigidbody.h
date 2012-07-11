@@ -33,34 +33,44 @@
 class obEntityWrapper;
 
 /*! \class obDynamicRigidBody
-  * \brief A dual Ogre-Bullet rigid body
+  * \brief A dynamic rigid body
   * \author Quentin Avril <quentin.avril@irisa.fr>
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
   *
-  * This class implements rigid bodies that are both Ogre::SceneNode and btRigidBody.
-  * It allows synchronous manipulation of rigid body representations in Ogre and Bullet.
   * The dynamic version of obRigidBody includes a special implementation of motion
   * states (obMotionState).
+  *
+  * \note For historical reasons, this class is named obDynamicRigidBody. It could be named sodaDynamicRigidBody.
   */
 class obDynamicRigidBody : public obRigidBody
 {
 public:
-	/*!
-	  * \brief Default constructor.
-	  * \param parent the parent obEntityWrapper
-	  * \param name unique name of the body in the world
-	  * \param pos the initial position of the body
-	  * \param quat the initial rotation of the body
-	  * \param scale the scale of the body with regard to the mesh default size
-	  * \param mass the mass of the body
-	  * \return a new obDynamicRigidBody
-	  */
-	obDynamicRigidBody(obEntityWrapper *parent,
-					   const Ogre::String &name,
-					   const Ogre::Vector3 &pos,
-					   const Ogre::Quaternion &quat,
-					   const Ogre::Vector3 &scale = Ogre::Vector3(1,1,1),
-					   const int mass = 0);
+    /*!
+      * \brief Default constructor.
+      * \param parent the parent obEntityWrapper
+      * \param pos the initial position of the body
+      * \param quat the initial rotation of the body
+      * \param scale the scale of the body with regard to the mesh default size
+      * \param mass the mass of the body
+      * \return a new obDynamicRigidBody
+      */
+    obDynamicRigidBody(obEntityWrapper *parent,
+                       const btVector3 &pos,
+                       const btQuaternion &quat,
+                       const btVector3 &scale = btVector3(1,1,1),
+                       const int mass = 0);
+    /*!
+      * \brief Shallow copy constructor.
+      * \param parent the parent obEntityWrapper of this instance
+      * \param other the obDynamicRigidBody whose parameters to copy
+      * \return a new obDynamicRigidBody
+      *
+      * \warning This constructor does not copy the other obDynamicRigidBody's btRigidBody.
+      * Clients still have to create the btRigidBody themselves after constructing the
+      * obDynamicRigidBody.
+      */
+    obDynamicRigidBody(obEntityWrapper *parent,
+                       const obDynamicRigidBody &other);
 
 	/*!
 	  * \brief Default destructor.
