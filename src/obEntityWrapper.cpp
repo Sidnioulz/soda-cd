@@ -111,40 +111,6 @@ obEntityWrapper::obEntityWrapper(const obEntityWrapper &other) throw(EntityAlrea
 {
     // Create the rigid body using a copy constructor
     obBody = new obDynamicRigidBody(this, *other.obBody);
-
-    // If no shape is defined, create one from the mesh
-    if(!shape)
-    {
-//            if(meshName == "cube.mesh")
-//                obBody->createCube(staticMesh);
-//            else if(meshName == "sphere.mesh")
-//                obBody->createSphere(staticMesh);
-//            else if(meshName == "simplePlane.mesh")
-//                obBody->createPlane(staticMesh);
-//            else if(meshName == "cylinder.mesh")
-//                obBody->createCylinder(staticMesh);
-//            else
-//            {
-                if (staticMesh)
-                    obBody->createMeshCollider(ogreEntity->getMesh().getPointer());
-                else
-                    obBody->createBody(ogreEntity->getMesh().getPointer());
-//            }
-    }
-    else
-        obBody->createBodyWithShape(shape, staticMesh);
-
-    // Setup a user pointer for later use within the Bullet manager
-    // This step is compulsory to be able to retrieve the entity from the broad-phase algorithm.
-    //FIXME: temporary stuff, better to do that in the copy constructor of obBody
-    obBody->getBulletBody()->getCollisionShape()->setUserPointer(this);
-    obBody->getBulletBody()->setWorldTransform(other.obBody->getBulletBody()->getWorldTransform());
-//    obBody->getBulletBody()->setGravity(other.obBody->getBulletBody()->getGravity());
-    obBody->getBulletBody()->setAngularVelocity(other.obBody->getBulletBody()->getAngularVelocity());
-    obBody->getBulletBody()->setLinearVelocity(other.obBody->getBulletBody()->getLinearVelocity());
-
-//    obBody->getBulletBody()->getWorldTransform().setOrigin(other.obBody->getPosition());
-//    obBody->getBulletBody()->getWorldTransform().setRotation(other.obBody->getRotation());
 }
 
 obEntityWrapper::~obEntityWrapper()

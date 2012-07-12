@@ -209,7 +209,7 @@ private:
     btCollisionShape    *btShape;       /**< Bullet shape for collisions */
     btVector3           position;       /**< Position of the object at creation time */
     btVector3           scale;          /**< Object scale compared to original mesh */
-	int                 mass;           /**< Mass of the object */
+    int                 mass;           /**< Mass of the object */
     btQuaternion        quaternion;     /**< Object rotation at creation time */
 };
 

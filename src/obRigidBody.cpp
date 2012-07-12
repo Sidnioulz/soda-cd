@@ -73,49 +73,42 @@ obRigidBody::obRigidBody(obEntity *parent, const obRigidBody &other) :
     mass(other.mass),
     quaternion(other.quaternion)
 {
-    //TODO: later, shared btShapes with some nice pointers
-//    btShape = other.btShape;
+    btShape = other.btShape;
 
-//    00368         btCollisionObject::serialize(&rbd->m_collisionObjectData, serializer);
-//    00369
-//    00370         m_invInertiaTensorWorld.serialize(rbd->m_invInertiaTensorWorld);
-//    00371         m_linearVelocity.serialize(rbd->m_linearVelocity);
-//    00372         m_angularVelocity.serialize(rbd->m_angularVelocity);
-//    00373         rbd->m_inverseMass = m_inverseMass;
-//    00374         m_angularFactor.serialize(rbd->m_angularFactor);
-//    00375         m_linearFactor.serialize(rbd->m_linearFactor);
-//    00376         m_gravity.serialize(rbd->m_gravity);
-//    00377         m_gravity_acceleration.serialize(rbd->m_gravity_acceleration);
-//    00378         m_invInertiaLocal.serialize(rbd->m_invInertiaLocal);
-//    00379         m_totalForce.serialize(rbd->m_totalForce);
-//    00380         m_totalTorque.serialize(rbd->m_totalTorque);
-//    00381         rbd->m_linearDamping = m_linearDamping;
-//    00382         rbd->m_angularDamping = m_angularDamping;
-//    00383         rbd->m_additionalDamping = m_additionalDamping;
-//    00384         rbd->m_additionalDampingFactor = m_additionalDampingFactor;
-//    00385         rbd->m_additionalLinearDampingThresholdSqr = m_additionalLinearDampingThresholdSqr;
-//    00386         rbd->m_additionalAngularDampingThresholdSqr = m_additionalAngularDampingThresholdSqr;
-//    00387         rbd->m_additionalAngularDampingFactor = m_additionalAngularDampingFactor;
-//    00388         rbd->m_linearSleepingThreshold=m_linearSleepingThreshold;
-//    00389         rbd->m_angularSleepingThreshold = m_angularSleepingThreshold;
+    btVector3 localInertiaTensor = btVector3(0,0,0);
+    btShape->calculateLocalInertia(mass, localInertiaTensor);
+
+    btBody = new btRigidBody(mass, _createMotionState(), btShape, localInertiaTensor);
+    btBody->setRestitution(other.btBody->getRestitution());
+    btBody->setFriction(other.btBody->getFriction());
+    btBody->setUserPointer(parent);
+
+    btBody->setAngularVelocity(other.btBody->getAngularVelocity());
+    btBody->setLinearVelocity(other.btBody->getLinearVelocity());
+    btBody->setAngularFactor(other.btBody->getAngularFactor());
+    btBody->setLinearFactor(other.btBody->getLinearFactor());
+    btBody->setDamping(other.btBody->getLinearDamping(), other.btBody->getAngularDamping());
+    btBody->setSleepingThresholds(other.btBody->getLinearSleepingThreshold(), other.btBody->getAngularSleepingThreshold());
+
+    btBody->setWorldTransform(other.btBody->getWorldTransform());
 }
 
 obRigidBody::~obRigidBody()
 {
-    // Check that the shape isn't compound (it is if created in createBody). If it is, delete child shapes
-    btCompoundShape *cShape = dynamic_cast<btCompoundShape *>(btShape);
-    if(cShape)
-    {
-        for(int i=0; i<cShape->getNumChildShapes(); ++i)
-            delete cShape->getChildShape(i);
-    }
+//    // Check that the shape isn't compound (it is if created in createBody). If it is, delete child shapes
+//    btCompoundShape *cShape = dynamic_cast<btCompoundShape *>(btShape);
+//    if(cShape)
+//    {
+//        for(int i=0; i<cShape->getNumChildShapes(); ++i)
+//            delete cShape->getChildShape(i);
+//    }
 
-    // Delete the shape either way
-    delete btShape;
+//    // Delete the shape either way
+//    delete btShape;
 
-    // Delete any triangle mesh that was used for the shape
-    if(triangleMesh)
-        delete triangleMesh;
+//    // Delete any triangle mesh that was used for the shape
+//    if(triangleMesh)
+//        delete triangleMesh;
 
     // Delete the motion state
     delete btBody->getMotionState();
@@ -251,7 +244,7 @@ void obRigidBody::createBody(Ogre::Mesh *ptr)
     btShape->calculateLocalInertia(mass,localInertiaTensor);
     btShape->setLocalScaling(scale);
 
-	btBody = new btRigidBody(mass, _createMotionState(), btShape, localInertiaTensor);
+    btBody = new btRigidBody(mass, _createMotionState(), btShape, localInertiaTensor);
     btBody->setRestitution(DynamicBodyRestitution);
     btBody->setFriction(DynamicBodyFriction);
     btBody->setUserPointer(parent);
@@ -267,7 +260,7 @@ void obRigidBody::createBodyWithShape(btCollisionShape *shape, const bool static
         btShape->calculateLocalInertia(mass,localInertiaTensor);
     }
 
-	btBody = new btRigidBody(staticMesh ? 0:mass, _createMotionState(), btShape, localInertiaTensor);
+    btBody = new btRigidBody(staticMesh ? 0:mass, _createMotionState(), btShape, localInertiaTensor);
     btBody->setRestitution(staticMesh ? StaticBodyRestitution:DynamicBodyRestitution);
     btBody->setFriction(staticMesh ? StaticBodyFriction:DynamicBodyFriction);
     btBody->setUserPointer(parent);
@@ -347,7 +340,7 @@ void obRigidBody::createMeshCollider(Ogre::Mesh *ptr)
     triangleMesh = triMesh;
     btShape = new btBvhTriangleMeshShape(triMesh, true);
 
-	btBody = new btRigidBody(0.0, _createMotionState(), btShape);
+    btBody = new btRigidBody(0.0, _createMotionState(), btShape);
     btBody->setRestitution(StaticBodyRestitution);
     btBody->setFriction(StaticBodyFriction);
     btBody->setUserPointer(parent);
