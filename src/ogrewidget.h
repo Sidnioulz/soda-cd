@@ -226,6 +226,9 @@ protected slots:
       * \brief Calls the rendering function if not already running every time a tick occurs.
       */
     void onTimerTick();
+
+    void onEntityDeletion(const Ogre::Entity *&ent);
+    void onSceneNodeDeletion(const Ogre::SceneNode *&node);
 };
 
 #endif // OGREWIDGET_H

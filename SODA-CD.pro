@@ -147,7 +147,7 @@ unix {
 }
 
 FORMS += \
-    src/mainasapcdwindow.ui
+    src/mainwindow.ui
 
 OTHER_FILES += \
     data/Plugins.cfg \

@@ -103,6 +103,9 @@ public:
      */
     obGhostEntity *_createNinja(const btVector3 &position, const btVector3 &scale, const btScalar &mass);
 
+private:
+    bool randomScale;      /*! Whether cubes have a random scale */
+
 };
 
 

@@ -48,9 +48,9 @@ Simulation::~Simulation()
     delete bufferInterface;
 }
 
-void Simulation::printStats() const
+void Simulation::printStats(QTextStream &out) const
 {
-    ExperimentTrackingInterface::getInterface()->printSynchronizationTimeStats();
+    ExperimentTrackingInterface::getInterface()->printSynchronizationTimeStats(out);
 }
 
 void Simulation::start()

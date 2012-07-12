@@ -27,9 +27,33 @@
 #include "Parser/Animation.h"
 #include "Parser/Action.h"
 #include "utils.h"
+#include "main.h"
 #include "ogreresources.h"
 
 unsigned int obEntityWrapper::nextInLine = 0;
+
+namespace {
+    //! Deletes an Ogre::Entity properly
+    void deleteOgreEntity(Ogre::Entity *ent)
+    {
+        QMetaObject::invokeMethod(MainPepsiWindow::getInstance()->getOgreWidget(), "onEntityDeletion",
+                                  Q_ARG(Ogre::Entity *, ent));
+    }
+
+    //! Deletes an Ogre::Entity properly
+    void deleteSceneNode(Ogre::SceneNode *node)
+    {
+        QMetaObject::invokeMethod(MainPepsiWindow::getInstance()->getOgreWidget(), "onSceneNodeDeletion",
+                                  Q_ARG(Ogre::SceneNode *, node));
+    }
+}
+
+
+
+
+
+
+
 
 obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &meshName, const Ogre::Vector3 &pos, const Ogre::Quaternion &quat, const bool staticMesh, const Ogre::Vector3 &scale, const int mass, btCollisionShape *shape)  throw(EntityAlreadyExistsException) :
     ogreEntity(0),
@@ -55,10 +79,10 @@ obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &m
                                         Utils::btVectorFromOgre(scale),
                                         mass);
 
-        ogreEntity = QSharedPointer<Ogre::Entity>(OgreResources::getSceneManager()->createEntity(name, meshName), Utils::deleteOgreEntity);
+        ogreEntity = QSharedPointer<Ogre::Entity>(OgreResources::getSceneManager()->createEntity(name, meshName), deleteOgreEntity);
         ogreEntity->setCastShadows(true);
 
-        ogreNode = QSharedPointer<Ogre::SceneNode>(OgreResources::getSceneManager()->getRootSceneNode()->createChildSceneNode(name, pos, quat), Utils::deleteSceneNode);
+        ogreNode = QSharedPointer<Ogre::SceneNode>(OgreResources::getSceneManager()->getRootSceneNode()->createChildSceneNode(name, pos, quat), deleteSceneNode);
         ogreNode->scale(scale);
         getSceneNode()->attachObject(ogreEntity.data());
 

@@ -28,7 +28,6 @@
 #include <OgreQuaternion.h>
 #include <btBulletDynamicsCommon.h>
 #include <blitz/array.h>
-#include "ogreresources.h"
 
 /*! \namespace Utils
   * \brief Various type conversion utilities.
@@ -72,24 +71,6 @@ namespace Utils
     static inline Ogre::Quaternion quaternionFromBullet(const btQuaternion &quat)
     {
         return Ogre::Quaternion(quat.w(), quat.x(), quat.y(), quat.z());
-    }
-
-    //! Deletes an Ogre::Entity properly
-    static inline void deleteOgreEntity(Ogre::Entity *ent)
-    {
-        OgreResources::lockSceneManagerMutex();
-        qDebug() << "Utils::deleteOgreEntity(" << ent->getName().c_str() << "; Thread " << QString().sprintf("%p", QThread::currentThread());
-        OgreResources::getSceneManager()->destroyEntity(ent->getName());
-        OgreResources::unlockSceneManagerMutex();
-    }
-
-    //! Deletes an Ogre::Entity properly
-    static inline void deleteSceneNode(Ogre::SceneNode *node)
-    {
-        OgreResources::lockSceneManagerMutex();
-        qDebug() << "Utils::deleteSceneNode(" << node->getName().c_str() << "; Thread " << QString().sprintf("%p", QThread::currentThread());
-        OgreResources::getSceneManager()->getRootSceneNode()->removeAndDestroyChild(node->getName());
-        OgreResources::unlockSceneManagerMutex();
     }
 }
 

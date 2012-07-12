@@ -22,7 +22,7 @@
 
 #include <limits>
 #include "physicsworld.h"
-#include "ui_mainasapcdwindow.h"
+#include "ui_mainwindow.h"
 #include "utils.h"
 #include "grid.h"
 #include "localgrid.h"

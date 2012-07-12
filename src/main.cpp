@@ -23,13 +23,22 @@
 #include <iostream>
 
 #include "main.h"
-#include "ui_mainasapcdwindow.h"
+#include "ui_mainwindow.h"
 #include "randomcubesimulation.h"
+#include "experimenttrackinginterface.h"
 
-MainAsapCdWindow::MainAsapCdWindow(QWidget *parent) :
+//TMP params
+QString MainPepsiWindow::paramLogFilePath = "/tmp/TEST.OUT";
+btScalar MainPepsiWindow::paramTimeLimit = 10;
+bool MainPepsiWindow::paramAutomatedSimulation = true;
+
+MainPepsiWindow *MainPepsiWindow::instance = 0;
+
+MainPepsiWindow::MainPepsiWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainAsapCdWindow),
-    targetFPS(60)
+    ui(new Ui::MainPepsiWindow),
+    targetFPS(60),
+    logFile(paramLogFilePath)
 {
     // Various UI setups
     ui->setupUi(this);
@@ -42,6 +51,8 @@ MainAsapCdWindow::MainAsapCdWindow(QWidget *parent) :
     qRegisterMetaType<QVector<CellBorderCoordinates> >("QVector<CellBorderCoordinates>");
     qRegisterMetaType<obEntityWrapper *>("obEntityWrapper *");
     qRegisterMetaType<btScalar>("btScalar");
+    qRegisterMetaType<Ogre::Entity *>("Ogre::Entity *");
+    qRegisterMetaType<Ogre::SceneNode *>("Ogre::SceneNode *");
 
     // Create the Ogre Widget
     ogreWidget = new OgreWidget(targetFPS);
@@ -66,28 +77,56 @@ MainAsapCdWindow::MainAsapCdWindow(QWidget *parent) :
 
     connect(toggleOgre, SIGNAL(triggered(bool)), ogreWidget, SLOT(setShown(bool)));
     ui->menuDebug->addAction(toggleOgre);
+
+    // Setup log file text stream
+    logFile.open(QIODevice::WriteOnly | QIODevice::Text);
+
+    // Set a time limit for the simulation, if required
+    if(paramAutomatedSimulation)
+    {
+        ExperimentTrackingInterface::getInterface()->setSimulationTimeLimit(paramTimeLimit);
+        connect(ExperimentTrackingInterface::getInterface(), SIGNAL(simulationTimeLimitReached(btScalar)), this, SLOT(close()));
+    }
 }
 
-MainAsapCdWindow::~MainAsapCdWindow()
+MainPepsiWindow::~MainPepsiWindow()
 {
 #ifndef NDEBUG
-        qDebug() << "MainAsapCdWindow::~MainAsapCdWindow(); Thread " << QString().sprintf("%p", QThread::currentThread());
+        qDebug() << "MainPepsiWindow::~MainPepsiWindow(); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
     simulation->stop();
     ogreWidget->clearBufferInterface();
+
+    QTextStream out(&logFile);
+    simulation->printStats(out);
+
 
     delete simulation;
 
     delete ogreWidget; // should be done by magic
     delete ui;
 #ifndef NDEBUG
-        qDebug() << "MainAsapCdWindow::~MainAsapCdWindow(); Destroyed; Thread " << QString().sprintf("%p", QThread::currentThread());
+        qDebug() << "MainPepsiWindow::~MainPepsiWindow(); Destroyed; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
+
+    logFile.close();
 }
 
-void MainAsapCdWindow::onOgreReady()
+MainPepsiWindow *MainPepsiWindow::getInstance()
 {
+    if(!instance)
+        instance = new MainPepsiWindow();
+
+    return instance;
+}
+
+void MainPepsiWindow::onOgreReady()
+{
+    // If automated run, hide the widget
+    if(paramAutomatedSimulation)
+        ui->menuDebug->actions().at(0)->trigger();
+
     simulation = new RandomCubeSimulation();
     ogreWidget->registerBufferInterface(simulation->getBufferInterface());
     simulation->start();
@@ -106,7 +145,7 @@ int main(int argc, char *argv[])
    QApplication app(argc, argv);
 
    // Initialize the window and Ogre rendering system
-   MainAsapCdWindow* window = new MainAsapCdWindow();
+   MainPepsiWindow* window = MainPepsiWindow::getInstance();
    window->show();
 
    // Run the application

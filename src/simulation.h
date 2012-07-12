@@ -26,6 +26,7 @@
 #include <Ogre.h>
 #include <QVector>
 #include <QMap>
+#include <QTextStream>
 
 #include "physicsworld.h"
 #include "circulartransformbufferinterface.h"
@@ -64,8 +65,9 @@ public:
 
     /*!
       * \brief Prints some statistics about the Simulation.
+      * \param out the stream to write to
       */
-    virtual void printStats() const;
+    virtual void printStats(QTextStream &out) const;
 
     /*!
       * \brief Starts the Simulation, initializing it if necessary.

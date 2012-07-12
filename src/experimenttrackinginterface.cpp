@@ -1,6 +1,7 @@
 #include "experimenttrackinginterface.h"
 #include <QtDebug>
 #include <QString>
+#include "main.h"
 
 
 
@@ -14,6 +15,11 @@ ExperimentTrackingInterface *ExperimentTrackingInterface::getInterface()
     return eti;
 }
 
+void ExperimentTrackingInterface::setSimulationTimeLimit(const btScalar &newLimit)
+{
+    timeLimit = newLimit;
+}
+
 void ExperimentTrackingInterface::registerSynchronizationEvent(const short &world0, const btScalar &timestamp, const short &world1)
 {
     syncGroupsMutex.lock();
@@ -22,7 +28,7 @@ void ExperimentTrackingInterface::registerSynchronizationEvent(const short &worl
     QList< QList<short> > groupsAtTime = syncGroups.value(timestamp, QList< QList<short> >());
 
     // Lookup for already existing groups
-    int index0 = 0, index1 = 0;
+    int index0 = -1, index1 = -1;
     for(int i=0; i<groupsAtTime.size(); ++i)
     {
         for(int j=0; j<groupsAtTime[i].size(); ++j)
@@ -39,7 +45,7 @@ void ExperimentTrackingInterface::registerSynchronizationEvent(const short &worl
     }
 
     // Both items found, merge lists
-    if(index0 != 0 && index1 != 0)
+    if(index0 != -1 && index1 != -1)
     {
         // Lists not already merged (could happen with duplicate events)
         if(index0 != index1)
@@ -47,8 +53,8 @@ void ExperimentTrackingInterface::registerSynchronizationEvent(const short &worl
             QList<short> senderList = groupsAtTime.at(index0);
             QList<short> syncNeighborList = groupsAtTime.at(index1);
 
-            groupsAtTime.removeAt(index0);
-            groupsAtTime.removeAt(index1);
+            groupsAtTime.removeAt(qMax(index0, index1));
+            groupsAtTime.removeAt(qMin(index0, index1));
 
             senderList.append(syncNeighborList);
             groupsAtTime.append(senderList);
@@ -57,14 +63,22 @@ void ExperimentTrackingInterface::registerSynchronizationEvent(const short &worl
     else
     {
         // Only sender's list exists
-        if(index0 != 0)
+        if(index0 != -1)
         {
-            groupsAtTime[index0].append(world1);
+            QList<short> senderList = groupsAtTime.takeAt(index0);
+
+            senderList.append(world1);
+
+            groupsAtTime.append(senderList);
         }
         // Only neighbor's list exists
-        else if(index1 != 0)
+        else if(index1 != -1)
         {
-            groupsAtTime[index1].append(world0);
+            QList<short> syncNeighborList = groupsAtTime.takeAt(index1);
+
+            syncNeighborList.append(world0);
+
+            groupsAtTime.append(syncNeighborList);
         }
         // If no world was already synchronized
         else
@@ -81,12 +95,19 @@ void ExperimentTrackingInterface::registerSynchronizationEvent(const short &worl
     syncGroupsMutex.unlock();
 }
 
-void ExperimentTrackingInterface::printSynchronizationTimeStats()
+void ExperimentTrackingInterface::onTimestampRendered(const btScalar &timeStamp)
+{
+    // If reached time limit plus a few frames (needed because
+    if(timeStamp >= timeLimit)
+        emit simulationTimeLimitReached(timeStamp);
+}
+
+void ExperimentTrackingInterface::printSynchronizationTimeStats(QTextStream &out)
 {
     syncGroupsMutex.lock();
 
-    qDebug() << "\n\n##### SYNCHRONIZATION TIME STATS #####";
-    qDebug() << "Number of timestamps registered:" << syncGroups.size();
+    out << "##### SYNCHRONIZATION TIME STATS #####\n";
+    out << "Number of timestamps registered: " << syncGroups.size() << "\n";
 
     QList<btScalar> timestamps = syncGroups.keys();
     QList<QList<QList<short > > > groups = syncGroups.values();
@@ -95,9 +116,9 @@ void ExperimentTrackingInterface::printSynchronizationTimeStats()
 
 
 
-    for(int ts=0; ts<timestamps.size(); ++ts)
+    for(int ts=0; ts<timestamps.size() && timestamps[ts] <= timeLimit+0.001; ++ts)
     {
-        qDebug() << "\n# Timestamp" << timestamps[ts];
+        out << "\n# Timestamp " << timestamps[ts] << "\n";
 
         for(int i=0; i<groups[ts].size(); ++i)
         {
@@ -105,12 +126,12 @@ void ExperimentTrackingInterface::printSynchronizationTimeStats()
             for(int j=0; j<groups[ts][i].size(); ++j)
                 line.append(QString("%1, ").arg(groups[ts][i][j]));
 
-            qDebug(qPrintable(line));
+            out << qPrintable(line) << "\n";
         }
     }
 
 
-    qDebug() << "##### end stats #####\n";
+    out << "##### end stats #####\n\n";
     syncGroupsMutex.unlock();
 }
 
@@ -123,6 +144,7 @@ void ExperimentTrackingInterface::clearStats()
 }
 
 
-ExperimentTrackingInterface::ExperimentTrackingInterface()
+ExperimentTrackingInterface::ExperimentTrackingInterface() :
+    timeLimit(INFINITY)
 {
 }

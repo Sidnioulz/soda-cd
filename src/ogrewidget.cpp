@@ -24,6 +24,8 @@
 #include "ogreresources.h"
 #include "utils.h"
 #include "physicsworld.h"
+#include "experimenttrackinginterface.h"
+
 
 OgreWidget::OgreWidget(int targetFPS, QWidget *parent) :
     QGLWidget(parent),
@@ -136,9 +138,9 @@ QWidget::showEvent(e);
 void OgreWidget::paintEvent(QPaintEvent *e)
 {
 //    ogreRoot->_fireFrameStarted();
-    OgreResources::lockSceneManagerMutex();
+//    OgreResources::lockSceneManagerMutex();
         ogreRenderWindow->update();
-    OgreResources::unlockSceneManagerMutex();
+//    OgreResources::unlockSceneManagerMutex();
 //    ogreRoot->_fireFrameEnded();
 
     e->accept();
@@ -587,6 +589,7 @@ void OgreWidget::render()
 //    qDebug() << "OgreWidget::render(); Simulation runtime " << simulationRunTime * 1000 << " / Actual time spent" << globalTimer.elapsed() << "; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
     update();
+    ExperimentTrackingInterface::getInterface()->onTimestampRendered(simulationRunTime);
     OgreResources::unlockSceneManagerMutex();
 
     // Render again if we missed a tick. This may cause stack overflow in extreme cases.
@@ -612,4 +615,16 @@ void OgreWidget::onTimerTick()
         renderingPassQueued = true;
     else
         render();
+}
+
+void OgreWidget::onEntityDeletion(const Ogre::Entity *&ent)
+{
+    qDebug() << "Utils::deleteOgreEntity(" << ent->getName().c_str() << "; Thread " << QString().sprintf("%p", QThread::currentThread());
+    OgreResources::getSceneManager()->destroyEntity(ent->getName());
+}
+
+void OgreWidget::onSceneNodeDeletion(const Ogre::SceneNode *&node)
+{
+    qDebug() << "Utils::deleteSceneNode(" << node->getName().c_str() << "; Thread " << QString().sprintf("%p", QThread::currentThread());
+    OgreResources::getSceneManager()->getRootSceneNode()->removeAndDestroyChild(node->getName());
 }

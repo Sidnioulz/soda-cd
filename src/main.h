@@ -22,7 +22,7 @@
 #define MAIN_H
 
 #define APP_NAME    "PEPSI's"
-#define VERSION     "0.3.0"
+#define VERSION     "0.3.2"
 
 #include <QMainWindow>
 #include "ogrewidget.h"
@@ -61,12 +61,14 @@ Q_DECLARE_METATYPE(PhysicsWorld *)
 Q_DECLARE_METATYPE(QVector<CellBorderCoordinates>)
 Q_DECLARE_METATYPE(obEntityWrapper *)
 Q_DECLARE_METATYPE(btScalar)
+Q_DECLARE_METATYPE(Ogre::Entity *)
+Q_DECLARE_METATYPE(Ogre::SceneNode *)
 
 namespace Ui {
-    class MainAsapCdWindow;
+    class MainPepsiWindow;
 }
 
-/*! \class MainAsapCdWindow
+/*! \class MainPepsiWindow
   * \brief A Qt window that contains an Ogre+bullet simulator.
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
   *
@@ -74,29 +76,65 @@ namespace Ui {
   * engine and the Ogre 3D engine. It instantiates widgets, the rendering engine and
   * the simulation management object.
   */
-class MainAsapCdWindow : public QMainWindow
+class MainPepsiWindow : public QMainWindow
 {
     Q_OBJECT
 
-public:
-    /*!
-      * \brief Default constructor.
-      * \param parent the parent widget if it exists
-      * \return a new MainAsapCdWindow
-      */
-    explicit MainAsapCdWindow(QWidget *parent = 0);
+protected:
+/*!
+  * \brief Default constructor.
+  * \param parent the parent widget if it exists
+  * \return a new MainPepsiWindow
+  */
+explicit MainPepsiWindow(QWidget *parent = 0);
 
+public:
     /*!
       * \brief Default destructor.
       */
-    ~MainAsapCdWindow();
+    ~MainPepsiWindow();
+
+    /*!
+     * \brief Permits access to the OgreWidget.
+     * \return a pointer to the MainPepsiWindow's OgreWidget
+     */
+    inline OgreWidget *getOgreWidget() const
+    {
+        return ogreWidget;
+    }
+
+    /*!
+     * \brief Permits access to the current Simulation.
+     * \return a pointer to the MainPepsiWindow's current Simulation
+     */
+    inline Simulation *getCurrentSimulation() const
+    {
+        return simulation;
+    }
+
+    /*!
+     * \brief Returns the instance of MainPepsiWindow.
+     * \return the instance of MainPepsiWindow
+     */
+    static MainPepsiWindow *getInstance();
 
 private:
-    Ui::MainAsapCdWindow                          *ui;              //!< Pointer to file-defined Qt GUI widgets
-    OgreWidget                                    *ogreWidget;      //!< Pointer to the Ogre rendering widget
-    Simulation                                    *simulation;      //!< A Simulation object
+    //Temporary placeholder for application parameters
+    static QString                      paramLogFilePath;   //!< Path of this application's log file
+    static btScalar                     paramTimeLimit;     //!< Time limit for the simulation (used to automate shutdown)
+    static bool                         paramAutomatedSimulation;     //!< Whether simulations are automated
 
-    int targetFPS;                                                  //!< target FPS of the simulation
+
+
+
+    static MainPepsiWindow              *instance;          //!< The unique instance of MainPepsiWindow
+
+    Ui::MainPepsiWindow                 *ui;                //!< Pointer to file-defined Qt GUI widgets
+    OgreWidget                          *ogreWidget;        //!< Pointer to the Ogre rendering widget
+    Simulation                          *simulation;        //!< A Simulation object
+
+    int                                 targetFPS;          //!< target FPS of the simulation
+    QFile                               logFile;            //!< File in which writing the log is performed
 
 private slots:
     //! Used to initialize the Simulation Scene once Ogre is ready to work
