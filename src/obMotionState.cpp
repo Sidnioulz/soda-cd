@@ -25,18 +25,40 @@
 #include "localgrid.h"
 #include "utils.h"
 
-obMotionState::obMotionState(obEntityWrapper *parent) : parentBody(parent), grid(0)
+obMotionState::obMotionState(obEntityWrapper *parent) :
+    parentBody(parent),
+    grid(0),
+    lastCellCoords()
+{
+}
+
+obMotionState::obMotionState(obEntityWrapper *parent, const btMotionState &other) :
+    btMotionState(other),
+    parentBody(parent),
+    grid(0),
+    lastCellCoords()
 {
 }
 
 void obMotionState::setLocalGrid(LocalGrid *newGrid)
 {
+
     grid = newGrid;
     btVector3 coords = grid->getGridInformation()->toCellCoordinates(grid->getResolution(), parentBody->getCenteredPosition());
+
+#ifndef NDEBUG
+    qDebug() << "obMotionState(" << parentBody->getDisplayName() << ")::setLocalGrid(" << (newGrid? newGrid->getOwnerId(): PhysicsWorld::NullWorldId) << "); in (" << coords.x() << coords.y() << coords.z() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+
 	if(grid->at(coords).containsEntity(parentBody))
         lastCellCoords = coords;
     else
+    {
+#ifndef NDEBUG
+    qWarning() << "obMotionState(" << parentBody->getDisplayName() << ")::setLocalGrid(" << (newGrid? newGrid->getOwnerId(): PhysicsWorld::NullWorldId) << "); in (" << coords.x() << coords.y() << coords.z() << "); Coordinates did not contain entity, set random last cell coordinates; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
         lastCellCoords = btVector3(INFINITY, INFINITY, INFINITY);
+    }
 }
 
 void obMotionState::unsetLocalGrid()
@@ -76,7 +98,7 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
                           "; Thread " << QString().sprintf("%p", QThread::currentThread());
 
                     // Update status
-                    parentBody->setStatus(obEntity::OutOfSimulationSpace);
+                    parentBody->setStatus(obEntity::Removed);
 
                     // Remove entity from Cell, remove pointer to LocalGrid
                     grid->at(lastCellCoords).removeEntity(parentBody);
@@ -119,7 +141,7 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
                         oldOwner->messageNeighbor(newParent,
                                                "onOwnershipTransfer",
                                                Q_ARG(PhysicsWorld *, oldOwner),
-                                               Q_ARG(obEntityWrapper *, parentBody),
+                                               Q_ARG(obEntityWrapper *, new obEntityWrapper(*parentBody)),
                                                Q_ARG(btScalar, eventTime));
 
 
@@ -127,6 +149,7 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
                     }
                     else
                     {
+                        //FIXME: should never happen, happens a lot.
                         qWarning() << "setWorldTransform(" << (parentBody? parentBody->getOwnerId() : PhysicsWorld::NullWorldId) << ")::setWorldTransform(" << worldTrans.getOrigin().x() << worldTrans.getOrigin().y() << worldTrans.getOrigin().z() << ");" <<
                               "Entity '" << parentBody->getDisplayName() <<
                               "' owned by '" << parentBody->getOwnerWorld() <<

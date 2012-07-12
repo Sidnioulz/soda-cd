@@ -52,6 +52,12 @@ public:
       */
     Cell(const short ownerId);
 
+    /*! \brief Copy constructor.
+      * \param other the Cell to copy
+      * \return a new Cell
+      */
+    Cell(const Cell &other);
+
     /*!
      * \brief Destructor.
      */

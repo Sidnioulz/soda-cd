@@ -78,7 +78,8 @@ HEADERS += \
     src/obghostentity.h \
     src/obentity.h \
     src/btlocalgridbroadphase.h \
-    src/garbageworld.h
+    src/garbageworld.h \
+    src/experimenttrackinginterface.h
 
 SOURCES += \
     src/ogrewidget.cpp \
@@ -116,7 +117,8 @@ SOURCES += \
     src/obghostentity.cpp \
     src/obentity.cpp \
     src/btlocalgridbroadphase.cpp \
-    src/garbageworld.cpp
+    src/garbageworld.cpp \
+    src/experimenttrackinginterface.cpp
 
 LIBS += -lOgreMain \
     -lOgreTerrain \

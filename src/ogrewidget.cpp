@@ -23,6 +23,7 @@
 #include "ogrewidget.h"
 #include "ogreresources.h"
 #include "utils.h"
+#include "physicsworld.h"
 
 OgreWidget::OgreWidget(int targetFPS, QWidget *parent) :
     QGLWidget(parent),
@@ -86,10 +87,10 @@ OgreWidget::~OgreWidget()
     //      Ogre::ResourceGroupManager::getSingleton().destroyResourceGroup(rgs[i]);
 
     // Destroy scene manager
-//    ogreRoot->destroySceneManager(ogreSceneManager); //FIXME: crashes on SceneManager::destroyAllMovableObjects
+    ogreRoot->destroySceneManager(ogreSceneManager); //FIXME: crashes on SceneManager::destroyAllMovableObjects
 
     // Destroy root
-//    OgreResources::deleteRoot(); //FIXME: crashes on SceneManager::destroyAllMovableObjects
+    OgreResources::deleteRoot(); //FIXME: crashes on SceneManager::destroyAllMovableObjects
 
 #ifndef NDEBUG
         qDebug() << "OgreWidget::OgreWidget(); Destroyed; Thread " << QString().sprintf("%p", QThread::currentThread());
@@ -536,6 +537,7 @@ void OgreWidget::render()
     // Variable used to store the time that is queried, and actually retrieved
     btScalar currentTimeStep = simulationRunTime + getTargetTimeStep();
 
+    OgreResources::lockSceneManagerMutex();
     // If there is no buffer interface, directly skip to rendering
     if(hasBufferInterface())
     {
@@ -551,40 +553,27 @@ void OgreWidget::render()
             obEntityTransformRecordListIterator it(*ptr);
             while(it.hasNext())
             {
+                // Get the Ogre node from the record
                 const obEntityTransformRecord &record = it.next();
-                Ogre::Node *node = ogreSceneManager->getSceneNode(record.obEnt->getName());
-
-
-
-
-
-
-                //        btTransform interpolatedTrans;
-        //        btTransformUtil::integrateTransform(myNinjaBody->getWorldTransform(),myNinjaBody->getLinearVelocity(),myNinjaBody->getAngularVelocity(),1/600.f,interpolatedTrans);
-        //    //    w->entities["ninja"]->getRigidBody()->setTransformation(interpolatedTrans);
-
-        //        qDebug() << interpolatedTrans.getOrigin().x() << ", "<< interpolatedTrans.getOrigin().y() << ", "<< interpolatedTrans.getOrigin().z();
-        //        qDebug() << myNinjaBody->getWorldTransform().getOrigin().x() << ", "<< myNinjaBody->getWorldTransform().getOrigin().y()<< ", "<< myNinjaBody->getWorldTransform().getOrigin().z();
-
-
-
-
-
-                node->setPosition(Utils::vectorFromBullet(record.transform.getOrigin()));
-                node->setOrientation(Utils::quaternionFromBullet(record.transform.getRotation()));
-
-                // Update color according to status for debug
-                if(record.status == obEntity::CrossingBorder)
+                if(ogreSceneManager->hasSceneNode(record.entityName))
                 {
-                    record.obEnt->setColor(0, 0, 0);
-                }
-                else if(record.status == obEntity::OutOfWorld)
-                {
-                    record.obEnt->setColor(1, 0, 0);
-//                    qDebug() << "Deleting eEntity '" << record.obEnt->getDisplayName() << "at time" << ptr->getTimeStep();
-//                    delete record.obEnt;
+                    Ogre::Node *node = ogreSceneManager->getSceneNode(record.entityName);
 
-                    //TODO either use a better status system or use smart pointers for deleting obEnts; // or code a garbage collector that is messaged, and that runs in the main thread.
+                    // Check for any special status
+    //                if(record.status == obEntity::CrossingBorder)
+    //                {
+    //                    record.obEnt->setColor(0, 0, 0);
+    //                }
+    //                else if(record.status == obEntity::NormalStatus)
+    //                {
+    //                    record.obEnt->setColor(PhysicsWorld::EntityColors[record.obEnt->getOwnerId()%PhysicsWorld::NbColors][0]/255.f,
+    //                                           PhysicsWorld::EntityColors[record.obEnt->getOwnerId()%PhysicsWorld::NbColors][1]/255.f,
+    //                                           PhysicsWorld::EntityColors[record.obEnt->getOwnerId()%PhysicsWorld::NbColors][2]/255.f);
+    //                }
+
+                    // Set position and orientation
+                    node->setPosition(Utils::vectorFromBullet(record.transform.getOrigin()));
+                    node->setOrientation(Utils::quaternionFromBullet(record.transform.getRotation()));
                 }
             }
         }
@@ -596,6 +585,7 @@ void OgreWidget::render()
 //    qDebug() << "OgreWidget::render(); Simulation runtime " << simulationRunTime * 1000 << " / Actual time spent" << globalTimer.elapsed() << "; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
     update();
+    OgreResources::unlockSceneManagerMutex();
 
     // Render again if we missed a tick. This may cause stack overflow in extreme cases.
     if(renderingPassQueued)

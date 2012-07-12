@@ -29,18 +29,23 @@ obDynamicRigidBody::obDynamicRigidBody(obEntityWrapper *parent,
                                        const btVector3 &scale,
                                        int mass) :
     obRigidBody(parent, pos, quat, scale, mass),
-    parent(parent)
+    parent(parent),
+    mState(0)
 {
 }
 
 obDynamicRigidBody::obDynamicRigidBody(obEntityWrapper *parent, const obDynamicRigidBody &other) :
     obRigidBody(parent, other),
-    parent(parent)
+    parent(parent),
+    mState(new obMotionState(parent, *other.mState))
 {
+    //TODO: copy shape, create body, stuff.
 }
 
 btMotionState *obDynamicRigidBody::_createMotionState()
 {
-	mState = new obMotionState(parent);
-	return mState;
+    if(!mState)
+        mState = new obMotionState(parent);
+
+    return mState;
 }

@@ -22,14 +22,23 @@
 #include "obentity.h"
 
 obEntityTransformRecord::obEntityTransformRecord() :
-    obEnt(0),
+//    obEnt(0),
+    entityName(),
     status(obEntity::NonExistant)
 {
 }
 
-obEntityTransformRecord::obEntityTransformRecord(obEntityWrapper *obEnt, const btTransform &transform) :
-    obEnt(obEnt),
+//obEntityTransformRecord::obEntityTransformRecord(obEntityWrapper *obEnt, const btTransform &transform) :
+//    obEnt(obEnt),
+//    transform(transform),
+//    status(obEnt? obEnt->getStatus() : obEntity::NonExistant)
+//{
+//}
+
+
+obEntityTransformRecord::obEntityTransformRecord(Ogre::String entityName, const obEntity::EntityStatus &status, const btTransform &transform) :
+    entityName(entityName),
     transform(transform),
-    status(obEnt? obEnt->getStatus() : obEntity::NonExistant)
+    status(status)
 {
 }

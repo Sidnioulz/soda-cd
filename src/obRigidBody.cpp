@@ -42,6 +42,8 @@
 #include "obRigidBody.h"
 
 #include <QtDebug>
+#include <btBulletDynamicsCommon.h>
+#include <bullet/LinearMath/btSerializer.h>
 #include "ogreresources.h"
 
 const float obRigidBody::StaticBodyRestitution  = 0.1f;
@@ -71,6 +73,31 @@ obRigidBody::obRigidBody(obEntity *parent, const obRigidBody &other) :
     mass(other.mass),
     quaternion(other.quaternion)
 {
+    //TODO: later, shared btShapes with some nice pointers
+//    btShape = other.btShape;
+
+//    00368         btCollisionObject::serialize(&rbd->m_collisionObjectData, serializer);
+//    00369
+//    00370         m_invInertiaTensorWorld.serialize(rbd->m_invInertiaTensorWorld);
+//    00371         m_linearVelocity.serialize(rbd->m_linearVelocity);
+//    00372         m_angularVelocity.serialize(rbd->m_angularVelocity);
+//    00373         rbd->m_inverseMass = m_inverseMass;
+//    00374         m_angularFactor.serialize(rbd->m_angularFactor);
+//    00375         m_linearFactor.serialize(rbd->m_linearFactor);
+//    00376         m_gravity.serialize(rbd->m_gravity);
+//    00377         m_gravity_acceleration.serialize(rbd->m_gravity_acceleration);
+//    00378         m_invInertiaLocal.serialize(rbd->m_invInertiaLocal);
+//    00379         m_totalForce.serialize(rbd->m_totalForce);
+//    00380         m_totalTorque.serialize(rbd->m_totalTorque);
+//    00381         rbd->m_linearDamping = m_linearDamping;
+//    00382         rbd->m_angularDamping = m_angularDamping;
+//    00383         rbd->m_additionalDamping = m_additionalDamping;
+//    00384         rbd->m_additionalDampingFactor = m_additionalDampingFactor;
+//    00385         rbd->m_additionalLinearDampingThresholdSqr = m_additionalLinearDampingThresholdSqr;
+//    00386         rbd->m_additionalAngularDampingThresholdSqr = m_additionalAngularDampingThresholdSqr;
+//    00387         rbd->m_additionalAngularDampingFactor = m_additionalAngularDampingFactor;
+//    00388         rbd->m_linearSleepingThreshold=m_linearSleepingThreshold;
+//    00389         rbd->m_angularSleepingThreshold = m_angularSleepingThreshold;
 }
 
 obRigidBody::~obRigidBody()
@@ -227,8 +254,7 @@ void obRigidBody::createBody(Ogre::Mesh *ptr)
 	btBody = new btRigidBody(mass, _createMotionState(), btShape, localInertiaTensor);
     btBody->setRestitution(DynamicBodyRestitution);
     btBody->setFriction(DynamicBodyFriction);
-//    btBody->setCollisionFlags(btBody->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
-    btBody->getCollisionShape()->setUserPointer(parent);
+    btBody->setUserPointer(parent);
 }
 
 void obRigidBody::createBodyWithShape(btCollisionShape *shape, const bool staticMesh)
@@ -244,7 +270,7 @@ void obRigidBody::createBodyWithShape(btCollisionShape *shape, const bool static
 	btBody = new btRigidBody(staticMesh ? 0:mass, _createMotionState(), btShape, localInertiaTensor);
     btBody->setRestitution(staticMesh ? StaticBodyRestitution:DynamicBodyRestitution);
     btBody->setFriction(staticMesh ? StaticBodyFriction:DynamicBodyFriction);
-    btBody->getCollisionShape()->setUserPointer(parent);
+    btBody->setUserPointer(parent);
 }
 
 
@@ -324,7 +350,7 @@ void obRigidBody::createMeshCollider(Ogre::Mesh *ptr)
 	btBody = new btRigidBody(0.0, _createMotionState(), btShape);
     btBody->setRestitution(StaticBodyRestitution);
     btBody->setFriction(StaticBodyFriction);
-    btBody->getCollisionShape()->setUserPointer(parent);
+    btBody->setUserPointer(parent);
 }
 
 btMotionState *obRigidBody::_createMotionState()

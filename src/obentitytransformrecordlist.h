@@ -72,7 +72,7 @@ public:
       */
     inline void addTransform(obEntityWrapper *obEnt, const btTransform &transform)
     {
-        QList::append(obEntityTransformRecord(obEnt, transform));
+        QList::append(obEntityTransformRecord(obEnt->getName(), obEnt->getStatus(), transform));
     }
 
     /*!
@@ -90,7 +90,7 @@ public:
       */
     inline bool contains(obEntityWrapper *key) const
     {
-        return QList::contains(obEntityTransformRecord(key));
+        return QList::contains(obEntityTransformRecord(key->getName(), key->getStatus()));
     }
 
     /*!

@@ -60,7 +60,7 @@ public:
                        const btVector3 &scale = btVector3(1,1,1),
                        const int mass = 0);
     /*!
-      * \brief Shallow copy constructor.
+      * \brief Special copy constructor.
       * \param parent the parent obEntityWrapper of this instance
       * \param other the obDynamicRigidBody whose parameters to copy
       * \return a new obDynamicRigidBody

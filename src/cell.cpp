@@ -37,6 +37,13 @@ Cell::Cell(const short ownerId) :
 {
 }
 
+Cell::Cell(const Cell &other) :
+    entities(other.entities),
+    borders(other.borders),
+    ownerId(other.ownerId)
+{
+}
+
 Cell::~Cell()
 {
 }

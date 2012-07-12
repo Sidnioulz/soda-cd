@@ -27,7 +27,7 @@ const obEntityTransformRecord obEntityTransformRecordList::find(obEntityWrapper 
     while(it.hasNext())
     {
         const obEntityTransformRecord &record = it.next();
-        if(record.obEnt == key)
+        if(record.entityName == key->getName())
             return record;
     }
 

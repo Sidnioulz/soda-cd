@@ -227,28 +227,28 @@ void BulletManagerWorld::internalSingleStepSimulation(btScalar timeStep)
 
     //TODO: obEntity class, static_cast to obEntity, then dynamic_cast to son instances
 
-//                qDebug() << obA->getCollisionShape()->getUserPointer();
-//                qDebug() << obB->getCollisionShape()->getUserPointer();
+//                qDebug() << obA->getUserPointer();
+//                qDebug() << obB->getUserPointer();
 
-////                obEntityWrapper *obEntA = dynamic_cast<obEntityWrapper *>(obA->getCollisionShape()->getUserPointer());
+////                obEntityWrapper *obEntA = dynamic_cast<obEntityWrapper *>(obA->getUserPointer());
 ////                if(obEntA)
 ////                    qDebug() << "obEntA is " << obEntA->getDisplayName();
 ////                else
 ////                {
-////                    CellBorderEntity *cbeA = dynamic_cast<CellBorderEntity *>(obA->getCollisionShape()->getUserPointer());
+////                    CellBorderEntity *cbeA = dynamic_cast<CellBorderEntity *>(obA->getUserPointer());
 ////                    if(cbeA)
 ////                        qDebug() << "cellBorderA is " << cbeA->getCoordinates().x() << cbeA->getCoordinates().y() << cbeA->getCoordinates().z();
 
 ////                }
 
 
-////                obEntityWrapper *obEntB = dynamic_cast<obEntityWrapper *>(obB->getCollisionShape()->getUserPointer());
+////                obEntityWrapper *obEntB = dynamic_cast<obEntityWrapper *>(obB->getUserPointer());
 ////                qDebug() << "obEntB is " << obEntB->getDisplayName();
 ////                if(obEntB)
 ////                    qDebug() << "obEntB is " << obEntB->getDisplayName();
 ////                else
 ////                {
-////                    CellBorderEntity *cbeB = dynamic_cast<CellBorderEntity *>(obB->getCollisionShape()->getUserPointer());
+////                    CellBorderEntity *cbeB = dynamic_cast<CellBorderEntity *>(obB->getUserPointer());
 ////                    if(cbeB)
 ////                        qDebug() << "cellBorderB is " << cbeB->getCoordinates().x() << cbeB->getCoordinates().y() << cbeB->getCoordinates().z();
 
@@ -400,7 +400,7 @@ void	BulletManagerWorld::performDiscreteCollisionDetection()
         for(int i=0; i<bdArraySize; ++i)
         {
             btCollisionObject *collObj0 = static_cast<btCollisionObject *>(array[i].m_pProxy0->m_clientObject);
-            obEntity *entity0 = static_cast<obEntity *>(collObj0->getCollisionShape()->getUserPointer());
+            obEntity *entity0 = static_cast<obEntity *>(collObj0->getUserPointer());
             if(entity0->getType() == obEntity::obEntityWrapperType)
             {
                 obEnt = dynamic_cast<obEntityWrapper *>(entity0);
@@ -415,7 +415,7 @@ void	BulletManagerWorld::performDiscreteCollisionDetection()
 
 
             btCollisionObject *collObj1 = static_cast<btCollisionObject *>(array[i].m_pProxy1->m_clientObject);
-            obEntity *entity1 = static_cast<obEntity *>(collObj1->getCollisionShape()->getUserPointer());
+            obEntity *entity1 = static_cast<obEntity *>(collObj1->getUserPointer());
             if(entity1->getType() == obEntity::obEntityWrapperType)
             {
                 obEnt = dynamic_cast<obEntityWrapper *>(entity1);
@@ -450,7 +450,8 @@ void	BulletManagerWorld::performDiscreteCollisionDetection()
                 world->messageNeighbor(localGrid->at(otherSideCoords).getOwnerId(),
                                        "onTerritoryIntrusion",
                                        Q_ARG(PhysicsWorld *, world),
-                                       Q_ARG(QVector<CellBorderCoordinates>, QVector<CellBorderCoordinates>(1, coord)));
+                                       Q_ARG(QVector<CellBorderCoordinates>, QVector<CellBorderCoordinates>(1, coord)),
+                                       Q_ARG(btScalar, world->getCurrentTime()));
             }
 
             //TODO: sending CBC's not enough. Should already join objects?

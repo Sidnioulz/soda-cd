@@ -55,10 +55,10 @@ obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &m
                                         Utils::btVectorFromOgre(scale),
                                         mass);
 
-        ogreEntity = QSharedPointer<Ogre::Entity>(OgreResources::getSceneManager()->createEntity(name, meshName));
+        ogreEntity = QSharedPointer<Ogre::Entity>(OgreResources::getSceneManager()->createEntity(name, meshName), Utils::deleteOgreEntity);
         ogreEntity->setCastShadows(true);
 
-        ogreNode = QSharedPointer<Ogre::SceneNode>(OgreResources::getSceneManager()->getRootSceneNode()->createChildSceneNode(name, pos, quat));
+        ogreNode = QSharedPointer<Ogre::SceneNode>(OgreResources::getSceneManager()->getRootSceneNode()->createChildSceneNode(name, pos, quat), Utils::deleteSceneNode);
         ogreNode->scale(scale);
         getSceneNode()->attachObject(ogreEntity.data());
 
@@ -98,6 +98,7 @@ obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &m
 }
 
 obEntityWrapper::obEntityWrapper(const obEntityWrapper &other) throw(EntityAlreadyExistsException) :
+    obEntity(),
     ogreEntity(other.ogreEntity),
     ogreNode(other.ogreNode),
     meshName(other.getMeshName()),
@@ -124,10 +125,10 @@ obEntityWrapper::obEntityWrapper(const obEntityWrapper &other) throw(EntityAlrea
 //                obBody->createCylinder(staticMesh);
 //            else
 //            {
-            if (staticMesh)
-                obBody->createMeshCollider(ogreEntity->getMesh().getPointer());
-            else
-                obBody->createBody(ogreEntity->getMesh().getPointer());
+                if (staticMesh)
+                    obBody->createMeshCollider(ogreEntity->getMesh().getPointer());
+                else
+                    obBody->createBody(ogreEntity->getMesh().getPointer());
 //            }
     }
     else
@@ -135,10 +136,15 @@ obEntityWrapper::obEntityWrapper(const obEntityWrapper &other) throw(EntityAlrea
 
     // Setup a user pointer for later use within the Bullet manager
     // This step is compulsory to be able to retrieve the entity from the broad-phase algorithm.
+    //FIXME: temporary stuff, better to do that in the copy constructor of obBody
     obBody->getBulletBody()->getCollisionShape()->setUserPointer(this);
+    obBody->getBulletBody()->setWorldTransform(other.obBody->getBulletBody()->getWorldTransform());
+//    obBody->getBulletBody()->setGravity(other.obBody->getBulletBody()->getGravity());
+    obBody->getBulletBody()->setAngularVelocity(other.obBody->getBulletBody()->getAngularVelocity());
+    obBody->getBulletBody()->setLinearVelocity(other.obBody->getBulletBody()->getLinearVelocity());
 
-    obBody->getBulletBody()->getWorldTransform().setOrigin(obBody->getPosition());
-    obBody->getBulletBody()->getWorldTransform().setRotation(obBody->getRotation());
+//    obBody->getBulletBody()->getWorldTransform().setOrigin(other.obBody->getPosition());
+//    obBody->getBulletBody()->getWorldTransform().setRotation(other.obBody->getRotation());
 }
 
 obEntityWrapper::~obEntityWrapper()

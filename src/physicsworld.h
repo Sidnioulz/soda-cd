@@ -160,8 +160,9 @@ public slots:
      * \brief Called when a neighbor's entity overlaps the border between that neighbor and the parent PhysicsWorld.
      * \param neighbor the neighbor whose object overlaps
      * \param coords the area(s) of overlapping
+     * \param time the timestamp at which the intrusion occurred (from neighbor's clock)
      */
-    void onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords);
+    void onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords, const btScalar &time);
 
     /*!
      * \brief Called when an obEntityWrapper's ownership is transfered to this PhysicsWorldWorker's parent.
@@ -346,9 +347,12 @@ public:
     //TODO: document messageNeighbor
     bool messageNeighbor(const short neighborId, const char *method, QGenericArgument val0 = QGenericArgument(0), QGenericArgument val1 = QGenericArgument(), QGenericArgument val2 = QGenericArgument(), QGenericArgument val3 = QGenericArgument(), QGenericArgument val4 = QGenericArgument(), QGenericArgument val5 = QGenericArgument(), QGenericArgument val6 = QGenericArgument(), QGenericArgument val7 = QGenericArgument(), QGenericArgument val8 = QGenericArgument(), QGenericArgument val9 = QGenericArgument()) const;
 
-    static const short NullWorldId;         //!< a value used when a world ID is needed but there is no corresponding world instance
-    static const short UnknownWorldId;      //!< a value used when the owner world of an object is not known yet
-    static const short IdBeingProcessed;    //!< a value used when the owner world of an object is being computed
+    static const short NullWorldId;               //!< a value used when a world ID is needed but there is no corresponding world instance
+    static const short UnknownWorldId;            //!< a value used when the owner world of an object is not known yet
+    static const short IdBeingProcessed;          //!< a value used when the owner world of an object is being computed
+
+    static const int   NbColors = 12;             //!< number of available colors for the per-thread coloring of entities
+    static const int   EntityColors[NbColors][3]; //!< table containing color codes used to distinguish entity thread owners
 
 
 private:
@@ -388,9 +392,6 @@ private:
     static void _tickCallback(btDynamicsWorld *world, btScalar timeStep);
 
     const Simulation          &simulation;               /*!< the Simulation this world belongs to */
-
-    static const int          NbColors = 12;             //!< number of available colors for the per-thread coloring of entities
-    static const int          EntityColors[NbColors][3]; //!< table containing color codes used to distinguish entity thread owners
 
     short                     id;                        //!< a number associated only to this object and used for entity naming
     btScalar                  targetTimeStep;            //!< the target time step of the application

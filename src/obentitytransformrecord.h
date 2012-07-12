@@ -32,7 +32,8 @@
   * at a given time.
   */
 struct obEntityTransformRecord {
-    obEntityWrapper         *obEnt;             /*!< Pointer to the obEntityWrapper to which the transform can be applied */
+//    obEntityWrapper         *obEnt;             /*!< Pointer to the obEntityWrapper to which the transform can be applied */
+    Ogre::String            entityName;         /*!< Name of the entity */
     btTransform             transform;          /*!< Position and rotation of the object */
     btVector3               linearVelocity;     /*!< Linear velocity of the entity */
     btVector3               angularVelocity;    /*!< Angular velocity of the entity */
@@ -47,11 +48,12 @@ struct obEntityTransformRecord {
 
     /*!
      * \brief Constructor with parameters.
-     * \param obEnt the entity that this object applies to
+     * \param entityName the name of the entity
+     * \param status the status of the entity
      * \param transform the transform to be stored
      * \return a new obEntityTransformRecord
      */
-    obEntityTransformRecord(obEntityWrapper *obEnt, const btTransform &transform = btTransform());
+    obEntityTransformRecord(Ogre::String entityName, const obEntity::EntityStatus &status, const btTransform &transform = btTransform());
 
     /*!
      * \brief Redefinition of the equal operator. Two obEntityTransformRecords are equal of they concern the same obEntityWrapper.
@@ -63,7 +65,7 @@ struct obEntityTransformRecord {
      */
     inline bool operator ==(const obEntityTransformRecord &other) const
     {
-        return obEnt == other.obEnt;
+        return entityName == other.entityName;
     }
 
     /*!

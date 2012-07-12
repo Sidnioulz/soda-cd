@@ -137,22 +137,7 @@ void LocalGrid::removeEntity(obEntityWrapper *obEnt)
     obEnt->getRigidBody()->getMotionState()->unsetLocalGrid();
 }
 
-void LocalGrid::getNeighbors(const btVector3 &position, QVector<Cell *> &neighbors, QVector<btVector3> &nPositions)
-{
-    for(int i=-1; i<2; ++i)
-        for(int j=-1; j<2; ++j)
-            for(int k=-1; k<2; ++k)
-                if((i!=0 || j!=0 || k!=0) && !cellOutOfBounds(btVector3(i, j, k) + position))
-                {
-                    if(!neighbors.contains(&at(position)))
-                    {
-                        neighbors.append(&at(position));
-                        nPositions.append(btVector3(i, j, k) + position);
-                    }
-                }
-}
-
-void LocalGrid::getUnownedNeighbors(const btVector3 &position, QVector<Cell *> &neighbors, QVector<btVector3> &nPositions)
+void LocalGrid::getUnownedNeighbors(const btVector3 &position, QMap<btVector3, Cell> &neighbors)
 {
     for(int i=-1; i<2; ++i)
         for(int j=-1; j<2; ++j)
@@ -160,10 +145,9 @@ void LocalGrid::getUnownedNeighbors(const btVector3 &position, QVector<Cell *> &
                 if((i!=0 || j!=0 || k!=0) && !cellOutOfBounds(btVector3(i, j, k) + position))
                 {
                     Cell &nCell = at(position);
-                    if(nCell.getOwnerId() != PhysicsWorld::IdBeingProcessed &&  nCell.getOwnerId() != ownerId && !neighbors.contains(&at(position)))
+                    if(nCell.getOwnerId() != PhysicsWorld::IdBeingProcessed &&  nCell.getOwnerId() != ownerId && !neighbors.contains(position))
                     {
-                        neighbors.append(&at(position));
-                        nPositions.append(btVector3(i, j, k) + position);
+                        neighbors.insert(btVector3(i, j, k) + position, nCell);
                     }
                 }
 }
@@ -171,16 +155,18 @@ void LocalGrid::getUnownedNeighbors(const btVector3 &position, QVector<Cell *> &
 short LocalGrid::resolveOwnership(Cell &cell, const btVector3 &position)
 {
     short finalId = ownerId;
-    QVector<Cell *> neighbors;
-    QVector<btVector3> nPositions;
+    QMap<btVector3, Cell> neighbors;
+    QMapIterator<btVector3, Cell> it(neighbors);
 
-    getUnownedNeighbors(position, neighbors, nPositions);
+    getUnownedNeighbors(position, neighbors);
 
-    // Look for the next non-owned neighbor
-    for(int i=0; i<neighbors.size(); ++i)
+    //FIXME: should not work, but it does.
+    while(it.hasNext())
     {
-        Cell &neighbor = (*neighbors[i]);
-        const btVector3 &neighborPos = nPositions[i];
+        it.next();
+
+        const btVector3 &neighborPos = it.key();
+        const Cell &neighbor = it.value();
 
         // We found a neighbor owned by another world, so the currentConnectedCells must be
         // marked to NullWorlId for further negotiation with neighbors.
@@ -191,7 +177,7 @@ short LocalGrid::resolveOwnership(Cell &cell, const btVector3 &position)
         else if(neighbor.getOwnerId() == PhysicsWorld::UnknownWorldId)
         {
             cell.setOwnerId(PhysicsWorld::IdBeingProcessed);
-            getUnownedNeighbors(neighborPos, neighbors, nPositions);
+            getUnownedNeighbors(neighborPos, neighbors);
         }
     }
 

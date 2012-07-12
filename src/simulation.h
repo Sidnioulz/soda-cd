@@ -62,10 +62,15 @@ public:
 	  */
     virtual ~Simulation();
 
-	/*!
-	  * \brief Starts the Simulation, initializing it if necessary.
-	  */
-	virtual void start();
+    /*!
+      * \brief Prints some statistics about the Simulation.
+      */
+    virtual void printStats() const;
+
+    /*!
+      * \brief Starts the Simulation, initializing it if necessary.
+      */
+    virtual void start();
 
 	/*!
 	  * \brief Pauses simulation in the PhysicsWorlds.

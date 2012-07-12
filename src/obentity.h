@@ -58,9 +58,8 @@ public:
         NormalStatus            = (1<<1),               /*!< Entity is in a normal status (usual status of Entities) */
         CrossingBorder          = (1<<2),               /*!< Entity is crossing a border */
         OutOfWorld              = (1<<3),               /*!< Entity has left its world and should be transferred with IPC */
-		OutOfSimulationSpace    = (1<<4),               /*!< Entity has left the global simulation space and can be deleted */
-		Overlapped              = (1<<5),               /*!< Border entity is being overlapped */
-		Detached                = (1<<6)                /*!< Entity not attached to any PhysicsWorld anymore */
+        Removed                 = (1<<4),               /*!< Entity has left the global simulation space and will be deleted */
+        Overlapped              = (1<<5)               /*!< Border entity is being overlapped */
     } EntityStatus;
 
     /*!
@@ -69,9 +68,7 @@ public:
      */
     inline void setStatus(const EntityStatus &newStatus)
     {
-        //FIXME: temporary hack to see out of world objects
-        if(status != OutOfWorld)
-            status = newStatus;
+        status = newStatus;
     }
 
     /*!

@@ -130,26 +130,17 @@ public:
 	void removeEntity(obEntityWrapper *obEnt);
 
     /*!
-     * \brief Adds the neighbors of a given Cell to a vector passed as a paremeter.
-     * \param position the cell coordinates of the Cell whose neighbors are wanted
-     * \param neighbors a vector to store pointers to the Cell's neighbors
-     * \param nPositions a vector to store the positions of the Cell's neighbors
-     */
-    void getNeighbors(const btVector3 &position, QVector<Cell *> &neighbors, QVector<btVector3> &nPositions);
-
-    /*!
      * \brief Adds the neighbors of a given Cell to a vector passed as a paremeter, provided that they are not owned by this LocalGrid.
      * \param position the cell coordinates of the Cell whose neighbors are wanted
-     * \param neighbors a vector to store pointers to the Cell's neighbors
-     * \param nPositions a vector to store the positions of the Cell's neighbors
+     * \param neighbors a map of Cells ranked by position
      *
-     * This function adds the neighbors of a given Cell to a vector passed as a paremeter,
-     * and their positions to another parameter vector, provided that they are not owned
+     * This function adds the neighbors of a given Cell to a map passed as a paremeter,
+     * using their position as a key, provided that they are not owned
      * by this LocalGrid. Precisely, the Cells must not have the same owner id as this
      * LocalGrid, and they must not have PhysicsWorld::IdBeingProcessed as an id (in order
      * to allow browsing based on the owner id without infinite loops).
      */
-    void getUnownedNeighbors(const btVector3 &position, QVector<Cell *> &neighbors, QVector<btVector3> &nPositions);
+    void getUnownedNeighbors(const btVector3 &position, QMap<btVector3, Cell> &neighbors);
 
     /*!
      * \brief Takes a Cell whose owner is unknown and computes whether it can be safely owned by this LocalGrid.
@@ -159,8 +150,7 @@ public:
      *
      * This function takes a Cell whose owner is unknown and computes whether it
      * is connected to another world's Cells or to the border of the grid, or
-     * whether it is surrounded by already owned Cells. It will also compute the
-     * owner id of neighbor Cells who have not been assigned an owner either.
+     * whether it is surrounded by already owned Cells.
      */
     short resolveOwnership(Cell &cell, const btVector3 &position);
 

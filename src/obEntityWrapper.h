@@ -103,6 +103,8 @@ private:
 class obEntityWrapper : public obEntity
 {
 public:
+    //TODO: manage default status for obEntityWrapper (should be detached until added to a world, then normal)
+
     /*! \brief Default constructor.
       * \param name unique name of the entity in the world
       * \param meshName name of the mesh file to use as a shape if the shape parameter is not filled

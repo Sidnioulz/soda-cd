@@ -55,6 +55,19 @@ public:
       */
     obMotionState(obEntityWrapper *parent);
 
+
+    /*!
+      * \brief Special copy constructor.
+      * \param parent the rigid body that this motion state belongs to
+      * \param other the btMotionState whose parameters to copy
+      * \return a new obMotionState
+      *
+      * \warning This constructor does not copy the other obMotionState's grid and
+      * cell coordinates, but uses another btMotionState's information instead of
+      * being empty.
+      */
+    obMotionState(obEntityWrapper *parent, const btMotionState &other);
+
     /*!
       * \brief Returns the LocalGrid this object is within, or NULL if the object is outside its previous LocalGrid.
       * \return the LocalGrid that owns the obMotionState's parent, or NULL if the parent is already out of the grid

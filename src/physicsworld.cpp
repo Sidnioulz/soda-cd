@@ -30,6 +30,7 @@
 #include "ogreresources.h"
 #include "cellborderentity.h"
 #include "simulation.h"
+#include "experimenttrackinginterface.h"
 
 
 PhysicsWorldThread::PhysicsWorldThread(QObject *parent) :
@@ -139,12 +140,17 @@ PhysicsWorldWorker::PhysicsWorldWorker(PhysicsWorld *parent) :
 
 PhysicsWorldWorker::~PhysicsWorldWorker()
 {
+#ifndef NDEBUG
     qDebug() << "PhysicsWorldWorker(" << parent->id << ")::~PhysicsWorldWorker(); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
 }
 
 void PhysicsWorldWorker::onThreadStopping()
 {
+#ifndef NDEBUG
     qDebug() << "PhysicsWorldWorker(" << parent->id << ")::onThreadStopping(); Shutdown flag now set, will abort future events as much as possible; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+
     _shuttingDown = true;
 }
 
@@ -201,12 +207,15 @@ void PhysicsWorldWorker::runOnePass()
 #endif
 }
 
-void PhysicsWorldWorker::onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords)
+void PhysicsWorldWorker::onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords, const btScalar &time)
 {
 #ifndef NDEBUG
     qDebug() << "PhysicsWorld(" << parent->id << ")::onTerritoryIntrusion(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", Vector[" << coords.size() << "]); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
+    ExperimentTrackingInterface *eti = ExperimentTrackingInterface::getInterface();
+
+    eti->registerSynchronizationEvent(parent->id, time, neighbor->getId());
     //TODO
 }
 
@@ -217,8 +226,8 @@ void PhysicsWorldWorker::onOwnershipTransfer(const PhysicsWorld *&neighbor, cons
 #endif
 
     obEntityWrapper *obEnt = const_cast<obEntityWrapper *>(object);
-//    obEnt->setStatus(obEntity::NormalStatus);
-//     parent->_addEntity(obEnt);
+    obEnt->setStatus(obEntity::NormalStatus);
+     parent->_addEntity(obEnt);
 }
 
 
@@ -275,7 +284,6 @@ PhysicsWorld::PhysicsWorld(const Simulation &simulation, const btScalar &targetT
     getBulletManager()->getDynamicsWorld()->setInternalTickCallback(_tickCallback, static_cast<void *>(this));
 
     // Initial CircularTransformBuffer entry
-    //FIXME: in this record, status's should be inserted? Use addRecord;
     obEntityTransformRecordList *initialPositions = new obEntityTransformRecordList(0);
     for(int i=0; i<entities.size(); ++i)
         initialPositions->addTransform(entities[i], entities[i]->getRigidBody()->getBulletBody()->getWorldTransform());
@@ -388,6 +396,7 @@ void PhysicsWorld::_addEntity(obEntityWrapper *obEnt)
     entities.append(obEnt);
 
     getBulletManager()->getDynamicsWorld()->addRigidBody(obEnt->getRigidBody()->getBulletBody());
+    obEnt->setStatus(obEntity::NormalStatus);
     obEnt->setColor(EntityColors[id%NbColors][0]/255.f, EntityColors[id%NbColors][1]/255.f, EntityColors[id%NbColors][2]/255.f);
     obEnt->setOwnerWorld(this);
 }
@@ -411,7 +420,6 @@ void PhysicsWorld::_entityVectoryRemovalMethod(QVector<obEntityWrapper *> &conta
     qDebug() << "PhysicsWorld(" << id << ")::_entityVectoryRemovalMethod(" << obEnt->getDisplayName() << "); Start; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
     Q_ASSERT(obEnt != 0);
-    qDebug() << "BEGIN CONTAINER " << container.size();
 
     for(int i=0; i<container.size(); ++i)
         if(container[i]->getName() == obEnt->getName())
@@ -455,7 +463,7 @@ void PhysicsWorld::_removeEntity(obEntityWrapper *obEnt)
     obEnt->unsetOwnerWorld();
 
 	// Delete the object if it is not in the simulation space anymore
-    if(obEnt->getStatus() == obEntity::OutOfSimulationSpace && simulation.getWorldType() != GridInformation::ClosedWorld)
+    if(obEnt->getStatus() == obEntity::Removed && simulation.getWorldType() != GridInformation::ClosedWorld)
 	{
 #ifndef NDEBUG
         qDebug() << "PhysicsWorld(" << id << ")::_removeEntity(" << obEnt->getDisplayName() << "); Entity has left simulation space, should do something about it (ignore if object went below floor in SidewiseOpenWorld); Thread " << QString().sprintf("%p", QThread::currentThread());
@@ -465,6 +473,8 @@ void PhysicsWorld::_removeEntity(obEntityWrapper *obEnt)
 #ifndef NDEBUG
     qDebug() << "PhysicsWorld(" << id << ")::_removeEntity(" << obEnt->getDisplayName() << "); Entity effectively removed; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
+
+    delete obEnt;
 }
 
 void PhysicsWorld::assignLocalGrid(LocalGrid *local)
@@ -657,8 +667,14 @@ void PhysicsWorld::_tickCallback(btDynamicsWorld *world, btScalar timeStep)
     obEntityTransformRecordList *list = new obEntityTransformRecordList(w->currentTime);
     for(int i=0; i<w->entities.size(); ++i)
     {
+        // Add an entry to the list with the entity's name, status and transform
         //TODO: optimize this call (use a reference for entities)
         list->addTransform(w->entities[i], w->entities[i]->getRigidBody()->getBulletBody()->getWorldTransform());
+
+        // Reset the entity's status if it had a status set for just this step
+        //FIXME: it's ugly to do this here! the app lacks a consistent status modification scheme
+        if(w->entities[i]->getStatus() != obEntity::Removed)
+            w->entities[i]->setStatus(obEntity::NormalStatus);
 
 //        if(w->entities[i]->getStatus() & (obEntity::OutOfWorld | obEntity::OutOfSimulationSpace))
 //            w->_removeEntity(w->entities[i]);

@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 #include "simulation.h"
+#include "experimenttrackinginterface.h"
 
 Simulation::Simulation(const btScalar &targetTimeStep, const int &declNumWorlds, const btVector3 &sceneSize, const int &numEntities) :
     status(Simulation::STOPPED),
@@ -35,6 +36,8 @@ Simulation::Simulation(const btScalar &targetTimeStep, const int &declNumWorlds,
 {
     createBufferInterface();
     createPhysicsWorlds();
+
+    ExperimentTrackingInterface::getInterface()->clearStats();
 }
 
 Simulation::~Simulation()
@@ -45,6 +48,10 @@ Simulation::~Simulation()
     delete bufferInterface;
 }
 
+void Simulation::printStats() const
+{
+    ExperimentTrackingInterface::getInterface()->printSynchronizationTimeStats();
+}
 
 void Simulation::start()
 {
@@ -533,10 +540,10 @@ void Simulation::_init()
     // Browse all sorted entities to assign Cell owners to non-empty Cells, and return the list of empty ones
     QVector<btVector3> emptyCells = computeCellOwnersAndLocateEmptyCells(resolution);
 
-//    // Make sure that whenever a Cell is surrounded by Cells from the same LocalGrid, that LocalGrid owns it
-    assignSurroundedCellsToOwners(emptyCells);
+    // Make sure that whenever a Cell is surrounded by Cells from the same LocalGrid, that LocalGrid owns it
+//    assignSurroundedCellsToOwners(emptyCells);
 
-//	// Assign the Cells that are still empty, using a Clustering algorithm
+    // Assign the Cells that are still empty, using a Clustering algorithm
     assignEmptyCells(resolution, emptyCells);
 
 	// Assign LocalGrids to their respective PhysicsWorlds, and setup LocalGrid borders if wanted
