@@ -142,12 +142,12 @@ void ExperimentTrackingInterface::printSynchronizationTimeStats(const Simulation
 
                 // For each world, compute the average number of sync'd neighbors
                 cptSumSyncPerWorld.insert(groups[ts][i][j], cptSumSyncPerWorld.value(groups[ts][i][j], 0) + groups[ts][i].size()-1);
+
+                // Groups of that size have one more occurence
+                cptSumOccurPerGroup.insert(groups[ts][i].size(), cptSumOccurPerGroup.value(groups[ts][i].size(), 0) + 1);
             }
 
             out << qPrintable(line) << "\n";
-
-            // Groups of that size have one more occurence
-            cptSumOccurPerGroup.insert(groups[ts][i].size(), cptSumOccurPerGroup.value(groups[ts][i].size(), 0) +1);
         }
     }
 
@@ -159,13 +159,16 @@ void ExperimentTrackingInterface::printSynchronizationTimeStats(const Simulation
 
 
     out << "\n\n## Stats per group size\n";
+    int sumTotOccurPerGroup=0;
+    for(int i=0; i<cptSumOccurPerGroup.values().size(); ++i)
+        sumTotOccurPerGroup+=cptSumOccurPerGroup.values().at(i);
+
     QMapIterator<int, int> it(cptSumOccurPerGroup);
     while(it.hasNext())
     {
         it.next();
 
-        out << "Groups of size " << it.key() << " represent " << it.value() << " occurences, on average " << (float)(it.value()) / (float)(groups.size()) << ".\n" <<
-               (float)(100*it.value()*it.key()) / (float)(groups.size() * simulation.getNumWorlds()) << "% of worlds belong to a group of size " << it.key() << ".\n\n";
+        out << "Groups of size " << it.key() << " represent " << it.value() << " occurences.\n On average " << (float)100*it.value() / (float)sumTotOccurPerGroup << "% of occurences in this group.\n";
     }
 
     out << "\n##### end stats #####\n\n";
