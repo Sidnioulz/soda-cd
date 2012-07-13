@@ -619,12 +619,16 @@ void OgreWidget::onTimerTick()
 
 void OgreWidget::onEntityDeletion(const Ogre::Entity *&ent)
 {
+#ifndef NDEBUG
     qDebug() << "Utils::deleteOgreEntity(" << ent->getName().c_str() << "; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
     OgreResources::getSceneManager()->destroyEntity(ent->getName());
 }
 
 void OgreWidget::onSceneNodeDeletion(const Ogre::SceneNode *&node)
 {
+#ifndef NDEBUG
     qDebug() << "Utils::deleteSceneNode(" << node->getName().c_str() << "; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
     OgreResources::getSceneManager()->getRootSceneNode()->removeAndDestroyChild(node->getName());
 }
