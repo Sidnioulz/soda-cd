@@ -20,12 +20,24 @@ void ExperimentTrackingInterface::setSimulationTimeLimit(const btScalar &newLimi
     timeLimit = newLimit;
 }
 
-void ExperimentTrackingInterface::registerSynchronizationEvent(const short &world0, const btScalar &timestamp, const short &world1)
+void ExperimentTrackingInterface::registerSynchronizationEvent(const Simulation &simulation, const short &world0, const short &world1, const btScalar &timestamp)
 {
     syncGroupsMutex.lock();
 
     // Get the group for this timestamp
     QList< QList<short> > groupsAtTime = syncGroups.value(timestamp, QList< QList<short> >());
+
+    // Init groupsAtTime
+    if(groupsAtTime.isEmpty())
+    {
+        for(int i=0; i<simulation.getNumWorlds(); ++i)
+        {
+            QList<short> oneElemList;
+            //FIXME: temporary hack because of deadline, should be simulation.getWorldAt(i)->getId() but segfault (probably called before ctor of last world)
+            oneElemList.append(i+1);
+            groupsAtTime.append(oneElemList);
+        }
+    }
 
     // Lookup for already existing groups
     int index0 = -1, index1 = -1;
@@ -102,9 +114,12 @@ void ExperimentTrackingInterface::onTimestampRendered(const btScalar &timeStamp)
         emit simulationTimeLimitReached(timeStamp);
 }
 
-void ExperimentTrackingInterface::printSynchronizationTimeStats(QTextStream &out)
+void ExperimentTrackingInterface::printSynchronizationTimeStats(const Simulation &simulation, QTextStream &out)
 {
     syncGroupsMutex.lock();
+
+    QMap<int, int> cptSumOccurPerGroup;
+    QMap<short, int> cptSumSyncPerWorld;
 
     out << "##### SYNCHRONIZATION TIME STATS #####\n";
     out << "Number of timestamps registered: " << syncGroups.size() << "\n";
@@ -112,26 +127,48 @@ void ExperimentTrackingInterface::printSynchronizationTimeStats(QTextStream &out
     QList<btScalar> timestamps = syncGroups.keys();
     QList<QList<QList<short > > > groups = syncGroups.values();
 
-
-
-
-
+    // Number of timestamps saved
     for(int ts=0; ts<timestamps.size() && timestamps[ts] <= timeLimit+0.001; ++ts)
     {
         out << "\n# Timestamp " << timestamps[ts] << "\n";
 
+        // Number of groups at timestamp ts
         for(int i=0; i<groups[ts].size(); ++i)
         {
             QString line = QString("Group %1 (size %2): ").arg(i).arg(groups[ts][i].size());
             for(int j=0; j<groups[ts][i].size(); ++j)
+            {
                 line.append(QString("%1, ").arg(groups[ts][i][j]));
 
+                // For each world, compute the average number of sync'd neighbors
+                cptSumSyncPerWorld.insert(groups[ts][i][j], cptSumSyncPerWorld.value(groups[ts][i][j], 0) + groups[ts][i].size()-1);
+            }
+
             out << qPrintable(line) << "\n";
+
+            // Groups of that size have one more occurence
+            cptSumOccurPerGroup.insert(groups[ts][i].size(), cptSumOccurPerGroup.value(groups[ts][i].size(), 0) +1);
         }
     }
 
+    out << "\n\n## Stats per world\n";
+    for(int w=0; w<simulation.getNumWorlds(); ++w)
+    {
+        out << "World " << w+1 << ": " << (float)(cptSumSyncPerWorld.value(w+1, 0)) / (float)(groups.size()) << " sync per time step on average\n";
+    }
 
-    out << "##### end stats #####\n\n";
+
+    out << "\n\n## Stats per group size\n";
+    QMapIterator<int, int> it(cptSumOccurPerGroup);
+    while(it.hasNext())
+    {
+        it.next();
+
+        out << "Groups of size " << it.key() << " represent " << it.value() << " occurences, on average " << (float)(it.value()) / (float)(groups.size()) << ".\n" <<
+               (float)(100*it.value()*it.key()) / (float)(groups.size() * simulation.getNumWorlds()) << "% of worlds belong to a group of size " << it.key() << ".\n\n";
+    }
+
+    out << "\n##### end stats #####\n\n";
     syncGroupsMutex.unlock();
 }
 

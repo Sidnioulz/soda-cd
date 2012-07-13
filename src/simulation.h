@@ -104,6 +104,15 @@ public:
     virtual GridInformation::WorldType getWorldType() const = 0;
 
     /*!
+     * \brief Retrieves the number of defined PhysicsWorlds.
+     * \return the number of PhysicsWorlds in the Simulation
+     */
+    inline int getNumWorlds() const
+    {
+        return worlds.size();
+    }
+
+    /*!
      * \brief Retrieves a PhysicsWorld from its identifier.
      * \param id the identifier of the wanted PhysicsWorld
      * \return the corresponding PhysicsWorld if it exists, or null otherwise
@@ -117,6 +126,21 @@ public:
             return 0;
         else
             return worlds[id-1];
+    }
+
+    /*!
+     * \brief Retrieves a PhysicsWorld from its world table index.
+     * \param id the index of the wanted PhysicsWorld
+     * \return the corresponding PhysicsWorld if it exists, or null otherwise
+     *
+     * \warning This method is meant to be used only by the statistics interface.
+     */
+    inline PhysicsWorld *getWorldAt(const short index) const
+    {
+        if(index<=0 || index>worlds.size())
+            return 0;
+        else
+            return worlds[index];
     }
 
 

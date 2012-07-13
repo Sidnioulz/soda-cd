@@ -50,7 +50,7 @@ Simulation::~Simulation()
 
 void Simulation::printStats(QTextStream &out) const
 {
-    ExperimentTrackingInterface::getInterface()->printSynchronizationTimeStats(out);
+    ExperimentTrackingInterface::getInterface()->printSynchronizationTimeStats(*this, out);
 }
 
 void Simulation::start()

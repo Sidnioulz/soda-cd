@@ -7,6 +7,9 @@
 #include <QTextStream>
 #include <btBulletDynamicsCommon.h>
 
+// Forward declaration
+class Simulation;
+
 class ExperimentTrackingInterface : public QObject
 {
     Q_OBJECT
@@ -16,8 +19,8 @@ public:
 
     void setSimulationTimeLimit(const btScalar &newLimit);
 
-    void registerSynchronizationEvent(const short &senderId, const btScalar &timestamp, const short &syncNeighbor);
-    void printSynchronizationTimeStats(QTextStream &out);
+    void registerSynchronizationEvent(const Simulation &simulation, const short &world0, const short &world1, const btScalar &timestamp);
+    void printSynchronizationTimeStats(const Simulation &simulation, QTextStream &out);
 
     void clearStats();
 

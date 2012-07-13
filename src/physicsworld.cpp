@@ -215,7 +215,7 @@ void PhysicsWorldWorker::onTerritoryIntrusion(const PhysicsWorld *&neighbor, con
 
     ExperimentTrackingInterface *eti = ExperimentTrackingInterface::getInterface();
 
-    eti->registerSynchronizationEvent(parent->id, time, neighbor->getId());
+    eti->registerSynchronizationEvent(parent->simulation, parent->id, neighbor->getId(), time);
     //TODO
 }
 
