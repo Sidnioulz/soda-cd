@@ -27,19 +27,27 @@
 #include "randomcubesimulation.h"
 #include "experimenttrackinginterface.h"
 
-//TMP params
-QString MainPepsiWindow::paramLogFilePath = "/tmp/TEST.OUT";
-btScalar MainPepsiWindow::paramTimeLimit = 10;
-bool MainPepsiWindow::paramAutomatedSimulation = true;
-
 MainPepsiWindow *MainPepsiWindow::instance = 0;
 
-MainPepsiWindow::MainPepsiWindow(QWidget *parent) :
+MainPepsiWindow::MainPepsiWindow(QxtCommandOptions &opt, QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainPepsiWindow),
     targetFPS(60),
-    logFile(paramLogFilePath)
+    logFile()
 {
+    // Setup parameters using the QxtCommandOptions object
+    paramAutomatedSimulation = opt.parameters().value("automated", QVariant(false)).toBool();
+    paramTimeLimit = opt.parameters().value("time-limit", QVariant(10.0f)).toFloat();
+    paramLogFilePath = opt.parameters().value("output-path", QVariant("/tmp/pepsis.out")).toString();
+    logFile.setFileName(paramLogFilePath);
+
+    paramSpaceLen.setX(opt.parameters().value("x", QVariant(6000)).toInt());
+    paramSpaceLen.setY(opt.parameters().value("y", QVariant(2000)).toInt());
+    paramSpaceLen.setZ(opt.parameters().value("z", QVariant(6000)).toInt());
+
+    paramNbEntities = opt.parameters().value("nb-entities", QVariant(1000)).toInt();
+    paramSimulationName = opt.parameters().value("simulation", QVariant("RandomCubeSimulation")).toString();
+
     // Various UI setups
     ui->setupUi(this);
     this->setWindowTitle("Asynchronous Scalable Anticipative Parallel CD");
@@ -100,9 +108,11 @@ MainPepsiWindow::~MainPepsiWindow()
 
     QTextStream out(&logFile);
     simulation->printStats(out);
+    out.flush();
+    logFile.close();
 
-
-    delete simulation;
+    if(simulation)
+        delete simulation;
 
     delete ogreWidget; // should be done by magic
     delete ui;
@@ -110,15 +120,28 @@ MainPepsiWindow::~MainPepsiWindow()
         qDebug() << "MainPepsiWindow::~MainPepsiWindow(); Destroyed; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
-    logFile.close();
+}
+
+MainPepsiWindow *MainPepsiWindow::getInstance(QxtCommandOptions &opt)
+{
+    if(!instance)
+        instance = new MainPepsiWindow(opt);
+
+    return getInstance();
 }
 
 MainPepsiWindow *MainPepsiWindow::getInstance()
 {
-    if(!instance)
-        instance = new MainPepsiWindow();
-
     return instance;
+}
+
+void MainPepsiWindow::deleteInstance()
+{
+    if(instance)
+    {
+        delete instance;
+        instance = 0;
+    }
 }
 
 void MainPepsiWindow::onOgreReady()
@@ -127,9 +150,17 @@ void MainPepsiWindow::onOgreReady()
     if(paramAutomatedSimulation)
         ui->menuDebug->actions().at(0)->trigger();
 
-    simulation = new RandomCubeSimulation();
-    ogreWidget->registerBufferInterface(simulation->getBufferInterface());
-    simulation->start();
+    // Create a supported simulation
+    //TODO: dynamic loading of plugins
+    if(paramSimulationName == "RandomCubeSimulation")
+        simulation = new RandomCubeSimulation(1.0f/60, 0, paramSpaceLen, paramNbEntities, true);
+
+    // If a simulation is runnable
+    if(simulation)
+    {
+        ogreWidget->registerBufferInterface(simulation->getBufferInterface());
+        simulation->start();
+    }
 }
 
 int main(int argc, char *argv[])
@@ -139,19 +170,57 @@ int main(int argc, char *argv[])
                  APP_NAME << " comes with ABSOLUTELY NO WARRANTY; for details " <<
                  "read the COPYING file included with the program.  This is " <<
                  "free software, and you are welcome to redistribute it under " <<
-                 "certain conditions." << std::endl;
+                 "certain conditions." << std::endl << std::endl;
 
    // Create the QApplicationbuffer[
    QApplication app(argc, argv);
 
+   // Setup command-line arguments object
+   QxtCommandOptions opt;
+
+   opt.add("simulation", "Simulation name", QxtCommandOptions::ValueRequired);
+   opt.alias("simulation", "s");
+
+   opt.addSection("Simulation Specific Parameters");
+   opt.add("nb-entities", "Number of entities (if applicable)", QxtCommandOptions::ValueRequired);
+   opt.alias("nb-entities", "n");
+
+   opt.add("x", "X dimension of the simulation scene (if applicable)", QxtCommandOptions::ValueRequired);
+   opt.alias("x", "x");
+
+   opt.add("y", "Y dimension of the simulation scene (if applicable)", QxtCommandOptions::ValueRequired);
+   opt.alias("y", "y");
+
+   opt.add("z", "Z dimension of the simulation scene (if applicable)", QxtCommandOptions::ValueRequired);
+   opt.alias("z", "z");
+
+   opt.addSection("Debug and Automation Parameters");
+   opt.add("output-path", "Path to the log file to create", QxtCommandOptions::ValueRequired);
+   opt.alias("output-path", "o");
+
+   opt.add("automated", "Enable automatic simulation and shutdown (requires -t)", QxtCommandOptions::NoValue);
+   opt.alias("automated", "a");
+
+   opt.add("time-limit", "Time limit in seconds", QxtCommandOptions::ValueRequired);
+   opt.alias("time-limit", "t");
+
+
+   std::cout << APP_NAME << " options:" << std::endl;
+   opt.showUsage();
+
+   // Parse the arguments
+   opt.setFlagStyle(QxtCommandOptions::SingleDash);
+   opt.setParamStyle(QxtCommandOptions::SpaceAndEquals);
+   opt.parse(app.arguments());
+
    // Initialize the window and Ogre rendering system
-   MainPepsiWindow* window = MainPepsiWindow::getInstance();
+   MainPepsiWindow* window = MainPepsiWindow::getInstance(opt);
    window->show();
 
    // Run the application
    int r = app.exec();
 
    // Memory cleanup and exit
-   delete window;
+   MainPepsiWindow::deleteInstance();
    return r;
 }

@@ -27,30 +27,25 @@
 #include <QMainWindow>
 #include "ogrewidget.h"
 #include "simulation.h"
+#include <QxtCore/QxtCommandOptions>
 
 // Doxygen documentation main page, do not remove
-/*! \mainpage Welcome to the documentation for SODA CD.
+/*! \mainpage Welcome to the documentation for PEPSI's.
  *
  * \section intro_sec About this application.
  *
- * SODA CD has been developed as part of a research internship in the <a href="http://www.inria.fr/equipes/vr4i">Inria VR4I</a> project team, by Steve Dodier-Lazaro, under the supervision of Valérie Gouranton and Quentin Avril. It is currently not available for download and is the exclusive property of Inria Rennes.
+ * PEPSI's has been developed as part of a research internship in the <a href="http://www.inria.fr/equipes/vr4i">Inria VR4I</a> project team, by Steve Dodier-Lazaro, under the supervision of Valérie Gouranton and Quentin Avril. It is currently not available for download and is the exclusive property of Inria Rennes.
  *
- * \section install_sec Building SODA CD
+ * \section install_sec Building PEPSI's
  *
- * You will need the following dependencies installed: Qt, Bullet Physics, Ogre 3D, Blitz++, Boost. The libraries and include files of all dependencies should be reachable by Qt Creator. If one of them is missing, please edit the .pro file attached to this project, and set INCLUDEPATH and LIBS to appropriate values.
- * Please use qmake and then make to build SODA CD outside of Qt Creator. You may need to modify your LD_LIBRARY_PATH environment variable at runtime to be able to run the application.
+ * You will need the following dependencies installed: Qt, Bullet Physics, Ogre 3D, Blitz++, Boost, Qxt. The libraries and include files of all dependencies should be reachable by Qt Creator. If one of them is missing, please edit the .pro file attached to this project, and set INCLUDEPATH and LIBS to appropriate values.
+ * Please use qmake and then make to build PEPSI's outside of Qt Creator. You may need to modify your LD_LIBRARY_PATH environment variable at runtime to be able to run the application.
  *
- * Note that the Blitz++ Fedora 16 package misses some code headers, and you may need to manually install them to build SODA CD.
+ * Note that the Blitz++ Fedora 16 package misses some code headers, and you may need to manually install them to build PEPSI's.
  *
  * \section report_bugs Reporting a bug
  * Please email either <a href="mailto:steve.dodier-lazaro@inria.fr">Steve</a> or <a href="mailto:quentin.avril@irisa.fr">Quentin</a>.
  */
-
-//TODO: https://gforge.inria.fr/projects/kaapi/	check if useful
-//TODO: http://runtime.bordeaux.inria.fr/marcel/	scheduling and thread placement
-//TODO: http://runtime.bordeaux.inria.fr/hwloc/	ideal number of threads, hw ls
-//TODO: http://runtime.bordeaux.inria.fr/StarPU/	gpu async computation for cpu's
-//TODO: http://runtime.bordeaux.inria.fr/pm2-doc/Section3.html#Section3.1 for multi-pc parallelism
 
 //TODO: inlining
 //TODO: assertions on all function headers
@@ -86,7 +81,7 @@ protected:
   * \param parent the parent widget if it exists
   * \return a new MainPepsiWindow
   */
-explicit MainPepsiWindow(QWidget *parent = 0);
+explicit MainPepsiWindow(QxtCommandOptions &opt, QWidget *parent = 0);
 
 public:
     /*!
@@ -116,16 +111,27 @@ public:
      * \brief Returns the instance of MainPepsiWindow.
      * \return the instance of MainPepsiWindow
      */
+    static MainPepsiWindow *getInstance(QxtCommandOptions &opt);
+
+    /*!
+     * \brief Returns the instance of MainPepsiWindow.
+     * \return the instance of MainPepsiWindow
+     */
     static MainPepsiWindow *getInstance();
 
+    /*!
+     * \brief Deletes the instance of MainPepsiWindow.
+     */
+    static void deleteInstance();
+
 private:
-    //Temporary placeholder for application parameters
-    static QString                      paramLogFilePath;   //!< Path of this application's log file
-    static btScalar                     paramTimeLimit;     //!< Time limit for the simulation (used to automate shutdown)
-    static bool                         paramAutomatedSimulation;     //!< Whether simulations are automated
-
-
-
+    // Placeholder for application parameters (more readable than direct use of QxtCommandOptions)
+    QString                             paramLogFilePath;             //!< Path of this application's log file
+    btScalar                            paramTimeLimit;               //!< Time limit for the simulation (used to automate shutdown)
+    bool                                paramAutomatedSimulation;     //!< Whether simulations are automated
+    btVector3                           paramSpaceLen;                //!< Length of the simulation space, if applicable to chosen Simulation
+    int                                 paramNbEntities;              //!< Number of entities, if applicable to chosen Simulation
+    QString                             paramSimulationName;          //!< Simulation name
 
     static MainPepsiWindow              *instance;          //!< The unique instance of MainPepsiWindow
 

@@ -51,7 +51,7 @@ public:
 
     /*!
      * \variable EntityStatus
-     * \brief Set of bits corresponding to different possible collision statuses for an object in SODA
+     * \brief Set of bits corresponding to different possible collision statuses for an object in PEPSI's
      */
     typedef enum __EntityStatus {
         NonExistant = 0,                                /*!< Entity doesn't exist */

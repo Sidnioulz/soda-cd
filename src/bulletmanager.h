@@ -85,7 +85,7 @@ public:
      * \param collisionFilterMask please refer to the Bullet documentation
      *
      * \note The Bullet documentation does not tell what this function does,
-     * and thus it is not properly documented in SODA CD. Modify at your own
+     * and thus it is not properly documented in PEPSI's. Modify at your own
      * expenses.
      */
     void addCollisionObject(btCollisionObject *collisionObject, short int collisionFilterGroup, short int collisionFilterMask);
@@ -95,7 +95,7 @@ public:
      * \param collisionObject please refer to the Bullet documentation
      *
      * \note The Bullet documentation does not tell what this function does,
-     * and thus it is not properly documented in SODA CD. Modify at your own
+     * and thus it is not properly documented in PEPSI's. Modify at your own
      * expenses.
      */
     void removeCollisionObject(btCollisionObject *collisionObject);
@@ -126,7 +126,7 @@ public:
 //     *
 //     * \note This function is an override of the original one from Bullet, it has
 //     * been written so as to disable collision filter groups that are used for
-//     * other purposes in SODA CD.
+//     * other purposes in PEPSI's.
 //     */
 
 //    void addRigidBody(btRigidBody* body, short group, short mask);
@@ -136,7 +136,7 @@ public:
      * \brief Updates AABBs of all bodies. See official Bullet documentation.
      *
      * \note The Bullet documentation does not tell what this function does,
-     * and thus it is not properly documented in SODA CD. Modify at your own
+     * and thus it is not properly documented in PEPSI's. Modify at your own
      * expenses.
      */
     void updateAabbs();
@@ -145,7 +145,7 @@ public:
      * \brief Performs one pass of discrete collision detection. See official Bullet documentation.
      *
      * \note The Bullet documentation does not tell what this function does,
-     * and thus it is not properly documented in SODA CD. Modify at your own
+     * and thus it is not properly documented in PEPSI's. Modify at your own
      * expenses.
      */
     void performDiscreteCollisionDetection();

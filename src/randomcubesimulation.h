@@ -48,13 +48,15 @@ public:
     RandomCubeSimulation(const btScalar &targetTimeStep = 1.0f/60,
                          const int &declNumWorlds = 0,
                          const btVector3 &sceneSize = btVector3(4000, 2000, 4000),
-                         const int &numEntities = 500);
+                         const int &numEntities = 500,
+                         const bool &randomScale = true);
 
 // SIMPLISTIC SIMULATION used for memory leak checking (enable random scale)
 //    RandomCubeSimulation(const btScalar &targetTimeStep = 1.0f/60,
 //                         const int &declNumWorlds = 2,
 //                         const btVector3 &sceneSize = btVector3(1000, 200, 1000),
-//                         const int &numEntities = 10);
+//                         const int &numEntities = 10,
+//    const bool &randomScale = true);
 
 
     /*!

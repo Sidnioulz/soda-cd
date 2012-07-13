@@ -1,6 +1,9 @@
 QT += core opengl gui
 TARGET = SODA-CD
 
+CONFIG  += qxt
+QXT     += core gui
+
 *-g++* {
     QMAKE_CXXFLAGS += -Wno-unused-but-set-parameter -Wno-unused-parameter
 #	QMAKE_CXXFLAGS += -std=c++11

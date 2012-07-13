@@ -339,7 +339,7 @@ void BulletManagerWorld::removeCollisionObject(btCollisionObject *collisionObjec
 
 //void BulletManagerWorld::addRigidBody(btRigidBody* body, short /*group*/, short /*mask*/)
 //{
-//    qWarning() << "Collision filters are not supported in SODA CD: they are used to encode obEntity statuses.";
+//    qWarning() << "Collision filters are not supported in PEPSI's: they are used to encode obEntity statuses.";
 //    btDiscreteDynamicsWorld::addRigidBody(body, obEntity::NormalStatus, ~((signed short)0));
 //}
 
