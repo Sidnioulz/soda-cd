@@ -45,6 +45,8 @@ MainPepsiWindow::MainPepsiWindow(QxtCommandOptions &opt, QWidget *parent) :
     paramSpaceLen.setY(opt.parameters().value("y", QVariant(2000)).toInt());
     paramSpaceLen.setZ(opt.parameters().value("z", QVariant(6000)).toInt());
 
+    paramNbWorlds = opt.parameters().value("nb-worlds", QVariant(0)).toInt();
+
     paramNbEntities = opt.parameters().value("nb-entities", QVariant(800)).toInt();
     paramSimulationName = opt.parameters().value("simulation", QVariant("RandomCubeSimulation")).toString();
 
@@ -155,7 +157,7 @@ void MainPepsiWindow::onOgreReady()
     // Create a supported simulation
     //TODO: dynamic loading of plugins
     if(paramSimulationName == "RandomCubeSimulation")
-        simulation = new RandomCubeSimulation(1.0f/60, 12, paramSpaceLen, paramNbEntities, false);
+        simulation = new RandomCubeSimulation(1.0f/60, paramNbWorlds, paramSpaceLen, paramNbEntities, false);
 
     // If a simulation is runnable
     if(simulation)
@@ -195,6 +197,9 @@ int main(int argc, char *argv[])
 
    opt.add("z", "Z dimension of the simulation scene (if applicable)", QxtCommandOptions::ValueRequired);
    opt.alias("z", "z");
+
+   opt.add("nb-worlds", "Number of worlds in which to run the simulation", QxtCommandOptions::ValueRequired);
+   opt.alias("nb-worlds", "w");
 
    opt.addSection("Debug and Automation Parameters");
    opt.add("output-path", "Path to the log file to create", QxtCommandOptions::ValueRequired);

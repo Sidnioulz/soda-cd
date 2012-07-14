@@ -130,6 +130,7 @@ private:
     btScalar                            paramTimeLimit;               //!< Time limit for the simulation (used to automate shutdown)
     bool                                paramAutomatedSimulation;     //!< Whether simulations are automated
     btVector3                           paramSpaceLen;                //!< Length of the simulation space, if applicable to chosen Simulation
+    int                                 paramNbWorlds;                //!< Number of PhysicsWorlds to use
     int                                 paramNbEntities;              //!< Number of entities, if applicable to chosen Simulation
     QString                             paramSimulationName;          //!< Simulation name
 
