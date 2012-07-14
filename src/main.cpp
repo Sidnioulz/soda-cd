@@ -45,7 +45,7 @@ MainPepsiWindow::MainPepsiWindow(QxtCommandOptions &opt, QWidget *parent) :
     paramSpaceLen.setY(opt.parameters().value("y", QVariant(2000)).toInt());
     paramSpaceLen.setZ(opt.parameters().value("z", QVariant(6000)).toInt());
 
-    paramNbEntities = opt.parameters().value("nb-entities", QVariant(1000)).toInt();
+    paramNbEntities = opt.parameters().value("nb-entities", QVariant(800)).toInt();
     paramSimulationName = opt.parameters().value("simulation", QVariant("RandomCubeSimulation")).toString();
 
     // Various UI setups
@@ -114,6 +114,8 @@ MainPepsiWindow::~MainPepsiWindow()
     if(simulation)
         delete simulation;
 
+    exit(0); //NO TIME TO LOOSE
+
     delete ogreWidget; // should be done by magic
     delete ui;
 #ifndef NDEBUG
@@ -153,7 +155,7 @@ void MainPepsiWindow::onOgreReady()
     // Create a supported simulation
     //TODO: dynamic loading of plugins
     if(paramSimulationName == "RandomCubeSimulation")
-        simulation = new RandomCubeSimulation(1.0f/60, 0, paramSpaceLen, paramNbEntities, true);
+        simulation = new RandomCubeSimulation(1.0f/60, 12, paramSpaceLen, paramNbEntities, false);
 
     // If a simulation is runnable
     if(simulation)

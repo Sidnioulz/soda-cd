@@ -47,7 +47,7 @@ public:
 // VERY NICE SIMULATION with 4 worlds that are not square, lots of border crossing (enable random scale)
     RandomCubeSimulation(const btScalar &targetTimeStep = 1.0f/60,
                          const int &declNumWorlds = 0,
-                         const btVector3 &sceneSize = btVector3(4000, 2000, 4000),
+                         const btVector3 &sceneSize = btVector3(10000, 4000, 10000),
                          const int &numEntities = 500,
                          const bool &randomScale = true);
 

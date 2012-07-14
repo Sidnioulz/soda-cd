@@ -83,7 +83,11 @@ void RandomCubeSimulation::loadEntities()
     int x,y,z;
     btScalar scale;
     btVector3 defaultBoxSize(102, 102, 102); // hard-linked
-    srand(1600000);
+
+    // Reference srand for simulations noted as interesting
+//    srand(1600000);
+    srand(time(NULL));
+
     for(int i=0; i<numEntities; ++i)
     {
         // Get random coordinates and scale

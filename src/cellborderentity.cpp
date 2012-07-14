@@ -58,7 +58,7 @@ CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates 
         // Create the rigid body
         obBody = new obRigidBody(this, worldCoords, btQuaternion::getIdentity());
         ogreNode = OgreResources::getSceneManager()->getRootSceneNode()->createChildSceneNode(name, Utils::vectorFromBullet(worldCoords), Ogre::Quaternion::IDENTITY);
-        ogreNode->showBoundingBox(true);
+//        ogreNode->showBoundingBox(true);
         obBody->createBorder(bodyLen, true);
 
         //TODO: create a OgreResources method to get a plane for a given direction and bodyLen.

@@ -142,6 +142,7 @@ unix {
     INCLUDEPATH += src \
         /usr/local/include/bullet/ \
         /usr/include/bullet/ \
+        /usr/include/qxt/ \
 		/usr/local/include/OGRE/ \
 		/usr/include/boost/ \
 		/usr/include/blitz/ \
