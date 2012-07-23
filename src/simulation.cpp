@@ -173,9 +173,15 @@ void Simulation::computeClusterAssignments(const QVector<btVector3> &points)
 
     QVector<btVector3> centroids(numWorlds);
     for(int i=0; i<centroids.size(); ++i)
+//      centroids[i] = btVector3(rand() % (int)sceneSize.x() - sceneSize.x() / 2,
+//                               rand() % (int)sceneSize.y(),
+//                               rand() % (int)sceneSize.z() - sceneSize.z() / 2);
+
+    // Vertical clusters
         centroids[i] = btVector3(rand() % (int)sceneSize.x() - sceneSize.x() / 2,
-                                 rand() % (int)sceneSize.y(),
+                                 0,
                                  rand() % (int)sceneSize.z() - sceneSize.z() / 2);
+
 
 	// Call EKMeans on the created objects
     Clustering::EKMeans ekm(centroids, points);
@@ -229,11 +235,6 @@ void Simulation::setupLocalGrids(const int &resolution, const QVector<btVector3>
 //            qDebug() << minCoord.x() << minCoord.y() << minCoord.z();
 //            qDebug() << maxCoord.x() << maxCoord.y() << maxCoord.z();
 
-			//FIXME: compute margin using Ceil(Ceil(nbCells/nbProbs) / 20) to have margin >5% of surface on each side?
-            //NOTE: Exemple 64Cells, 8Procs, margin=1, Grid=8x8x8, with margin 9x9x9 - Overhead is 36x8 + 100x2, with originally 512 cells, which means 48.8% overhead
-//            margin[LocalGrid::Left] =  margin[LocalGrid::Right] = qCeil((float)qCeil((float)grid->getNbCells().x() / numWorlds) / 10);
-//            margin[LocalGrid::Top] =  margin[LocalGrid::Bottom] = qCeil((float)qCeil((float)grid->getNbCells().y() / numWorlds) / 10);
-//            margin[LocalGrid::Front] =  margin[LocalGrid::Back] = qCeil((float)qCeil((float)grid->getNbCells().z() / numWorlds) / 10);
             QVector<int> margin = computeMargin(resolution, minCoord, maxCoord);
             grids[i] = new LocalGrid(grid->getGridAtResolution(resolution), worlds[i]->getId(), margin, (maxCoord+btVector3(1,1,1)-minCoord), minCoord);
         }
@@ -249,8 +250,17 @@ void Simulation::setupLocalGrids(const int &resolution, const QVector<btVector3>
 
 QVector<int> Simulation::computeMargin(const int &resolution, const btVector3 &minCoord, const btVector3 &maxCoord) const
 {
-	//NOTE: Consider scene borders when computing a margin!
-    return QVector<int>(6, 0);
+    QVector<int> margins(6, 0);
+
+    margins[GridInformation::Right] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(maxCoord + btVector3(1,0,0))) ? 1 : 0;
+    margins[GridInformation::Top] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(maxCoord + btVector3(0,1,0))) ? 1 : 0;
+    margins[GridInformation::Front] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(maxCoord + btVector3(0,0,1))) ? 1 : 0;
+
+    margins[GridInformation::Left] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(minCoord - btVector3(1,0,0))) ? 1 : 0;
+    margins[GridInformation::Bottom] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(minCoord - btVector3(0,1,0))) ? 1 : 0;
+    margins[GridInformation::Back] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(minCoord - btVector3(0,0,1))) ? 1 : 0;
+
+    return margins;
 }
 
 void Simulation::sortEntitiesPerCellCoordinates(const int &resolution)
@@ -489,14 +499,13 @@ void Simulation::extendLocalGrids(const int &resolution, const QVector<btVector3
             btVector3 minCoord = grid->toCellCoordinates(resolution, territoryBoundaries[i].first);
             btVector3 maxCoord = grid->toCellCoordinates(resolution, territoryBoundaries[i].second);
 
-//			qDebug() << "LocalGrid " << i << " being extended to:";
-//            qDebug() << minCoord.x() << minCoord.y() << minCoord.z();
-//            qDebug() << maxCoord.x() << maxCoord.y() << maxCoord.z();
+            qDebug() << "LocalGrid " << i << " being extended to:";
+            qDebug() << minCoord.x() << minCoord.y() << minCoord.z();
+            qDebug() << maxCoord.x() << maxCoord.y() << maxCoord.z();
 
             QVector<int> margin = computeMargin(resolution, minCoord, maxCoord);
-            //FIXME: temporary hack for the extendGrid and resize bug that made some cells unowned.
-//            grids[i]->resize(margin, (maxCoord+btVector3(1,1,1)-minCoord), minCoord);
-            grids[i]->resize(margin, nbCells, btVector3(0, 0, 0));
+            grids[i]->resize(margin, (maxCoord+btVector3(1,1,1)-minCoord), minCoord);
+//            grids[i]->resize(margin, nbCells, btVector3(0, 0, 0));
         }
         catch (exception& e)
         {

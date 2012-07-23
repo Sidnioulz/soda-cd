@@ -539,7 +539,9 @@ void OgreWidget::render()
 
     //FIXME: this still not working!
     // Variable used to store the time that is queried, and actually retrieved
+
     btScalar currentTimeStep = simulationRunTime + getTargetTimeStep();
+//    qDebug() << "Runtime is now (" << simulationRunTime <<") and time step to be asked is ("<< currentTimeStep<<");";
 
     OgreResources::lockSceneManagerMutex();
     // If there is no buffer interface, directly skip to rendering

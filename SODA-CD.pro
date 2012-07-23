@@ -82,7 +82,8 @@ HEADERS += \
     src/obentity.h \
     src/btlocalgridbroadphase.h \
     src/garbageworld.h \
-    src/experimenttrackinginterface.h
+    src/experimenttrackinginterface.h \
+    src/robustnessevalsimulation.h
 
 SOURCES += \
     src/ogrewidget.cpp \
@@ -121,7 +122,8 @@ SOURCES += \
     src/obentity.cpp \
     src/btlocalgridbroadphase.cpp \
     src/garbageworld.cpp \
-    src/experimenttrackinginterface.cpp
+    src/experimenttrackinginterface.cpp \
+    src/robustnessevalsimulation.cpp
 
 LIBS += -lOgreMain \
     -lOgreTerrain \

@@ -125,6 +125,16 @@ int BulletManagerWorld::stepSimulation(btScalar timeStep, int maxSubSteps, btSca
     return numSimulationSubSteps;
 }
 
+void BulletManagerWorld::waitForNeighbors(const QList<short> &neighbors, const btScalar &simulatedTime)
+{
+    QString neighborsListStr("Neighbors: ");
+    for(int i=0; i<neighbors.size(); ++i)
+        neighborsListStr.append(QString("%1, ").arg(neighbors.at(i)));
+
+    qDebug() << "BulletManagerWorld(" << broadphase->getWorld()->getId() << ")::waitForNeighbors(" << neighborsListStr << "Time: " << simulatedTime << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+    broadphase->getWorld()->_waitForNeighbors(neighbors, simulatedTime);
+}
+
 void BulletManagerWorld::internalSingleStepSimulation(btScalar timeStep)
 {
 //    qDebug() << "internalSingleStepSimulation" << QThread::currentThreadId();
@@ -155,10 +165,10 @@ void BulletManagerWorld::internalSingleStepSimulation(btScalar timeStep)
 
     performDiscreteCollisionDetection();
 
-    List of Collision pairs borderCols = checkCollisionsWithBorders();
+    m_borderCollisions = union of performDCD's m_borderCollisions + _dequeueAtTime(current time)
 
     // Synchronized version
-    if(borderCols is not empty)
+    if(!m_borderCollisions.isEmpty())
     {
 
         List of Worlds neighbors = findInvolvedNeighbors()

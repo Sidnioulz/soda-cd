@@ -26,7 +26,6 @@ CircularTransformBuffer::CircularTransformBuffer(PhysicsWorld *world) :
     QVector<QSharedPointer<obEntityTransformRecordList> >(CircularTransformBuffer::BufferSize),
     latestPastIndex(0),
     currentPhysicsIndex(0),
-	physicsRefTime(0),
     bufferType(DiscreteCollisionDetection),
     bufferNotFull(),
     fullBufferMutex(),
@@ -75,12 +74,6 @@ void CircularTransformBuffer::appendTimeStep(obEntityTransformRecordList *simul)
 #endif
         this->operator [](currentPhysicsIndex) = QSharedPointer<obEntityTransformRecordList>(simul);
 
-//        // Update the physics reference time
-//        if(physicsRefTime == 0)
-//            physicsRefTime = simul->getTimeStep();
-//
-//        qDebug() << "Included TSTM with time=" << simul->getTimeStep();
-
         // Increase the physics pointer
         currentPhysicsIndex = nextIndex(currentPhysicsIndex);
     }
@@ -94,9 +87,6 @@ void CircularTransformBuffer::appendTimeStep(obEntityTransformRecordList *simul)
 
 QSharedPointer<obEntityTransformRecordList> CircularTransformBuffer::processNext(const btScalar &targetTime)
 {
-    //TODO its here that we return the physics ref time, it's the last time we let a client process (targetTime or timeStep of the returned data depending on the type of Collision Detection)
-    //TODO we can then check that the client asks for future times only
-
     // Continuous collision detection, find closest future positions
 //    if(bufferType == ContinuousCollisionDetection)
     {
@@ -178,12 +168,6 @@ void CircularTransformBuffer::abortAllWrites()
 
 void CircularTransformBuffer::dropPastIndex()
 {
-//    QSharedPointer<obEntityTransformRecordList> ptr = at(latestPastIndex);
-//    if(!ptr.isNull())
-//        physicsRefTime = ptr->getTimeStep();
-//    else
-//        qWarning() << "About to drop a null pointer. This should not be needed.";
-
     // Insert an empty pointer on the previous cell to mark it available
     this->operator [](latestPastIndex).clear();
     latestPastIndex = nextIndex(latestPastIndex);

@@ -36,6 +36,7 @@
   */
 class BulletManagerWorld : public btDiscreteDynamicsWorld
 {
+    //TODO: fix publicness
 public:
     /*!
       * \brief Default constructor.
@@ -63,6 +64,9 @@ public:
       * as second argument to stepSimulation, but in that case you have to keep the timeStep constant.
       */
     int stepSimulation(btScalar timeStep, int maxSubSteps = 1, btScalar fixedTimeStep = btScalar(1.)/btScalar(60));
+
+//TODO: doc
+    void waitForNeighbors(const QList<short> &neighbors, const btScalar &simulatedTime);
 
     /*!
       * \brief Internal function that performs the actual simulation.

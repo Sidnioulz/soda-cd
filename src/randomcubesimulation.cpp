@@ -85,8 +85,8 @@ void RandomCubeSimulation::loadEntities()
     btVector3 defaultBoxSize(102, 102, 102); // hard-linked
 
     // Reference srand for simulations noted as interesting
-//    srand(1600000);
-    srand(time(NULL));
+    srand(1600000);
+    //srand(time(NULL));
 
     for(int i=0; i<numEntities; ++i)
     {

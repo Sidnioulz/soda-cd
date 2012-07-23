@@ -55,6 +55,8 @@ class PhysicsWorldThread : public QThread
 {
     Q_OBJECT
 
+    friend class PhysicsWorld;
+
 public:
     /*!
       * \brief Default constructor.
@@ -88,8 +90,9 @@ public slots:
 private slots:
     /*!
      * \brief Actually exits the event loop, should be called by the last event of the loop.
+     * \param code return code of the exit function
      */
-    void _exitEventLoop();
+    void _exitEventLoop(int code);
 
     /*!
      * \brief Informs that the thread is ready to run, and allows leaving the startAndAttachWorker() method.
@@ -101,6 +104,9 @@ signals:
      * \brief A signal to which the PhysicsWorldThread's shutdown helper and the PhysicsWorldWorker are connected.
      */
     void aboutToStop();
+
+protected:
+    QEventLoop      *incomingLoop;      /*!< An event loop for incoming messages that must be received during processing of a pass */
 
 private:
     QSignalMapper   *shutDownHelper;    /*!< An object to help shutting the thread down properly */
@@ -212,6 +218,7 @@ class PhysicsWorld : public QObject
     Q_OBJECT
 
     friend class PhysicsWorldWorker;
+    friend class BulletManagerWorld;
 
 public:
     /*!
@@ -220,7 +227,7 @@ public:
       * \param targetTimeStep the duration of a simulation time step
       * \return a new PhysicsWorld
       */
-	explicit PhysicsWorld(const Simulation &simulation, const btScalar &targetTimeStep);
+    explicit PhysicsWorld(Simulation &simulation, const btScalar &targetTimeStep);
 
 	/*!
 	  * \brief Default destructor.
@@ -278,10 +285,20 @@ public:
     void removeEntity(obEntityWrapper *obEnt, btScalar targetTime);
 
     /*!
-     * \brief Returns a reference to this PhysicsWorld's entities.
+     * \brief Returns a read-only reference to this PhysicsWorld's entities.
      * \return a constant reference to the vector containing the dynamic entities of the world
      */
     inline const QVector<obEntityWrapper*> &getEntities() const
+    {
+        return entities;
+    }
+
+    /*!
+     * \brief Returns a read-write reference to this PhysicsWorld's entities.
+     * \param int dummy parameter to allow non-const references
+     * \return a constant reference to the vector containing the dynamic entities of the world
+     */
+    inline QVector<obEntityWrapper*> &getEntities(int)
     {
         return entities;
     }
@@ -355,6 +372,30 @@ public:
     static const int   EntityColors[NbColors][3]; //!< table containing color codes used to distinguish entity thread owners
 
 
+protected:
+
+    /*!
+     * \typedef MessageType
+     * \brief Different types of incoming IPC messages.
+     */
+    typedef enum __messageType {
+        SyncReady=0
+    } MessageType;
+
+    /*!
+     * \struct IncomingMessage
+     * \brief The IncomingMessage struct contains an incoming message for IPC during a simulation step pass.
+     * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
+     */
+    struct IncomingMessage {
+        short senderId;
+        MessageType messageType;
+        QVariant data;
+    };
+
+
+    void _waitForNeighbors(const QList<short> &neighbors, const btScalar &simulatedTime);
+
 private:
     /*!
       * \brief Adds an entity wrapper to this physics world.
@@ -391,7 +432,7 @@ private:
      */
     static void _tickCallback(btDynamicsWorld *world, btScalar timeStep);
 
-    const Simulation          &simulation;               /*!< the Simulation this world belongs to */
+    Simulation                &simulation;               /*!< the Simulation this world belongs to */
 
     short                     id;                        //!< a number associated only to this object and used for entity naming
     btScalar                  targetTimeStep;            //!< the target time step of the application
@@ -409,6 +450,7 @@ private:
     PhysicsWorldThread        worldThread;               /*!< The thread in which CD passes run, and in which messages are received */
     PhysicsWorldWorker        *worker;                   /*!< The worker object that contains the CD passes code and that is run in worldThread */
     QTimer                    timer;                     /*!< A timer used to spam runOnePass() events in the event loop */
+    QMap<btScalar, QList<IncomingMessage> > incomingQueue; /*!< A map with incoming messages for different time steps */
 
     static short              WorldIdCounter;            //!< a counter to make sure world IDs are unique
 };

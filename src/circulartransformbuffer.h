@@ -110,15 +110,6 @@ public:
     }
 
     /*!
-      * \brief Returns the reference time (oldest available time step) of this buffer.
-      * \return the oldest timeStep of all buffer entries
-      */
-    inline btScalar getPhysicsRefTime() const
-    {
-        return physicsRefTime;
-    }
-
-    /*!
       * \brief Appends a obEntityTransformRecordList to the buffer.
       * \param simul the data to append
       */
@@ -169,7 +160,6 @@ private:
 
     int latestPastIndex;                    //!< Index of the latest data used for rendering
     int currentPhysicsIndex;                //!< Index of the place where to write new data
-    btScalar physicsRefTime;                //!< Oldest time step for which the physics engine provided data
 
     const BufferType bufferType;            //!< Whether the buffer is for continuous or discrete CD
 

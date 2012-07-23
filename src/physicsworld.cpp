@@ -45,7 +45,9 @@ PhysicsWorldThread::PhysicsWorldThread(QObject *parent) :
     shutDownHelper = new QSignalMapper;
     shutDownHelper->setMapping(this, 0);
     connect(this, SIGNAL(aboutToStop()), shutDownHelper, SLOT(map()));
-    connect(shutDownHelper, SIGNAL(mapped(int)), this, SLOT(_exitEventLoop()), Qt::DirectConnection);
+    connect(shutDownHelper, SIGNAL(mapped(int)), this, SLOT(_exitEventLoop(0)), Qt::DirectConnection);
+
+    incomingLoop = new QEventLoop(this);
 
 #ifndef NDEBUG
     qWarning() << "PhysicsWorldThread()::PhysicsWorldThread constructed; Thread " << QString().sprintf("%p", QThread::currentThread());
@@ -95,6 +97,7 @@ PhysicsWorldThread::~PhysicsWorldThread()
     qWarning() << "PhysicsWorldThread()::~PhysicsWorldThread(); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
+    delete incomingLoop;
     delete shutDownHelper;
 }
 
@@ -103,13 +106,14 @@ void PhysicsWorldThread::run()
     QThread::exec();
 }
 
-void PhysicsWorldThread::_exitEventLoop()
+void PhysicsWorldThread::_exitEventLoop(int code)
 {
 #ifndef NDEBUG
     qWarning() << "PhysicsWorldThread()::_exitEventLoop(); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
-    exit();
+    incomingLoop->exit(code);
+    exit(code);
 }
 
 void PhysicsWorldThread::setReadyStatus()
@@ -171,13 +175,13 @@ void PhysicsWorldWorker::runOnePass()
     // Manage entity and grid queues before the next simulation
     //FIXME: the code to add/remove entities below is probably partly wrong now.
     parent->entityMutex.lock();
-//        while(!parent->entityAdditionQueue.isEmpty())
-//        {
-//            QPair<obEntityWrapper *, btScalar> entity = parent->entityAdditionQueue.dequeue();
-//            parent->_addEntity(entity.first);
-//            rewindTime = qMin(rewindTime, entity.second);
-//            rewind = true;
-//        }
+    while(!parent->entityAdditionQueue.isEmpty())
+    {
+        QPair<obEntityWrapper *, btScalar> entity = parent->entityAdditionQueue.dequeue();
+        parent->_addEntity(entity.first);
+        rewindTime = qMin(rewindTime, entity.second);
+        rewind = true;
+    }
     while(!parent->entityRemovalQueue.isEmpty())
     {
         QPair<obEntityWrapper *, btScalar> entity = parent->entityRemovalQueue.dequeue();
@@ -213,10 +217,10 @@ void PhysicsWorldWorker::onTerritoryIntrusion(const PhysicsWorld *&neighbor, con
     qDebug() << "PhysicsWorld(" << parent->id << ")::onTerritoryIntrusion(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", Vector[" << coords.size() << "]); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
-    ExperimentTrackingInterface *eti = ExperimentTrackingInterface::getInterface();
+//    ExperimentTrackingInterface *eti = ExperimentTrackingInterface::getInterface();
 
-    eti->registerSynchronizationEvent(parent->simulation, parent->id, neighbor->getId(), time);
-    //TODO
+//    eti->registerSynchronizationEvent(parent->simulation, parent->id, neighbor->getId(), time);
+    //TODO: implement a queue here with future sync events
 }
 
 void PhysicsWorldWorker::onOwnershipTransfer(const PhysicsWorld *&neighbor, const obEntityWrapper *&object, const btScalar &time)
@@ -266,7 +270,7 @@ const int PhysicsWorld::EntityColors[PhysicsWorld::NbColors][3] = {
     {201, 192, 187} // Pale Silver
 };
 
-PhysicsWorld::PhysicsWorld(const Simulation &simulation, const btScalar &targetTimeStep) :
+PhysicsWorld::PhysicsWorld(Simulation &simulation, const btScalar &targetTimeStep) :
     simulation(simulation),
     id(WorldIdCounter++), targetTimeStep(targetTimeStep), entities(), globalStaticEntities(),
     buffer(new CircularTransformBuffer(this)), currentTime(0),
@@ -283,11 +287,22 @@ PhysicsWorld::PhysicsWorld(const Simulation &simulation, const btScalar &targetT
     // Set tick callback that will be called to write transforms to the buffer
     getBulletManager()->getDynamicsWorld()->setInternalTickCallback(_tickCallback, static_cast<void *>(this));
 
+    //FIXME: only for RobustnessEvalSimulation
+    // Initial CircularTransformBuffer entries
+//    for(int t=0; t<CircularTransformBuffer::BufferSize-1; ++t)
+//    {
+//        obEntityTransformRecordList *initialPositions = new obEntityTransformRecordList(t*targetTimeStep);
+//        for(int i=0; i<entities.size(); ++i)
+//            initialPositions->addTransform(entities[i], entities[i]->getRigidBody()->getBulletBody()->getWorldTransform());
+//        buffer->appendTimeStep(initialPositions);
+//    }
+
     // Initial CircularTransformBuffer entry
     obEntityTransformRecordList *initialPositions = new obEntityTransformRecordList(0);
     for(int i=0; i<entities.size(); ++i)
         initialPositions->addTransform(entities[i], entities[i]->getRigidBody()->getBulletBody()->getWorldTransform());
     buffer->appendTimeStep(initialPositions);
+
 
     // Build the worker object that will run in this PhysicsWorld's thread
     worker = new PhysicsWorldWorker(this);
@@ -630,25 +645,25 @@ bool PhysicsWorld::messageNeighbor(PhysicsWorld *neighbor, const char *method, Q
 bool PhysicsWorld::messageNeighbor(const short neighborId, const char *method, QGenericArgument val0, QGenericArgument val1, QGenericArgument val2, QGenericArgument val3, QGenericArgument val4, QGenericArgument val5, QGenericArgument val6, QGenericArgument val7, QGenericArgument val8, QGenericArgument val9) const
 {
 #ifndef NDEBUG
-	qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+//	qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
 	PhysicsWorld *neighbor = getNeighbor(neighborId);
 	if(neighbor)
 	{
 #ifndef NDEBUG
-        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Invoking method; Thread " << QString().sprintf("%p", QThread::currentThread());
+//        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Invoking method; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
         QMetaObject::invokeMethod(neighbor->worker, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
 #ifndef NDEBUG
-        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Message sent; Thread " << QString().sprintf("%p", QThread::currentThread());
+//        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Message sent; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 		return true;
 	}
 	else
     {
 #ifndef NDEBUG
-        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Could not find neighbor, aborting; Thread " << QString().sprintf("%p", QThread::currentThread());
+//        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Could not find neighbor, aborting; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
         return false;
     }
@@ -681,4 +696,45 @@ void PhysicsWorld::_tickCallback(btDynamicsWorld *world, btScalar timeStep)
     }
 
     w->buffer->appendTimeStep(list);
+
+    // Call the Simulation's tick callback if one is defined
+    if(w->simulation.hasTickCallback())
+        w->simulation.tickCallback(w, timeStep);
+}
+
+void PhysicsWorld::_waitForNeighbors(const QList<short> &neighbors, const btScalar &simulatedTime)
+{
+    // List of available neighbors
+    QList<short> available;
+    available.append(getId());
+
+    // Let neighbors know one is available
+    //TODO: emit to all neighbors a message sayign available
+
+    // While at least one neighbor hasn't reached this step
+    while(available.size() == neighbors.size())
+    {
+
+        // Check event queue for new available messages
+        worldThread.incomingLoop->processEvents();
+        QList<IncomingMessage> messages = incomingQueue.take(simulatedTime);
+
+        // Process events if relevant, and remove them from the list
+        QList<IncomingMessage>::iterator iter = messages.begin();
+        while(iter != messages.end())
+        {
+            IncomingMessage msg = *iter;
+
+            if(msg.messageType == SyncReady && neighbors.contains(msg.senderId) && !available.contains(msg.senderId))
+            {
+                available.append(msg.senderId);
+                iter = messages.erase(iter);
+            }
+            else
+                iter++;
+        }
+
+        // Post back events
+        incomingQueue.insert(simulatedTime, messages);
+    }
 }

@@ -39,15 +39,20 @@ LocalGrid::LocalGrid(GridInformation *gridInfo, const short &ownerId, const QVec
     length(length),
     offset(offset)
 {
-    Array::resize(Range(offset.x()-margin[GridInformation::Left], length.x()+offset.x()-1+margin[GridInformation::Right]),
-           Range(offset.y()-margin[GridInformation::Bottom], length.y()+offset.y()-1+margin[GridInformation::Top]),
-           Range(offset.z()-margin[GridInformation::Front], length.z()+offset.z()-1-margin[GridInformation::Back]));
+    Array::resize(Range(offset.x(), length.x()+offset.x()-1+margin[GridInformation::Left]+margin[GridInformation::Right]),
+           Range(offset.y(), length.y()+offset.y()-1+margin[GridInformation::Bottom]+margin[GridInformation::Top]),
+           Range(offset.z(), length.z()+offset.z()-1+margin[GridInformation::Front]+margin[GridInformation::Back]));
     Array::operator = (Cell(PhysicsWorld::UnknownWorldId));
 
     qDebug() << offset.x() << offset.y() << offset.z();
+    qDebug() << length.x() << length.y() << length.z();
+    std::cout << "Grid #" << ownerId << std::endl;
     std::cout << "Lower bound:  " << lbound() << std::endl;
     std::cout << "Upper bound:  " << ubound() << std::endl;
-    std::cout << "Grid nbCells: " << size() << std::endl << std::endl;
+    std::cout << "Grid nbCells: " << size() << std::endl;
+    std::cout << "Margin:       " << margin[0] << ", "<< margin[1] << ", "<< margin[2] << ", "<< margin[3] << ", "<< margin[4] << ", " << margin[5] << ", "<< std::endl << std::endl;
+
+    qDebug() << " ";
 }
 
 LocalGrid::~LocalGrid()
@@ -73,7 +78,7 @@ void LocalGrid::resize(const QVector<int> &newMargin, const btVector3 &newLength
 
     for(Array<Cell, 3>::const_iterator it = tmp.begin(); it != tmp.end(); it++)
     {
-        if(Array::isInRange(it.position()))
+        if(Array::isInRange(it.position())) //TODO: && !isMargin(it.position())
             Array::operator ()(it.position()) = *it;
     }
 }

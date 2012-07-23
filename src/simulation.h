@@ -143,6 +143,11 @@ public:
             return worlds[index];
     }
 
+    //TODO: doc
+    virtual bool hasTickCallback() const = 0;
+    virtual void tickCallback(PhysicsWorld *world, const btScalar &timeStep) = 0;
+
+
 
 protected:
 	/*!
@@ -286,7 +291,6 @@ protected:
      * \brief Initializes Simulation data (by default, calls setupBasic3DEnvironment(), setupBasicPhysicsEnvironment() and loadEntities())
      */
     virtual void loadSimulationData();
-
 	/*!
 	 * \brief Initializes the Simulation so that it can be started.
 	 */

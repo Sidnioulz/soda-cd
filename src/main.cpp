@@ -25,6 +25,7 @@
 #include "main.h"
 #include "ui_mainwindow.h"
 #include "randomcubesimulation.h"
+#include "robustnessevalsimulation.h"
 #include "experimenttrackinginterface.h"
 
 MainPepsiWindow *MainPepsiWindow::instance = 0;
@@ -158,6 +159,8 @@ void MainPepsiWindow::onOgreReady()
     //TODO: dynamic loading of plugins
     if(paramSimulationName == "RandomCubeSimulation")
         simulation = new RandomCubeSimulation(1.0f/60, paramNbWorlds, paramSpaceLen, paramNbEntities, false);
+    else if(paramSimulationName == "RobustnessEvalSimulation")
+        simulation = new RobustnessEvalSimulation(1.0f/60, paramNbEntities);
 
     // If a simulation is runnable
     if(simulation)

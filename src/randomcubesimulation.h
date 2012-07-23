@@ -87,6 +87,15 @@ public:
          return GridInformation::ClosedWorld;
      }
 
+     //TODO: doc
+     inline bool hasTickCallback() const
+     {
+         return false;
+     }
+
+     inline void tickCallback(PhysicsWorld *world, const btScalar &timeStep)
+     {}
+
     /*!
      * \brief Creates a 3D box entity with both an Ogre and a bullet structure.
      * \param position the x,y,z coordinates of the object
