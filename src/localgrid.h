@@ -321,6 +321,13 @@ public:
     }
 
     /*!
+     * \brief Tells whether the Cell at given coordinates is part of a margin.
+     * \param coord the coordinates to check
+     * \return whether the matching Cell is part of a LocalGrid's margin
+     */
+    bool cellIsMargin(const btVector3 &coord) const;
+
+    /*!
      * \brief Tells whether the Cell at given coordinates is adjacent to unowned inhabitable Cells or is itself unowned.
      * \param coord the coordinates to check
      * \return whether the matching Cell belongs to another world or is on the grid border

@@ -78,7 +78,7 @@ void LocalGrid::resize(const QVector<int> &newMargin, const btVector3 &newLength
 
     for(Array<Cell, 3>::const_iterator it = tmp.begin(); it != tmp.end(); it++)
     {
-        if(Array::isInRange(it.position())) //TODO: && !isMargin(it.position())
+        if(Array::isInRange(it.position()) && !cellIsMargin(Utils::btVectorFromBlitz(it.position())))
             Array::operator ()(it.position()) = *it;
     }
 }
@@ -247,6 +247,13 @@ QVector<btVector3> LocalGrid::resolveEmptyCellOwnerships()
     }
 
     return nowAssigned;
+}
+
+bool LocalGrid::cellIsMargin(const btVector3 &coord) const
+{
+    return !(coord.x()>=lbound(0)+margin[GridInformation::Left] && coord.x()<=ubound(0)+margin[GridInformation::Right] &&
+             coord.y()>=lbound(1)+margin[GridInformation::Bottom] && coord.y()<=ubound(1)+margin[GridInformation::Top] &&
+             coord.z()>=lbound(2)+margin[GridInformation::Back] && coord.z()<=ubound(2)+margin[GridInformation::Front]);
 }
 
 bool LocalGrid::cellAdjacentToOrIsUnownedCell(const btVector3 &coord) const

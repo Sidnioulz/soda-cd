@@ -252,15 +252,17 @@ QVector<int> Simulation::computeMargin(const int &resolution, const btVector3 &m
 {
     QVector<int> margins(6, 0);
 
-    margins[GridInformation::Right] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(maxCoord + btVector3(1,0,0))) ? 1 : 0;
-    margins[GridInformation::Top] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(maxCoord + btVector3(0,1,0))) ? 1 : 0;
-    margins[GridInformation::Front] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(maxCoord + btVector3(0,0,1))) ? 1 : 0;
-
-    margins[GridInformation::Left] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(minCoord - btVector3(1,0,0))) ? 1 : 0;
-    margins[GridInformation::Bottom] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(minCoord - btVector3(0,1,0))) ? 1 : 0;
-    margins[GridInformation::Back] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(minCoord - btVector3(0,0,1))) ? 1 : 0;
-
     return margins;
+
+//    margins[GridInformation::Right] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(maxCoord + btVector3(1,0,0))) ? 1 : 0;
+//    margins[GridInformation::Top] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(maxCoord + btVector3(0,1,0))) ? 1 : 0;
+//    margins[GridInformation::Front] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(maxCoord + btVector3(0,0,1))) ? 1 : 0;
+
+//    margins[GridInformation::Left] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(minCoord - btVector3(1,0,0))) ? 1 : 0;
+//    margins[GridInformation::Bottom] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(minCoord - btVector3(0,1,0))) ? 1 : 0;
+//    margins[GridInformation::Back] = (grid->getGridAtResolution(resolution)->isWithinWorldCellBounds(minCoord - btVector3(0,0,1))) ? 1 : 0;
+
+//    return margins;
 }
 
 void Simulation::sortEntitiesPerCellCoordinates(const int &resolution)
@@ -503,9 +505,10 @@ void Simulation::extendLocalGrids(const int &resolution, const QVector<btVector3
             qDebug() << minCoord.x() << minCoord.y() << minCoord.z();
             qDebug() << maxCoord.x() << maxCoord.y() << maxCoord.z();
 
+            //FIXME:
             QVector<int> margin = computeMargin(resolution, minCoord, maxCoord);
-            grids[i]->resize(margin, (maxCoord+btVector3(1,1,1)-minCoord), minCoord);
-//            grids[i]->resize(margin, nbCells, btVector3(0, 0, 0));
+//            grids[i]->resize(margin, (maxCoord+btVector3(1,1,1)-minCoord), minCoord);
+            grids[i]->resize(margin, nbCells, btVector3(0, 0, 0));
         }
         catch (exception& e)
         {
