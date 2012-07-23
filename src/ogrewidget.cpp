@@ -191,55 +191,55 @@ void OgreWidget::keyPressEvent(QKeyEvent *e)
     }
     else if(e->key() == Qt::Key_G)
     {
-        if (mDetailsPanel->getTrayLocation() == OgreBites::TL_NONE)
-        {
-            mTrayMgr->moveWidgetToTray(mDetailsPanel, OgreBites::TL_TOPRIGHT, 0);
-            mDetailsPanel->show();
-        }
-        else
-        {
-            mTrayMgr->removeWidgetFromTray(mDetailsPanel);
-            mDetailsPanel->hide();
-        }
+//        if (mDetailsPanel->getTrayLocation() == OgreBites::TL_NONE)
+//        {
+//            mTrayMgr->moveWidgetToTray(mDetailsPanel, OgreBites::TL_TOPRIGHT, 0);
+//            mDetailsPanel->show();
+//        }
+//        else
+//        {
+//            mTrayMgr->removeWidgetFromTray(mDetailsPanel);
+//            mDetailsPanel->hide();
+//        }
         e->accept();
     }
     else if(e->key() == Qt::Key_F)
     {
-        mTrayMgr->toggleAdvancedFrameStats();
+//        mTrayMgr->toggleAdvancedFrameStats();
         e->accept();
     }
     else if(e->key() == Qt::Key_T)
     {
-        Ogre::String newVal;
-        Ogre::TextureFilterOptions tfo;
-        unsigned int aniso;
+//        Ogre::String newVal;
+//        Ogre::TextureFilterOptions tfo;
+//        unsigned int aniso;
 
-        switch (mDetailsPanel->getParamValue(9).asUTF8()[0])
-        {
-        case 'B':
-            newVal = "Trilinear";
-            tfo = Ogre::TFO_TRILINEAR;
-            aniso = 1;
-            break;
-        case 'T':
-            newVal = "Anisotropic";
-            tfo = Ogre::TFO_ANISOTROPIC;
-            aniso = 8;
-            break;
-        case 'A':
-            newVal = "None";
-            tfo = Ogre::TFO_NONE;
-            aniso = 1;
-            break;
-        default:
-            newVal = "Bilinear";
-            tfo = Ogre::TFO_BILINEAR;
-            aniso = 1;
-        }
+//        switch (mDetailsPanel->getParamValue(9).asUTF8()[0])
+//        {
+//        case 'B':
+//            newVal = "Trilinear";
+//            tfo = Ogre::TFO_TRILINEAR;
+//            aniso = 1;
+//            break;
+//        case 'T':
+//            newVal = "Anisotropic";
+//            tfo = Ogre::TFO_ANISOTROPIC;
+//            aniso = 8;
+//            break;
+//        case 'A':
+//            newVal = "None";
+//            tfo = Ogre::TFO_NONE;
+//            aniso = 1;
+//            break;
+//        default:
+//            newVal = "Bilinear";
+//            tfo = Ogre::TFO_BILINEAR;
+//            aniso = 1;
+//        }
 
-        Ogre::MaterialManager::getSingleton().setDefaultTextureFiltering(tfo);
-        Ogre::MaterialManager::getSingleton().setDefaultAnisotropy(aniso);
-        mDetailsPanel->setParamValue(9, newVal);
+//        Ogre::MaterialManager::getSingleton().setDefaultTextureFiltering(tfo);
+//        Ogre::MaterialManager::getSingleton().setDefaultAnisotropy(aniso);
+//        mDetailsPanel->setParamValue(9, newVal);
         e->accept();
     }
     else if(e->key() == Qt::Key_R)
@@ -263,7 +263,7 @@ void OgreWidget::keyPressEvent(QKeyEvent *e)
         }
 
         ogreCamera->setPolygonMode(pm);
-        mDetailsPanel->setParamValue(10, newVal);
+        //mDetailsPanel->setParamValue(10, newVal);
         e->accept();
     }
     else if(e->key() == Qt::Key_A || e->key() == Qt::Key_Left)
@@ -438,28 +438,28 @@ void OgreWidget::initOgreSystem()
     setupLoadResources();
 
     // Bad SdkTrays code, FIXME later
-    mTrayMgr = new OgreBites::SdkTrayManager("InterfaceName", ogreRenderWindow, this);
-    mTrayMgr->showFrameStats(OgreBites::TL_BOTTOMLEFT);
-    mTrayMgr->showLogo(OgreBites::TL_BOTTOMRIGHT);
+//    mTrayMgr = new OgreBites::SdkTrayManager("InterfaceName", ogreRenderWindow, this);
+//    mTrayMgr->showFrameStats(OgreBites::TL_BOTTOMLEFT);
+//    mTrayMgr->showLogo(OgreBites::TL_BOTTOMRIGHT);
 
-    // create a params panel for displaying sample details
-    Ogre::StringVector items;
-    items.push_back("cam.pX");
-    items.push_back("cam.pY");
-    items.push_back("cam.pZ");
-    items.push_back("cam.oW");
-    items.push_back("cam.oX");
-    items.push_back("cam.oY");
-    items.push_back("cam.oZ");
-    items.push_back("");
-    items.push_back("");
-    items.push_back("Filtering");
-    items.push_back("Poly Mode");
+//    // create a params panel for displaying sample details
+//    Ogre::StringVector items;
+//    items.push_back("cam.pX");
+//    items.push_back("cam.pY");
+//    items.push_back("cam.pZ");
+//    items.push_back("cam.oW");
+//    items.push_back("cam.oX");
+//    items.push_back("cam.oY");
+//    items.push_back("cam.oZ");
+//    items.push_back("");
+//    items.push_back("");
+//    items.push_back("Filtering");
+//    items.push_back("Poly Mode");
 
-    mDetailsPanel = mTrayMgr->createParamsPanel(OgreBites::TL_NONE, "DetailsPanel", 200, items);
-    mDetailsPanel->setParamValue(9, "Bilinear");
-    mDetailsPanel->setParamValue(10, "Solid");
-    mDetailsPanel->hide();
+//    mDetailsPanel = mTrayMgr->createParamsPanel(OgreBites::TL_NONE, "DetailsPanel", 200, items);
+//    mDetailsPanel->setParamValue(9, "Bilinear");
+//    mDetailsPanel->setParamV alue(10, "Solid");
+//    mDetailsPanel->hide();
 
     ogreRoot->addFrameListener(this);
 
@@ -511,21 +511,21 @@ bool OgreWidget::frameRenderingQueued(const Ogre::FrameEvent &evt)
     if(ogreRenderWindow->isClosed())
         return false;
 
-    mTrayMgr->frameRenderingQueued(evt);
+//    mTrayMgr->frameRenderingQueued(evt);
 
-    if (!mTrayMgr->isDialogVisible())
-    {
-        if (mDetailsPanel->isVisible())   // if details panel is visible, then update its contents
-        {
-            mDetailsPanel->setParamValue(0, Ogre::StringConverter::toString(ogreCamera->getDerivedPosition().x));
-            mDetailsPanel->setParamValue(1, Ogre::StringConverter::toString(ogreCamera->getDerivedPosition().y));
-            mDetailsPanel->setParamValue(2, Ogre::StringConverter::toString(ogreCamera->getDerivedPosition().z));
-            mDetailsPanel->setParamValue(3, Ogre::StringConverter::toString(ogreCamera->getDerivedOrientation().w));
-            mDetailsPanel->setParamValue(4, Ogre::StringConverter::toString(ogreCamera->getDerivedOrientation().x));
-            mDetailsPanel->setParamValue(5, Ogre::StringConverter::toString(ogreCamera->getDerivedOrientation().y));
-            mDetailsPanel->setParamValue(6, Ogre::StringConverter::toString(ogreCamera->getDerivedOrientation().z));
-        }
-    }
+//    if (!mTrayMgr->isDialogVisible())
+//    {
+//        if (mDetailsPanel->isVisible())   // if details panel is visible, then update its contents
+//        {
+//            mDetailsPanel->setParamValue(0, Ogre::StringConverter::toString(ogreCamera->getDerivedPosition().x));
+//            mDetailsPanel->setParamValue(1, Ogre::StringConverter::toString(ogreCamera->getDerivedPosition().y));
+//            mDetailsPanel->setParamValue(2, Ogre::StringConverter::toString(ogreCamera->getDerivedPosition().z));
+//            mDetailsPanel->setParamValue(3, Ogre::StringConverter::toString(ogreCamera->getDerivedOrientation().w));
+//            mDetailsPanel->setParamValue(4, Ogre::StringConverter::toString(ogreCamera->getDerivedOrientation().x));
+//            mDetailsPanel->setParamValue(5, Ogre::StringConverter::toString(ogreCamera->getDerivedOrientation().y));
+//            mDetailsPanel->setParamValue(6, Ogre::StringConverter::toString(ogreCamera->getDerivedOrientation().z));
+//        }
+//    }
     return true;
 }
 

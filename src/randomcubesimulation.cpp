@@ -61,7 +61,7 @@ void RandomCubeSimulation::setupBasic3DEnvironment()
 
     // Setup some fog
     Ogre::ColourValue fadeColour(0.75, 0.75, 0.8);
-    OgreResources::getSceneManager()->setFog(Ogre::FOG_EXP2, fadeColour, 0.0001f, 0, 0);
+   // OgreResources::getSceneManager()->setFog(Ogre::FOG_EXP2, fadeColour, 0.0001f, 0, 0);
 
     // Add some light
     OgreResources::getSceneManager()->setAmbientLight(Ogre::ColourValue(1, 1, 1, 1));
