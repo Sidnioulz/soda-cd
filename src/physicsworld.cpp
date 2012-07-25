@@ -25,6 +25,7 @@
 #include <limits>
 
 #include "utils.h"
+#include "main.h"
 #include "physicsworld.h"
 #include "obEntityWrapper.h"
 #include "ogreresources.h"
@@ -45,7 +46,7 @@ PhysicsWorldThread::PhysicsWorldThread(QObject *parent) :
     shutDownHelper = new QSignalMapper;
     shutDownHelper->setMapping(this, 0);
     connect(this, SIGNAL(aboutToStop()), shutDownHelper, SLOT(map()));
-    connect(shutDownHelper, SIGNAL(mapped(int)), this, SLOT(_exitEventLoop(0)), Qt::DirectConnection);
+    connect(shutDownHelper, SIGNAL(mapped(int)), this, SLOT(_exitEventLoop(int)), Qt::DirectConnection);
 
     incomingLoop = new QEventLoop(this);
 
@@ -109,7 +110,7 @@ void PhysicsWorldThread::run()
 void PhysicsWorldThread::_exitEventLoop(int code)
 {
 #ifndef NDEBUG
-    qWarning() << "PhysicsWorldThread()::_exitEventLoop(); Thread " << QString().sprintf("%p", QThread::currentThread());
+    qWarning() << "PhysicsWorldThread()::_exitEventLoop("<< code << "); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
     incomingLoop->exit(code);
@@ -211,10 +212,19 @@ void PhysicsWorldWorker::runOnePass()
 #endif
 }
 
-void PhysicsWorldWorker::onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords, const btScalar &time)
+void PhysicsWorldWorker::onBorderTraversed(const PhysicsWorld *&neighbor, const EntityOverlappedCellsMap &objects, const btScalar &time)
 {
 #ifndef NDEBUG
-    qDebug() << "PhysicsWorld(" << parent->id << ")::onTerritoryIntrusion(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", Vector[" << coords.size() << "]); Thread " << QString().sprintf("%p", QThread::currentThread());
+    QMapIterator<obEntityWrapper *, QVector<CellBorderCoordinates> > it(objects);
+    QString entStr;
+    while(it.hasNext())
+    {
+        entStr += it.next().key()->getDisplayName();
+        if(it.hasNext())
+            entStr += ", ";
+    }
+
+    qDebug() << "PhysicsWorld(" << parent->id << ")::onBorderTraversed(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", Entities: [" << entStr << "]); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
 //    ExperimentTrackingInterface *eti = ExperimentTrackingInterface::getInterface();
@@ -641,32 +651,40 @@ bool PhysicsWorld::messageNeighbor(PhysicsWorld *neighbor, const char *method, Q
     }
 }
 
-//TODO: document messageNeighbor
 bool PhysicsWorld::messageNeighbor(const short neighborId, const char *method, QGenericArgument val0, QGenericArgument val1, QGenericArgument val2, QGenericArgument val3, QGenericArgument val4, QGenericArgument val5, QGenericArgument val6, QGenericArgument val7, QGenericArgument val8, QGenericArgument val9) const
 {
+    return messageNeighbor(getNeighbor(neighborId), method, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
+}
+
+bool PhysicsWorld::asyncMessageNeighbor(PhysicsWorld *neighbor, const char *method, QGenericArgument val0, QGenericArgument val1, QGenericArgument val2, QGenericArgument val3, QGenericArgument val4, QGenericArgument val5, QGenericArgument val6, QGenericArgument val7, QGenericArgument val8, QGenericArgument val9) const
+{
 #ifndef NDEBUG
-//	qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+    qDebug() << "PhysicsWorld(" << id << ")::asyncMessageNeighbor(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", " << method << "); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
-	PhysicsWorld *neighbor = getNeighbor(neighborId);
-	if(neighbor)
-	{
-#ifndef NDEBUG
-//        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Invoking method; Thread " << QString().sprintf("%p", QThread::currentThread());
-#endif
-        QMetaObject::invokeMethod(neighbor->worker, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
-#ifndef NDEBUG
-//        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Message sent; Thread " << QString().sprintf("%p", QThread::currentThread());
-#endif
-		return true;
-	}
-	else
+    if(neighbor)
     {
 #ifndef NDEBUG
-//        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << neighborId << ", " << method << "); Could not find neighbor, aborting; Thread " << QString().sprintf("%p", QThread::currentThread());
+        qDebug() << "PhysicsWorld(" << id << ")::asyncMessageNeighbor(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", " << method << "); Invoking method; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+        QMetaObject::invokeMethod(neighbor->worldThread.incomingLoop, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
+#ifndef NDEBUG
+        qDebug() << "PhysicsWorld(" << id << ")::asyncMessageNeighbor(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", " << method << "); Message sent; Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+        return true;
+    }
+    else
+    {
+#ifndef NDEBUG
+        qDebug() << "PhysicsWorld(" << id << ")::asyncMessageNeighbor(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", " << method << "); Could not find neighbor, aborting; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
         return false;
     }
+}
+
+bool PhysicsWorld::asyncMessageNeighbor(const short neighborId, const char *method, QGenericArgument val0, QGenericArgument val1, QGenericArgument val2, QGenericArgument val3, QGenericArgument val4, QGenericArgument val5, QGenericArgument val6, QGenericArgument val7, QGenericArgument val8, QGenericArgument val9) const
+{
+    return asyncMessageNeighbor(getNeighbor(neighborId), method, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
 }
 
 void PhysicsWorld::_tickCallback(btDynamicsWorld *world, btScalar timeStep)
@@ -709,7 +727,8 @@ void PhysicsWorld::_waitForNeighbors(const QList<short> &neighbors, const btScal
     available.append(getId());
 
     // Let neighbors know one is available
-    //TODO: emit to all neighbors a message sayign available
+    for(int i=0; i<neighbors.size(); ++i)
+        messageNeighbor(neighbors[i], "onSynchronizationReady", Q_ARG(QList<short>, neighbors), Q_ARG(btScalar, simulatedTime));
 
     // While at least one neighbor hasn't reached this step
     while(available.size() == neighbors.size())

@@ -89,6 +89,12 @@ public:
     {
         setW(direction);
     }
+
+    /*!
+     * \brief Returns the CellBorderCoordinates of the other side of the border represented by this object.
+     * param otherSideCoords the object in which to store the other side's coordinates
+     */
+    void getOtherSide(CellBorderCoordinates &otherSideCoords) const;
 };
 
 

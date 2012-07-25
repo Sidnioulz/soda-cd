@@ -59,7 +59,7 @@ MainPepsiWindow::MainPepsiWindow(QxtCommandOptions &opt, QWidget *parent) :
 
     // IPC setup
     qRegisterMetaType<PhysicsWorld *>("PhysicsWorld *");
-    qRegisterMetaType<QVector<CellBorderCoordinates> >("QVector<CellBorderCoordinates>");
+    qRegisterMetaType<EntityOverlappedCellsMap>("EntityOverlappedCellsMap");
     qRegisterMetaType<obEntityWrapper *>("obEntityWrapper *");
     qRegisterMetaType<btScalar>("btScalar");
     qRegisterMetaType<Ogre::Entity *>("Ogre::Entity *");

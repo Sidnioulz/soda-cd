@@ -39,6 +39,7 @@
 #include <QtDebug>
 #include <btBulletCollisionCommon.h>
 #include "bulletmanager.h"
+#include "main.h"
 #include "obEntityWrapper.h"
 #include "cellborderentity.h"
 #include "physicsworld.h"
@@ -402,9 +403,10 @@ void	BulletManagerWorld::performDiscreteCollisionDetection()
 
         obEntityWrapper *obEnt = 0;
         CellBorderEntity *border = 0;
-        btVector3 otherSideCoords;
+        CellBorderCoordinates otherSideCoords;
         PhysicsWorld *world = broadphase->getWorld();
         LocalGrid *localGrid = broadphase->getWorld()->getLocalGrid();
+        QMap<short, QMap<obEntityWrapper *, QVector<CellBorderCoordinates> > > borderTraversedNeighbors;
 
         const int &bdArraySize = array.size();
         for(int i=0; i<bdArraySize; ++i)
@@ -439,67 +441,37 @@ void	BulletManagerWorld::performDiscreteCollisionDetection()
             }
 
             const CellBorderCoordinates &coord = border->getCoordinates();
-            otherSideCoords = coord;
+            coord.getOtherSide(otherSideCoords);
 
-            if(coord.direction() == GridInformation::Top)
-                otherSideCoords += btVector3(0,1,0);
-            else if(coord.direction() == GridInformation::Bottom)
-                otherSideCoords += btVector3(0,-1,0);
-            else if(coord.direction() == GridInformation::Left)
-                otherSideCoords += btVector3(-1,0,0);
-            else if(coord.direction() == GridInformation::Right)
-                otherSideCoords += btVector3(1,0,0);
-            else if(coord.direction() == GridInformation::Back)
-                otherSideCoords += btVector3(0,0,-1);
-            else if(coord.direction() == GridInformation::Front)
-                otherSideCoords += btVector3(0,0,1);
-
+            // This is not a global space border but a border between worlds, append the entity to that neighbor's list
             if(localGrid->getGridInformation()->isWithinWorldCellBounds(otherSideCoords))
             {
-//                qDebug() << "performDiscreteCollisionDetection("<< world->getId() <<"): border overlap with" << localGrid->at(otherSideCoords).getOwnerId();
-                world->messageNeighbor(localGrid->at(otherSideCoords).getOwnerId(),
-                                       "onTerritoryIntrusion",
-                                       Q_ARG(PhysicsWorld *, world),
-                                       Q_ARG(QVector<CellBorderCoordinates>, QVector<CellBorderCoordinates>(1, coord)),
-                                       Q_ARG(btScalar, world->getCurrentTime()));
-            }
+                const short &neighborId = localGrid->at(otherSideCoords).getOwnerId();
+                QMap<obEntityWrapper *, QVector<CellBorderCoordinates> > mapForNeighbor = borderTraversedNeighbors.value(neighborId, QMap<obEntityWrapper *, QVector<CellBorderCoordinates> >());
 
-            //TODO: sending CBC's not enough. Should already join objects?
-            //TODO: its in this function that we check for border crossing and out of bounds objects, and we synchronize in BulletManagerWorld either way.
+                QVector<CellBorderCoordinates> coordsForEnt = mapForNeighbor.value(obEnt, QVector<CellBorderCoordinates>());
+                coordsForEnt.append(otherSideCoords);
+                mapForNeighbor.insert(obEnt, coordsForEnt);
+
+                borderTraversedNeighbors.insert(neighborId, mapForNeighbor);
+            }
+        }
+
+        //Send a message to all neighbors having a traversed border
+        QMap<short, QMap<obEntityWrapper *, QVector<CellBorderCoordinates> > >::const_iterator it = borderTraversedNeighbors.begin();
+        while(it!=borderTraversedNeighbors.end())
+        {
+            world->messageNeighbor(it.key(),
+                                   "onBorderTraversed",
+                                   Q_ARG(PhysicsWorld *, world),
+                                   Q_ARG(EntityOverlappedCellsMap, it.value()),
+                                   Q_ARG(btScalar, world->getCurrentTime()));
+
+            it++;
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//TODO: replace QMap by QHash wherever possible in SODA.
 
 BulletManager::BulletManager() :
     broadphase(0),

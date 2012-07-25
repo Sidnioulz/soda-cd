@@ -23,6 +23,54 @@
 #include "localgrid.h"
 #include "ogreresources.h"
 
+void CellBorderCoordinates::getOtherSide(CellBorderCoordinates &otherSideCoords) const
+{
+    if(direction() == GridInformation::Top)
+    {
+        otherSideCoords.setX(x());
+        otherSideCoords.setY(y() + 1);
+        otherSideCoords.setZ(z());
+        otherSideCoords.setDirection(GridInformation::Bottom);
+    }
+    else if(direction() == GridInformation::Bottom)
+    {
+        otherSideCoords.setX(x());
+        otherSideCoords.setY(y() - 1);
+        otherSideCoords.setZ(z());
+        otherSideCoords.setDirection(GridInformation::Top);
+    }
+
+    else if(direction() == GridInformation::Left)
+    {
+        otherSideCoords.setX(x() - 1);
+        otherSideCoords.setY(y());
+        otherSideCoords.setZ(z());
+        otherSideCoords.setDirection(GridInformation::Right);
+    }
+    else if(direction() == GridInformation::Right)
+    {
+        otherSideCoords.setX(x() + 1);
+        otherSideCoords.setY(y());
+        otherSideCoords.setZ(z());
+        otherSideCoords.setDirection(GridInformation::Left);
+    }
+
+    else if(direction() == GridInformation::Back)
+    {
+        otherSideCoords.setX(x());
+        otherSideCoords.setY(y());
+        otherSideCoords.setZ(z() - 1);
+        otherSideCoords.setDirection(GridInformation::Front);
+    }
+    else if(direction() == GridInformation::Front)
+    {
+        otherSideCoords.setX(x());
+        otherSideCoords.setY(y());
+        otherSideCoords.setZ(z() + 1);
+        otherSideCoords.setDirection(GridInformation::Back);
+    }
+}
+
 CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates &coords) throw(EntityAlreadyExistsException) :
 	obBody(0),
     ogreEntity(0),

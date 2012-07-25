@@ -35,6 +35,8 @@ class Simulation;
 class PhysicsWorldThread;
 class PhysicsWorldWorker;
 class PhysicsWorld;
+// Needed for metatypes because of compiler parser restrictions on damn C++ macros!
+typedef QMap<obEntityWrapper *, QVector<CellBorderCoordinates> > EntityOverlappedCellsMap;
 
 //! An obEntityWrapper instance associated with a time unit that represents a temporal event.
 typedef QPair<obEntityWrapper *, btScalar> TimedEntity;
@@ -165,10 +167,10 @@ public slots:
     /*!
      * \brief Called when a neighbor's entity overlaps the border between that neighbor and the parent PhysicsWorld.
      * \param neighbor the neighbor whose object overlaps
-     * \param coords the area(s) of overlapping
+     * \param objects the overlapping objects and the lists of cells they overlap
      * \param time the timestamp at which the intrusion occurred (from neighbor's clock)
      */
-    void onTerritoryIntrusion(const PhysicsWorld *&neighbor, const QVector<CellBorderCoordinates> &coords, const btScalar &time);
+    void onBorderTraversed(const PhysicsWorld *&neighbor, const EntityOverlappedCellsMap &objects, const btScalar &time);
 
     /*!
      * \brief Called when an obEntityWrapper's ownership is transfered to this PhysicsWorldWorker's parent.
@@ -363,6 +365,12 @@ public:
 
     //TODO: document messageNeighbor
     bool messageNeighbor(const short neighborId, const char *method, QGenericArgument val0 = QGenericArgument(0), QGenericArgument val1 = QGenericArgument(), QGenericArgument val2 = QGenericArgument(), QGenericArgument val3 = QGenericArgument(), QGenericArgument val4 = QGenericArgument(), QGenericArgument val5 = QGenericArgument(), QGenericArgument val6 = QGenericArgument(), QGenericArgument val7 = QGenericArgument(), QGenericArgument val8 = QGenericArgument(), QGenericArgument val9 = QGenericArgument()) const;
+
+    //TODO: document asyncMessageNeighbor
+    bool asyncMessageNeighbor(PhysicsWorld *neighbor, const char *method, QGenericArgument val0 = QGenericArgument(0), QGenericArgument val1 = QGenericArgument(), QGenericArgument val2 = QGenericArgument(), QGenericArgument val3 = QGenericArgument(), QGenericArgument val4 = QGenericArgument(), QGenericArgument val5 = QGenericArgument(), QGenericArgument val6 = QGenericArgument(), QGenericArgument val7 = QGenericArgument(), QGenericArgument val8 = QGenericArgument(), QGenericArgument val9 = QGenericArgument()) const;
+
+    //TODO: document asyncMessageNeighbor
+    bool asyncMessageNeighbor(const short neighborId, const char *method, QGenericArgument val0 = QGenericArgument(0), QGenericArgument val1 = QGenericArgument(), QGenericArgument val2 = QGenericArgument(), QGenericArgument val3 = QGenericArgument(), QGenericArgument val4 = QGenericArgument(), QGenericArgument val5 = QGenericArgument(), QGenericArgument val6 = QGenericArgument(), QGenericArgument val7 = QGenericArgument(), QGenericArgument val8 = QGenericArgument(), QGenericArgument val9 = QGenericArgument()) const;
 
     static const short NullWorldId;               //!< a value used when a world ID is needed but there is no corresponding world instance
     static const short UnknownWorldId;            //!< a value used when the owner world of an object is not known yet
