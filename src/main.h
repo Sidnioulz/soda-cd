@@ -53,9 +53,6 @@
 //TODO: assertions on all function headers
 //TODO: when objects and cells too big to populate several worlds, don't!
 
-// Needed for metatypes because of compiler parser restrictions on damn C++ macros!
-typedef QMap<obEntityWrapper *, QVector<CellBorderCoordinates> > EntityOverlappedCellsMap;
-
 // IPC type declarations
 Q_DECLARE_METATYPE(PhysicsWorld *)
 Q_DECLARE_METATYPE(EntityOverlappedCellsMap)
@@ -63,6 +60,7 @@ Q_DECLARE_METATYPE(obEntityWrapper *)
 Q_DECLARE_METATYPE(btScalar)
 Q_DECLARE_METATYPE(Ogre::Entity *)
 Q_DECLARE_METATYPE(Ogre::SceneNode *)
+Q_DECLARE_METATYPE(QList<short>)
 
 namespace Ui {
     class MainPepsiWindow;

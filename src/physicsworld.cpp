@@ -34,8 +34,64 @@
 #include "experimenttrackinginterface.h"
 
 
-PhysicsWorldThread::PhysicsWorldThread(QObject *parent) :
-    QThread(parent)
+PhysicsWorldAsyncEventLoop::PhysicsWorldAsyncEventLoop(PhysicsWorld *parent) :
+        QEventLoop(),
+        parent(parent)
+{
+}
+
+void PhysicsWorldAsyncEventLoop::onSynchronizationReady(const short &senderId, const QList<short> &neighbors, const btScalar &simulatedTime)
+{
+#ifndef NDEBUG
+    QListIterator<short> it(neighbors);
+    QString nbStr;
+    while(it.hasNext())
+    {
+        nbStr += QString("%1").arg(it.next());
+        if(it.hasNext())
+            nbStr += ", ";
+    }
+
+    qDebug() << "PhysicsWorldAsyncEventLoop(" << parent->id << ")::onSynchronizationReady(" << senderId << ", Neighbors: [" << nbStr << "], " << simulatedTime << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+#endif
+
+    PhysicsWorld::IncomingMessage msg;
+    msg.senderId = senderId;
+    msg.messageType = PhysicsWorld::SyncReady;
+    msg.data = QVariant::fromValue(neighbors);
+
+    QList<PhysicsWorld::IncomingMessage> sTimeMessages = parent->incomingQueue.value(simulatedTime, QList<PhysicsWorld::IncomingMessage>());
+    sTimeMessages.append(msg);
+    parent->incomingQueue.insert(simulatedTime, sTimeMessages);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PhysicsWorldThread::PhysicsWorldThread(PhysicsWorld *parent) :
+    QThread(0),
+    parent(parent)
 {
 #ifndef NDEBUG
     qWarning() << "PhysicsWorldThread()::PhysicsWorldThread " << QString().sprintf("%p", QThread::currentThread());
@@ -48,14 +104,12 @@ PhysicsWorldThread::PhysicsWorldThread(QObject *parent) :
     connect(this, SIGNAL(aboutToStop()), shutDownHelper, SLOT(map()));
     connect(shutDownHelper, SIGNAL(mapped(int)), this, SLOT(_exitEventLoop(int)), Qt::DirectConnection);
 
-    incomingLoop = new QEventLoop(this);
-
 #ifndef NDEBUG
     qWarning() << "PhysicsWorldThread()::PhysicsWorldThread constructed; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 }
 
-void PhysicsWorldThread::startAndAttachWorker(PhysicsWorldWorker *worker)
+void PhysicsWorldThread::startAndAttachWorker(PhysicsWorldWorker *worker, PhysicsWorldAsyncEventLoop *loop)
 {
 #ifndef NDEBUG
     qWarning() << "PhysicsWorldThread()::launchWorker(" << worker << "); Thread " << QString().sprintf("%p", QThread::currentThread());
@@ -69,6 +123,7 @@ void PhysicsWorldThread::startAndAttachWorker(PhysicsWorldWorker *worker)
 
     // Make sure that the worker and the shutdown helper run their events on this thread
     worker->moveToThread(this);
+    loop->moveToThread(this);
     shutDownHelper->moveToThread(this);
 
     // Make sure the worker will be aware of the thread shutting down (so that it aborts its events left to run)
@@ -98,7 +153,6 @@ PhysicsWorldThread::~PhysicsWorldThread()
     qWarning() << "PhysicsWorldThread()::~PhysicsWorldThread(); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
-    delete incomingLoop;
     delete shutDownHelper;
 }
 
@@ -113,7 +167,6 @@ void PhysicsWorldThread::_exitEventLoop(int code)
     qWarning() << "PhysicsWorldThread()::_exitEventLoop("<< code << "); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
-    incomingLoop->exit(code);
     exit(code);
 }
 
@@ -227,6 +280,16 @@ void PhysicsWorldWorker::onBorderTraversed(const PhysicsWorld *&neighbor, const 
     qDebug() << "PhysicsWorld(" << parent->id << ")::onBorderTraversed(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", Entities: [" << entStr << "]); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
+    PhysicsWorld::IncomingMessage msg;
+    msg.senderId = neighbor->getId();
+    msg.messageType = PhysicsWorld::BorderTraversed;
+    msg.data = QVariant::fromValue(objects);
+
+    QList<PhysicsWorld::IncomingMessage> sTimeMessages = parent->incomingQueue.value(time, QList<PhysicsWorld::IncomingMessage>());
+    sTimeMessages.append(msg);
+    parent->incomingQueue.insert(time, sTimeMessages);
+
+
 //    ExperimentTrackingInterface *eti = ExperimentTrackingInterface::getInterface();
 
 //    eti->registerSynchronizationEvent(parent->simulation, parent->id, neighbor->getId(), time);
@@ -243,7 +306,6 @@ void PhysicsWorldWorker::onOwnershipTransfer(const PhysicsWorld *&neighbor, cons
     obEnt->setStatus(obEntity::NormalStatus);
      parent->_addEntity(obEnt);
 }
-
 
 
 
@@ -317,6 +379,9 @@ PhysicsWorld::PhysicsWorld(Simulation &simulation, const btScalar &targetTimeSte
     // Build the worker object that will run in this PhysicsWorld's thread
     worker = new PhysicsWorldWorker(this);
 
+    // Build the event loop for asynchronous messages
+    incomingLoop = new PhysicsWorldAsyncEventLoop(this);
+
 #ifndef NDEBUG
     qDebug() << "PhysicsWorld(" << id << ")::PhysicsWorld(); Constructed.";
 #endif
@@ -326,6 +391,7 @@ PhysicsWorld::~PhysicsWorld()
 {
     stopSimulation();
     delete worker;
+    delete incomingLoop;
 
     QListIterator<TimedEntity> addIt(entityAdditionQueue);
     while(addIt.hasNext())
@@ -360,7 +426,7 @@ PhysicsWorld::~PhysicsWorld()
 void PhysicsWorld::startSimulation()
 {
     // Start the thread with the worker attached to it
-    worldThread.startAndAttachWorker(worker);
+    worldThread.startAndAttachWorker(worker, incomingLoop);
 
     //TODO: re-enable writes on the CircularTransformBuffer
 
@@ -634,11 +700,11 @@ bool PhysicsWorld::messageNeighbor(PhysicsWorld *neighbor, const char *method, Q
     if(neighbor)
     {
 #ifndef NDEBUG
-        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", " << method << "); Invoking method; Thread " << QString().sprintf("%p", QThread::currentThread());
+//        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", " << method << "); Invoking method; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
         QMetaObject::invokeMethod(neighbor->worker, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
 #ifndef NDEBUG
-        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", " << method << "); Message sent; Thread " << QString().sprintf("%p", QThread::currentThread());
+//        qDebug() << "PhysicsWorld(" << id << ")::messageNeighbor(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", " << method << "); Message sent; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
         return true;
     }
@@ -665,11 +731,11 @@ bool PhysicsWorld::asyncMessageNeighbor(PhysicsWorld *neighbor, const char *meth
     if(neighbor)
     {
 #ifndef NDEBUG
-        qDebug() << "PhysicsWorld(" << id << ")::asyncMessageNeighbor(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", " << method << "); Invoking method; Thread " << QString().sprintf("%p", QThread::currentThread());
+//        qDebug() << "PhysicsWorld(" << id << ")::asyncMessageNeighbor(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", " << method << "); Invoking method; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
-        QMetaObject::invokeMethod(neighbor->worldThread.incomingLoop, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
+        QMetaObject::invokeMethod(neighbor->incomingLoop, method, Qt::QueuedConnection, val0, val1, val2, val3, val4, val5, val6, val7, val8, val9);
 #ifndef NDEBUG
-        qDebug() << "PhysicsWorld(" << id << ")::asyncMessageNeighbor(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", " << method << "); Message sent; Thread " << QString().sprintf("%p", QThread::currentThread());
+//        qDebug() << "PhysicsWorld(" << id << ")::asyncMessageNeighbor(" << (neighbor ? neighbor->getId() : PhysicsWorld::NullWorldId) << ", " << method << "); Message sent; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
         return true;
     }
@@ -726,17 +792,23 @@ void PhysicsWorld::_waitForNeighbors(const QList<short> &neighbors, const btScal
     QList<short> available;
     available.append(getId());
 
-    // Let neighbors know one is available
+    // List of neighbors that should be sync'd with (incremented as they are discovered)
+    QList<short> totalSyncGroup(neighbors);
+    totalSyncGroup.append(getId());
+
+    // Let neighbors know we areis available
+    //FIXME: might want to do that again after
     for(int i=0; i<neighbors.size(); ++i)
-        messageNeighbor(neighbors[i], "onSynchronizationReady", Q_ARG(QList<short>, neighbors), Q_ARG(btScalar, simulatedTime));
+        asyncMessageNeighbor(neighbors[i], "onSynchronizationReady", Q_ARG(short, id), Q_ARG(QList<short>, totalSyncGroup), Q_ARG(btScalar, simulatedTime));
 
     // While at least one neighbor hasn't reached this step
-    while(available.size() == neighbors.size())
+    while(available.size() != totalSyncGroup.size())
     {
 
         // Check event queue for new available messages
-        worldThread.incomingLoop->processEvents();
-        QList<IncomingMessage> messages = incomingQueue.take(simulatedTime);
+        //FIXME: processEvents(parameters) is better than a duplicate 'incomingQueue'.
+        incomingLoop->processEvents();
+        QList<IncomingMessage> messages = incomingQueue.value(simulatedTime, QList<PhysicsWorld::IncomingMessage>());
 
         // Process events if relevant, and remove them from the list
         QList<IncomingMessage>::iterator iter = messages.begin();
@@ -747,6 +819,19 @@ void PhysicsWorld::_waitForNeighbors(const QList<short> &neighbors, const btScal
             if(msg.messageType == SyncReady && neighbors.contains(msg.senderId) && !available.contains(msg.senderId))
             {
                 available.append(msg.senderId);
+
+//                // Look for other synchronized neighbors, not spotted yet
+//                const QList<QVariant> &remoteSyncGroup = msg.data.toList();
+//                for(int i=0; i<remoteSyncGroup.size(); ++i)
+//                {
+//                    const short &remoteId = remoteSyncGroup[i].toInt();
+//                    if(!totalSyncGroup.contains(remoteId))
+//                    {
+//                        totalSyncGroup.insert(remoteId);
+////                        asyncMessageNeighbor(remoteId, "onSynchronizationReady", Q_ARG(short, id), Q_ARG(QList<short>, <DIFFERENCE BETWEEN REMOTE GROUP AND LOCAL GROUP>), Q_ARG(btScalar, simulatedTime));
+//                    }
+
+
                 iter = messages.erase(iter);
             }
             else

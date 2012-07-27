@@ -44,19 +44,18 @@ public:
      * \param numEntities the number of simulated entities
      * \return a new RandomCubeSimulation
      */
-// VERY NICE SIMULATION with 4 worlds that are not square, lots of border crossing (enable random scale)
-    RandomCubeSimulation(const btScalar &targetTimeStep = 1.0f/60,
-                         const int &declNumWorlds = 0,
-                         const btVector3 &sceneSize = btVector3(10000, 10000, 10000),
-                         const int &numEntities = 1000,
-                         const bool &randomScale = true);
+//    RandomCubeSimulation(const btScalar &targetTimeStep = 1.0f/60,
+//                         const int &declNumWorlds = 0,
+//                         const btVector3 &sceneSize = btVector3(10000, 10000, 10000),
+//                         const int &numEntities = 1000,
+//                         const bool &randomScale = true);
 
 // SIMPLISTIC SIMULATION used for memory leak checking (enable random scale)
-//    RandomCubeSimulation(const btScalar &targetTimeStep = 1.0f/60,
-//                         const int &declNumWorlds = 2,
-//                         const btVector3 &sceneSize = btVector3(1000, 200, 1000),
-//                         const int &numEntities = 10,
-//    const bool &randomScale = true);
+    RandomCubeSimulation(const btScalar &targetTimeStep = 1.0f/60,
+                         const int &declNumWorlds = 2,
+                         const btVector3 &sceneSize = btVector3(1000, 200, 1000),
+                         const int &numEntities = 10,
+    const bool &randomScale = true);
 
 
     /*!

@@ -82,34 +82,12 @@ public:
     /*! \brief Adds an entity to this Cell.
       * \param entity the obEntityWrapper to add to the Cell
       */
-    inline void addEntity(obEntityWrapper *entity)
-    {
-        Q_ASSERT(entity != NULL);
-
-        if(entities.isNull())
-            entities = QSharedPointer<QVector<obEntityWrapper *> >(new QVector<obEntityWrapper *>(1, entity));
-        else
-        {
-            Q_ASSERT(!entities->contains(entity));
-            entities->append(entity);
-        }
-    }
+    void addEntity(obEntityWrapper *entity);
 
     /*! \brief Adds an entity to this Cell.
       * \param entity the obEntityWrapper to add to the Cell
       */
-    inline void addCellBorder(CellBorderEntity *entity)
-    {
-        Q_ASSERT(entity != NULL);
-
-        if(borders.isNull())
-            borders = QSharedPointer<QVector<CellBorderEntity *> >(new QVector<CellBorderEntity *>(1, entity));
-        else
-        {
-            Q_ASSERT(!borders->contains(entity));
-            borders->append(entity);
-        }
-    }
+    void addCellBorder(CellBorderEntity *entity);
 
     /*! \brief Tells when an entity is within this Cell.
       * \param entity the obEntityWrapper to check
@@ -127,22 +105,7 @@ public:
 	  * \param entity the obEntityWrapper to remove from the Cell
 	  * \return whether the entity could be removed or not
 	  */
-	inline bool removeEntity(obEntityWrapper *entity)
-	{
-        if(!entities.isNull())
-            for(int i=0; i<entities->size(); ++i)
-                if(entity == entities->at(i))
-                {
-                    entities->remove(i);
-
-                    if(entities->isEmpty())
-                        entities.clear();
-
-                    return true;
-                }
-
-		return false;
-    }
+    bool removeEntity(obEntityWrapper *entity);
 
     /*! \brief Returns the entities of the Cell.
       * \return a pointer to the write-protected obEntityWrapper vector

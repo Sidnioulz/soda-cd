@@ -23,6 +23,18 @@
 #include "cell.h"
 #include "physicsworld.h"
 
+
+namespace {
+    //! Deletes CellBorderEntities in a QVector<CellBorderEntity *>
+    void deleteCellBorderEntity(QVector<CellBorderEntity *> *vector)
+    {
+        if(vector)
+            qDeleteAll(*vector);
+        delete vector;
+    }
+}
+
+
 Cell::Cell() :
     entities(0),
     borders(0),
@@ -46,4 +58,48 @@ Cell::Cell(const Cell &other) :
 
 Cell::~Cell()
 {
+}
+
+
+void Cell::addEntity(obEntityWrapper *entity)
+{
+    Q_ASSERT(entity != NULL);
+
+    if(entities.isNull())
+        entities = QSharedPointer<QVector<obEntityWrapper *> >(new QVector<obEntityWrapper *>(1, entity));
+    else
+    {
+        Q_ASSERT(!entities->contains(entity));
+        entities->append(entity);
+    }
+}
+
+void Cell::addCellBorder(CellBorderEntity *entity)
+{
+    Q_ASSERT(entity != NULL);
+
+    if(borders.isNull())
+        borders = QSharedPointer<QVector<CellBorderEntity *> >(new QVector<CellBorderEntity *>(1, entity), deleteCellBorderEntity);
+    else
+    {
+        Q_ASSERT(!borders->contains(entity));
+        borders->append(entity);
+    }
+}
+
+bool Cell::removeEntity(obEntityWrapper *entity)
+{
+    if(!entities.isNull())
+        for(int i=0; i<entities->size(); ++i)
+            if(entity == entities->at(i))
+            {
+                entities->remove(i);
+
+                if(entities->isEmpty())
+                    entities.clear();
+
+                return true;
+            }
+
+    return false;
 }

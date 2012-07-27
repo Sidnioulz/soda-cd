@@ -60,7 +60,7 @@ void CircularTransformBuffer::appendTimeStep(obEntityTransformRecordList *simul)
     while(getEntryState(nextIndex(currentPhysicsIndex)) != CT_STATE_EMPTY && !writeAborted)
     {
 #ifndef NDEBUG
-        qDebug() << "CircularTransformBuffer()::appendTimeStep(" << simul->getTimeStep() << "); About to wait; Thread " << QString().sprintf("%p", QThread::currentThread());
+        //qDebug() << "CircularTransformBuffer()::appendTimeStep(" << simul->getTimeStep() << "); About to wait; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
         bufferNotFull.wait(&fullBufferMutex);
     }
@@ -70,7 +70,7 @@ void CircularTransformBuffer::appendTimeStep(obEntityTransformRecordList *simul)
     if(!writeAborted)
     {
 #ifndef NDEBUG
-        qDebug() << "CircularTransformBuffer()::appendTimeStep(" << simul->getTimeStep() << "); Writing time step; Thread " << QString().sprintf("%p", QThread::currentThread());
+        //qDebug() << "CircularTransformBuffer()::appendTimeStep(" << simul->getTimeStep() << "); Writing time step; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
         this->operator [](currentPhysicsIndex) = QSharedPointer<obEntityTransformRecordList>(simul);
 
@@ -79,7 +79,7 @@ void CircularTransformBuffer::appendTimeStep(obEntityTransformRecordList *simul)
     }
 #ifndef NDEBUG
     else
-        qDebug() << "CircularTransformBuffer()::appendTimeStep(" << simul->getTimeStep() << "); Writes are aborted; Thread " << QString().sprintf("%p", QThread::currentThread());
+        //qDebug() << "CircularTransformBuffer()::appendTimeStep(" << simul->getTimeStep() << "); Writes are aborted; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
     writeMutex.unlock();
@@ -103,7 +103,7 @@ QSharedPointer<obEntityTransformRecordList> CircularTransformBuffer::processNext
         // If arriving here, then target time is ahead of the latest available positions
         // Or, the cell next to latestPastIndex is being filled by the physics thread
 #ifndef NDEBUG
-    qDebug() << "CircularTransformBuffer()::processNext(" << targetTime << "); Simulation late: latest past is " << (at(latestPastIndex).isNull() ? 0 : at(latestPastIndex)->getTimeStep()) << "; Thread " << QString().sprintf("%p", QThread::currentThread());
+    //qDebug() << "CircularTransformBuffer()::processNext(" << targetTime << "); Simulation late: latest past is " << (at(latestPastIndex).isNull() ? 0 : at(latestPastIndex)->getTimeStep()) << "; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
         return at(latestPastIndex);
     }

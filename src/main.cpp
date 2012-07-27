@@ -64,6 +64,7 @@ MainPepsiWindow::MainPepsiWindow(QxtCommandOptions &opt, QWidget *parent) :
     qRegisterMetaType<btScalar>("btScalar");
     qRegisterMetaType<Ogre::Entity *>("Ogre::Entity *");
     qRegisterMetaType<Ogre::SceneNode *>("Ogre::SceneNode *");
+    qRegisterMetaType<QList<short> >("QList<short>");
 
     // Create the Ogre Widget
     ogreWidget = new OgreWidget(targetFPS);

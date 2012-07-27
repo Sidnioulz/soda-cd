@@ -154,7 +154,17 @@ void BulletManagerWorld::internalSingleStepSimulation(btScalar timeStep)
     dispatchInfo.m_stepCount = 0;
     dispatchInfo.m_debugDraw = getDebugDrawer();
 
+    // Perform local detections and fill borderTraversedNeighbors with local border collisions
     performDiscreteCollisionDetection();
+
+    // Add notified remote border collisions
+    //TODO:
+
+    // Only wait for direct neighbors which require synchronization, if border traversals
+    if(!borderTraversedNeighbors.isEmpty())
+    {
+        waitForNeighbors(borderTraversedNeighbors.keys(), this->m_localTime);
+    }
 
 
 
@@ -396,7 +406,8 @@ void	BulletManagerWorld::performDiscreteCollisionDetection()
 
 
     {
-        BT_PROFILE("manageBorderCollisionsForDemo");
+        BT_PROFILE("listOverlappingBorders");
+        borderTraversedNeighbors.clear();
 
         btLocalGridBroadphase *bdPhase = static_cast<btLocalGridBroadphase *>(m_broadphasePairCache);
         const btBroadphasePairArray &array = bdPhase->getBorderCrossingPairCache()->getOverlappingPairArray();
@@ -406,7 +417,6 @@ void	BulletManagerWorld::performDiscreteCollisionDetection()
         CellBorderCoordinates otherSideCoords;
         PhysicsWorld *world = broadphase->getWorld();
         LocalGrid *localGrid = broadphase->getWorld()->getLocalGrid();
-        QMap<short, QMap<obEntityWrapper *, QVector<CellBorderCoordinates> > > borderTraversedNeighbors;
 
         const int &bdArraySize = array.size();
         for(int i=0; i<bdArraySize; ++i)

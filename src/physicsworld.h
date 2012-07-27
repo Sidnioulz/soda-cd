@@ -32,6 +32,7 @@
 
 // Forward declarations
 class Simulation;
+class PhysicsWorldAsyncEventLoop;
 class PhysicsWorldThread;
 class PhysicsWorldWorker;
 class PhysicsWorld;
@@ -44,7 +45,26 @@ typedef QPair<obEntityWrapper *, btScalar> TimedEntity;
 //! Queue of TimedEntity instances.
 typedef QQueue<TimedEntity > TimedEntityQueue;
 
+/*! \class PhysicsWorldAsyncEventLoop
+  * \brief An event loop with a list of slots for each event it can manage.
+  * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
+  *
+  * This class is an event loop that has a list of available slots. Each of these slots
+  * is run specifically on that loop, when processEvents() is called.
+  */
+class PhysicsWorldAsyncEventLoop : public QEventLoop
+{
+    Q_OBJECT
 
+public:
+    explicit PhysicsWorldAsyncEventLoop(PhysicsWorld *parent);
+
+public slots:
+    void onSynchronizationReady(const short &senderId, const QList<short> &neighbors, const btScalar &simulatedTime);
+
+private:
+    PhysicsWorld    *parent;        /*!< Pointer to the parent PhysicsWorld that owns this object */
+};
 
 
 /*! \class PhysicsWorldThread
@@ -62,10 +82,10 @@ class PhysicsWorldThread : public QThread
 public:
     /*!
       * \brief Default constructor.
-      * \param parent the parent QObject of this thread
+      * \param parent the parent PhysicsWorld of this thread
       * \return a new PhysicsWorldThread
       */
-    explicit PhysicsWorldThread(QObject *parent=0);
+    explicit PhysicsWorldThread(PhysicsWorld *parent);
 
     /*!
       * \brief Default destructor.
@@ -75,8 +95,9 @@ public:
     /*!
      * \brief Starts the thread and attaches a PhysicsWorldWorker to it.
      * \param worker the PhysicsWorldWorker that will run in this PhysicsWorldThread
+     * \param loop the asynchronous event loop used by the worker
      */
-    void startAndAttachWorker(PhysicsWorldWorker *worker);
+    void startAndAttachWorker(PhysicsWorldWorker *worker, PhysicsWorldAsyncEventLoop *loop);
 
     /*!
      * \brief Tells the worker to abort its jobs, and adds an exit event to the event loop.
@@ -107,13 +128,11 @@ signals:
      */
     void aboutToStop();
 
-protected:
-    QEventLoop      *incomingLoop;      /*!< An event loop for incoming messages that must be received during processing of a pass */
-
 private:
-    QSignalMapper   *shutDownHelper;    /*!< An object to help shutting the thread down properly */
-    QWaitCondition  waitCondition;      /*!< A wait condition that makes sure the startAndAttachWorker() method leaves only when the thread is actually started */
-    QMutex          mutex;              /*!< A mutex that makes sure the startAndAttachWorker() method leaves only when the thread is actually started */
+    PhysicsWorld                    *parent;            /*!< Pointer to the parent PhysicsWorld that owns this object */
+    QSignalMapper                   *shutDownHelper;    /*!< An object to help shutting the thread down properly */
+    QWaitCondition                  waitCondition;      /*!< A wait condition that makes sure the startAndAttachWorker() method leaves only when the thread is actually started */
+    QMutex                          mutex;              /*!< A mutex that makes sure the startAndAttachWorker() method leaves only when the thread is actually started */
 };
 
 
@@ -181,8 +200,8 @@ public slots:
     void onOwnershipTransfer(const PhysicsWorld *&neighbor, const obEntityWrapper *&object, const btScalar &time);
 
 private:
-    PhysicsWorld    *parent;
-    bool            _shuttingDown;
+    PhysicsWorld    *parent;        /*!< Pointer to the parent PhysicsWorld that owns this object */
+    bool            _shuttingDown;  /*!< Flag indicating whether the worker should shut down or keep running passes */
 };
 
 
@@ -219,6 +238,7 @@ class PhysicsWorld : public QObject
 {
     Q_OBJECT
 
+    friend class PhysicsWorldAsyncEventLoop;
     friend class PhysicsWorldWorker;
     friend class BulletManagerWorld;
 
@@ -387,7 +407,8 @@ protected:
      * \brief Different types of incoming IPC messages.
      */
     typedef enum __messageType {
-        SyncReady=0
+        SyncReady=0,
+        BorderTraversed=1
     } MessageType;
 
     /*!
@@ -455,6 +476,7 @@ private:
     TimedEntityQueue          entityAdditionQueue;       //!< a queue for objects to be added between next iterations of the collision detection algorithm
     TimedEntityQueue          entityRemovalQueue;        //!< a queue for objects to be removed between next iterations of the collision detection algorithm
 
+    PhysicsWorldAsyncEventLoop *incomingLoop;            /*!< An event loop for incoming messages that must be received during processing of a pass */
     PhysicsWorldThread        worldThread;               /*!< The thread in which CD passes run, and in which messages are received */
     PhysicsWorldWorker        *worker;                   /*!< The worker object that contains the CD passes code and that is run in worldThread */
     QTimer                    timer;                     /*!< A timer used to spam runOnePass() events in the event loop */

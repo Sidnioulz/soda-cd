@@ -39,7 +39,7 @@ QSharedPointer<obEntityTransformRecordList> CircularTransformBufferInterface::pr
     // Simulation is late
     if(originalTargetTime > targetTime)
     {
-        qDebug() << "CircularTransformBufferInterface::processNext(" << originalTargetTime << " ); Simulation is late on rendering (can provide only " << targetTime << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+        //qDebug() << "CircularTransformBufferInterface::processNext(" << originalTargetTime << " ); Simulation is late on rendering (can provide only " << targetTime << "); Thread " << QString().sprintf("%p", QThread::currentThread());
     }
 
     // A map that contains the merged buffer entries. This has to be changed to something more efficient.

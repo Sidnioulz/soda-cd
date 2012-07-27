@@ -26,6 +26,9 @@
 #include "btlocalgridbroadphase.h"
 #include "localgrid.h"
 
+// Needed for metatypes because of compiler parser restrictions on damn C++ macros!
+typedef QMap<obEntityWrapper *, QVector<CellBorderCoordinates> > EntityOverlappedCellsMap;
+
 /*! \class BulletManagerWorld
   * \brief An override of a Bullet dynamics world that can synchronize with another instance.
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
@@ -155,7 +158,10 @@ public:
     void performDiscreteCollisionDetection();
 
 private:
-    btLocalGridBroadphase* broadphase;                  //!< the broadphase algorithm interface
+    btLocalGridBroadphase*                broadphase;               //!< the broadphase algorithm interface
+    QMap<short, EntityOverlappedCellsMap> borderTraversedNeighbors; /*!< the list, for each neighbor, of border overlapping entities originating from this world */
+
+
 };
 
 /*! \class BulletManager
