@@ -25,7 +25,7 @@
 #include <Ogre.h>
 #include <QtCore>
 
-/*! \class OgreResources
+/*! \class sodaOgreResources
   * \brief Manages Ogre resources that require the use of the Ogre::ResourceManager singleton.
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
   *
@@ -34,7 +34,7 @@
   * mutexes wherever needed.
   */
 
-class OgreResources
+class sodaOgreResources
 {
 public:
 

@@ -29,23 +29,18 @@
 using namespace blitz;
 
 // Forward declaration
-class PhysicsWorld;
+class sodaLogicWorld;
 
-/*! \class LocalGrid
-  * \brief A 3D grid of Cells containing obEntityWrappers, that is specific to a given PhysicsWorld.
+/*! \class sodaLocalGrid
+  * \brief A 3D grid of Cells containing sodaDynamicEntities, that is specific to a given sodaLogicWorld.
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
   *
-  * This class is a Blitz++ 3D array of Cell objects, that contain a list of obEntityWrapper objects
-  * existing in the grid. The grid corresponds to the area of the scene managed by a single PhysicsWorld.
+  * This class is a Blitz++ 3D array of Cell objects, that contain a list of sodaDynamicEntity objects
+  * existing in the grid. The grid corresponds to the area of the scene managed by a single sodaLogicWorld.
   */
-class LocalGrid : public QObject, public Array<Cell, 3>
+class sodaLocalGrid : public QObject, public Array<Cell, 3>
 {
 	Q_OBJECT
-
-    //FIXME: many more functions should be private
-    //TODO: how to expand grids when scene sizes expanded? in motionstate?
-    //FIXME: neighbor discovery through margin!
-    //FIXME: consider the difference in each function semantics between WORLD SCENE border and LocalGrid shared bored with another grid
 
 public:
     typedef Array<Cell,3>::iterator iterator;               /*!< Iterators to browse Cells within the array */
@@ -54,21 +49,21 @@ public:
     /*!
       * \brief Default constructor.
       * \param gridInfo the GridInformation that matches the current simulation's parameters
-      * \param ownerId the id of this LocalGrid's owner
+      * \param ownerId the id of this sodaLocalGrid's owner
       * \param margin the margin to apply to the 3D array for resize optimization (not used yet)
       * \param length the length of the part of the scene managed in this grid
       * \param offset offset of the left-bottom-back corner of the grid wrt. to the global scene (cell coordinates)
-      * \return a new LocalGrid
+      * \return a new sodaLocalGrid
       */
-    LocalGrid(GridInformation *gridInfo, const short &ownerId, const QVector<int> &margin, const btVector3 &length, const btVector3 &offset);
+    sodaLocalGrid(GridInformation *gridInfo, const short &ownerId, const QVector<int> &margin, const btVector3 &length, const btVector3 &offset);
 
     /*!
       * \brief Default destructor.
       */
-    ~LocalGrid();
+    ~sodaLocalGrid();
 
     /*!
-      * \brief Resizes a LocalGrid to the new size passed as a parameter. New Cells are initialized empty and with an unknown owner.
+      * \brief Resizes a sodaLocalGrid to the new size passed as a parameter. New Cells are initialized empty and with an unknown owner.
       * \param margin the margin to apply to the 3D array for resize optimization (not used yet)
       * \param length the length of the part of the scene managed in this grid
       * \param offset offset of the left-bottom-back corner of the grid wrt. to the global scene (cell coordinates)
@@ -78,8 +73,8 @@ public:
     void resize(const QVector<int> &margin, const btVector3 &length, const btVector3 &offset);
 
     /*!
-     * \brief Returns a string containing textual information on the offsets and bounds of this LocalGrid.
-     * \return a QString made of the offset and bounds of this LocalGrid
+     * \brief Returns a string containing textual information on the offsets and bounds of this sodaLocalGrid.
+     * \return a QString made of the offset and bounds of this sodaLocalGrid
      */
     QString displayBoundsInfo() const;
 
@@ -95,7 +90,7 @@ public:
 
     /*!
      * \brief Returns the id of this grid's owner.
-     * \return the id of this LocalGrid's owner
+     * \return the id of this sodaLocalGrid's owner
      */
     inline short getOwnerId() const
     {
@@ -104,7 +99,7 @@ public:
 
     /*!
      * \brief Changes the owner id of this grid.
-     * \param id the id of the new owner of the LocalGrid
+     * \param id the id of the new owner of the sodaLocalGrid
      */
     inline void setOwnerId(const short id)
     {
@@ -112,38 +107,38 @@ public:
     }
 
     /*!
-     * \brief Adds an entity to this LocalGrid, in the corresponding Cell.
-     * \param obEnt the obEntityWrapper to add to this LocalGrid
+     * \brief Adds an entity to this sodaLocalGrid, in the corresponding Cell.
+     * \param obEnt the sodaDynamicEntity to add to this sodaLocalGrid
      */
-    void addEntity(obEntityWrapper *obEnt);
+    void addEntity(sodaDynamicEntity *obEnt);
 
     /*!
-     * \brief Adds a Cell border to a Cell of this LocalGrid.
+     * \brief Adds a Cell border to a Cell of this sodaLocalGrid.
      * \param cbEnt the Cell border entity to add
      */
     void addCellBorder(CellBorderEntity *cbEnt);
 
     /*!
-     * \brief Removes an entity from this LocalGrid, if it is found in the Cell matching its coordinates.
-     * \param obEnt the obEntityWrapper to remove from this LocalGrid
+     * \brief Removes an entity from this sodaLocalGrid, if it is found in the Cell matching its coordinates.
+     * \param obEnt the sodaDynamicEntity to remove from this sodaLocalGrid
      */
-	void removeEntity(obEntityWrapper *obEnt);
+	void removeEntity(sodaDynamicEntity *obEnt);
 
     /*!
-     * \brief Adds the neighbors of a given Cell to a vector passed as a paremeter, provided that they are not owned by this LocalGrid.
+     * \brief Adds the neighbors of a given Cell to a vector passed as a paremeter, provided that they are not owned by this sodaLocalGrid.
      * \param position the cell coordinates of the Cell whose neighbors are wanted
      * \param neighbors a map of Cells ranked by position
      *
      * This function adds the neighbors of a given Cell to a map passed as a paremeter,
      * using their position as a key, provided that they are not owned
-     * by this LocalGrid. Precisely, the Cells must not have the same owner id as this
-     * LocalGrid, and they must not have PhysicsWorld::IdBeingProcessed as an id (in order
+     * by this sodaLocalGrid. Precisely, the Cells must not have the same owner id as this
+     * sodaLocalGrid, and they must not have sodaLogicWorld::IdBeingProcessed as an id (in order
      * to allow browsing based on the owner id without infinite loops).
      */
     void getUnownedNeighbors(const btVector3 &position, QMap<btVector3, Cell> &neighbors);
 
     /*!
-     * \brief Takes a Cell whose owner is unknown and computes whether it can be safely owned by this LocalGrid.
+     * \brief Takes a Cell whose owner is unknown and computes whether it can be safely owned by this sodaLocalGrid.
      * \param cell the reference to the Cell whose owner is being computed
      * \param position the coordinates of the parameter Cell in the 3D array
      * \return the final Id of the given Cell
@@ -159,16 +154,16 @@ public:
      * \param output the vector to which these Cells should be added.
      *
      * This function adds to a given output vector the coordinates of all Cells
-     * whose id is PhysicsWorld::NullWorldId, also adding the id of this LocalGrid
+     * whose id is sodaLogicWorld::NullWorldId, also adding the id of this sodaLocalGrid
      * to each of these entries (in order to differentiate between Cells that have
-     * a null id between several LocalGrids).
+     * a null id between several sodaLocalGrids).
      */
     void getEmptyCellCoordinates(QVector<QPair<btVector3, short> > &output) const;
 
     /*!
-     * \brief Tells this LocalGrid that the Cell pointed to by coords is owned by the PhysicsWorld whose id is given.
+     * \brief Tells this sodaLocalGrid that the Cell pointed to by coords is owned by the sodaLogicWorld whose id is given.
      * \param coords the coordinates of the owned Cell
-     * \param id the id of the owning PhysicsWorld
+     * \param id the id of the owning sodaLogicWorld
      */
     void setCellOwnedBy(const btVector3 &coords, const short id);
 
@@ -226,7 +221,7 @@ public:
 
     /*!
      * \brief Tries to find, for all Cells with an unknown id, whether the id can be deduced already or if it must be negociated later with neighbors.
-     * \return the list of coordinates of Cells that are now owned by the LocalGrid
+     * \return the list of coordinates of Cells that are now owned by the sodaLocalGrid
      *
      * \todo Unit tests for this function.
      * \warning Function very likely broken.
@@ -260,32 +255,32 @@ public:
     }
 
     /*!
-     * \brief Tells whether a Cell is owned by this LocalGrid.
+     * \brief Tells whether a Cell is owned by this sodaLocalGrid.
      * \param coord the coordinates of the Cell to check
-     * \return true if the matching Cell is NOT owned by this LocalGrid
+     * \return true if the matching Cell is NOT owned by this sodaLocalGrid
      *
-     * This function tells whether a given Cell is owned by this LocalGrid.
-     * If it returns true, it may either be owned by another LocalGrid or be
+     * This function tells whether a given Cell is owned by this sodaLocalGrid.
+     * If it returns true, it may either be owned by another sodaLocalGrid or be
      * outside of the global simulation space bounds.
      */
     bool cellNotOwnedBySelf(const btVector3 &coord) const;
 
     /*!
-     * \brief Tells whether a Cell is owned by this LocalGrid.
+     * \brief Tells whether a Cell is owned by this sodaLocalGrid.
      * \param x the x coordinate of the Cell to check
      * \param y the y coordinate of the Cell to check
      * \param z the z coordinate of the Cell to check
-     * \return true if the matching Cell is NOT owned by this LocalGrid
+     * \return true if the matching Cell is NOT owned by this sodaLocalGrid
      *
-     * This function tells whether a given Cell is owned by this LocalGrid.
-     * If it returns true, it may either be owned by another LocalGrid or be
+     * This function tells whether a given Cell is owned by this sodaLocalGrid.
+     * If it returns true, it may either be owned by another sodaLocalGrid or be
      * outside of the global simulation space bounds.
      */
     bool cellNotOwnedBySelf(const int &x, const int &y, const int &z) const;
 
     /*!
-     * \brief Returns a set of coordinates that is roughly in the middle of the LocalGrid.
-     * \return a btVector3 of the coordinates at the middle of this LocalGrid
+     * \brief Returns a set of coordinates that is roughly in the middle of the sodaLocalGrid.
+     * \return a btVector3 of the coordinates at the middle of this sodaLocalGrid
      */
     inline btVector3 getCenteredPosition() const
     {
@@ -294,8 +289,8 @@ public:
     }
 
     /*!
-      * \brief Returns the LocalGrid's resolution.
-      * \return the LocalGrid's resolution
+      * \brief Returns the sodaLocalGrid's resolution.
+      * \return the sodaLocalGrid's resolution
       */
     inline const int &getResolution() const
     {
@@ -303,8 +298,8 @@ public:
     }
 
     /*!
-      * \brief Returns the LocalGrid's length.
-      * \return the LocalGrid's length
+      * \brief Returns the sodaLocalGrid's length.
+      * \return the sodaLocalGrid's length
       */
     inline const btVector3 &getLength() const
     {
@@ -312,8 +307,8 @@ public:
     }
 
     /*!
-      * \brief Returns the LocalGrid's offset.
-      * \return the LocalGrid's offset
+      * \brief Returns the sodaLocalGrid's offset.
+      * \return the sodaLocalGrid's offset
       */
     inline const btVector3 &getOffset() const
     {
@@ -323,7 +318,7 @@ public:
     /*!
      * \brief Tells whether the Cell at given coordinates is part of a margin.
      * \param coord the coordinates to check
-     * \return whether the matching Cell is part of a LocalGrid's margin
+     * \return whether the matching Cell is part of a sodaLocalGrid's margin
      */
     bool cellIsMargin(const btVector3 &coord) const;
 
@@ -333,7 +328,7 @@ public:
      * \return whether the matching Cell belongs to another world or is on the grid border
      *
      * This function, precisely, tells whether a given Cell is directly adjacent to a Cell that, or is itself a Cell that:
-     *   - belongs to another PhysicsWorld
+     *   - belongs to another sodaLogicWorld
      *   - is out of the global simulation space bounds with an OpenWorld configuration
      */
     bool cellAdjacentToOrIsUnownedCell(const btVector3 &coord) const;
@@ -350,17 +345,23 @@ public:
      */
     QVector<bool> getCellBorders(const btVector3 &coord) const;
 
+    /*!
+     * \brief Returns the number of CellBorderEntity objects that exist in this sodaLocalGrid.
+     * \return the sum of CellBorderEntity objects in all cells
+     */
+    int getNbBorders() const;
+
 
 private:
-    int resolution;                 /*!< the resolution of this LocalGrid. Fixed to 1 for now */
-    LocalGrid *parent;              /*!< the LocalGrid of lower resolution. Not used yet */
-    LocalGrid *child;               /*!< the LocalGrid of upper resolution. Not used yet */
+    int resolution;                 /*!< the resolution of this sodaLocalGrid. Fixed to 1 for now */
+    sodaLocalGrid *parent;          /*!< the sodaLocalGrid of lower resolution. Not used yet */
+    sodaLocalGrid *child;           /*!< the sodaLocalGrid of upper resolution. Not used yet */
 
-    GridInformation *gridInfo;      /*!< the GridInformation that matches the scene being simulated in the PhysicsWorld that owns this LocalGrid */
-    short ownerId;                  /*!< the id of the PhysicsWorld that owns this LocalGrid */
-    QVector<int> margin;            /*!< the margin between the first Cell of the LocalGrid that is owned by its owner and the border of the array. Should always be > 1 */
-    btVector3 length;               /*!< the length (in number of Cells) of this LocalGrid */
-    btVector3 offset;               /*!< the offset (in number of Cells) between the start of this LocalGrid (including margin) and the scene being simulated */
+    GridInformation *gridInfo;      /*!< the GridInformation that matches the scene being simulated in the sodaLogicWorld that owns this sodaLocalGrid */
+    short ownerId;                  /*!< the id of the sodaLogicWorld that owns this sodaLocalGrid */
+    QVector<int> margin;            /*!< the margin between the first Cell of the sodaLocalGrid that is owned by its owner and the border of the array. Should always be > 1 */
+    btVector3 length;               /*!< the length (in number of Cells) of this sodaLocalGrid */
+    btVector3 offset;               /*!< the offset (in number of Cells) between the start of this sodaLocalGrid (including margin) and the scene being simulated */
 };
 
 #endif // SPATIALSUBDIVISION_LOCALGRID_H

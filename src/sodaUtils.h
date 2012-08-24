@@ -29,13 +29,13 @@
 #include <btBulletDynamicsCommon.h>
 #include <blitz/array.h>
 
-/*! \namespace Utils
+/*! \namespace sodaUtils
   * \brief Various type conversion utilities.
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
   *
   * This file contains type conversion utilities from and to Qt, Bullet and Ogre.
   */
-namespace Utils
+namespace sodaUtils
 {
     //! Converts a btVector3 into a Ogre::Vector3.
     static inline Ogre::Vector3 vectorFromBullet(const btVector3 &vector)

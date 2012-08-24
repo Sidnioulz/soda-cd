@@ -22,23 +22,22 @@
 #define OBENTITYTRANSFORMRECORD_H
 
 #include <btBulletDynamicsCommon.h>
-#include "obEntityWrapper.h"
+#include "sodaDynamicEntity.h"
 
 /*! \struct obEntityTransformRecord
-  * \brief A structure that contains a btTransform and a pointer to the obEntityWrapper to which it can be applied.
+  * \brief A structure that contains a btTransform and a pointer to the sodaDynamicEntity to which it can be applied.
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
   *
-  * This class represents the position and rotation information of an obEntityWrapper
+  * This class represents the position and rotation information of a sodaDynamicEntity
   * at a given time.
   */
 struct obEntityTransformRecord {
-//    obEntityWrapper         *obEnt;             /*!< Pointer to the obEntityWrapper to which the transform can be applied */
     Ogre::String            entityName;         /*!< Name of the entity */
     btTransform             transform;          /*!< Position and rotation of the object */
     btVector3               linearVelocity;     /*!< Linear velocity of the entity */
     btVector3               angularVelocity;    /*!< Angular velocity of the entity */
 
-    obEntity::EntityStatus  status;             /*!< Current status for visual feedback */
+    sodaEntity::EntityStatus  status;             /*!< Current status for visual feedback */
 
     /*!
      * \brief Default constructor.
@@ -53,15 +52,15 @@ struct obEntityTransformRecord {
      * \param transform the transform to be stored
      * \return a new obEntityTransformRecord
      */
-    obEntityTransformRecord(Ogre::String entityName, const obEntity::EntityStatus &status, const btTransform &transform = btTransform());
+    obEntityTransformRecord(Ogre::String entityName, const sodaEntity::EntityStatus &status, const btTransform &transform = btTransform());
 
     /*!
-     * \brief Redefinition of the equal operator. Two obEntityTransformRecords are equal of they concern the same obEntityWrapper.
+     * \brief Redefinition of the equal operator. Two obEntityTransformRecords are equal of they concern the same sodaDynamicEntity.
      * \param other the other obEntityTransformRecord
-     * \return true if the obEntityTransformRecords concern the same obEntityWrapper, false otherwise
+     * \return true if the obEntityTransformRecords concern the same sodaDynamicEntity, false otherwise
      *
      * \note If you want to compare the values of two obEntityTransformRecords on the
-     * same obEntityWrapper, you may use this == other && this.transform == other.transform.
+     * same sodaDynamicEntity, you may use this == other && this.transform == other.transform.
      */
     inline bool operator ==(const obEntityTransformRecord &other) const
     {
@@ -69,12 +68,12 @@ struct obEntityTransformRecord {
     }
 
     /*!
-     * \brief Redefinition of the not equal operator. Two obEntityTransformRecords are not equal of they concern different obEntityWrappers.
+     * \brief Redefinition of the not equal operator. Two obEntityTransformRecords are not equal of they concern different sodaDynamicEntities.
      * \param other the other obEntityTransformRecord
-     * \return true if the obEntityTransformRecords concern different obEntityWrappers, false otherwise
+     * \return true if the obEntityTransformRecords concern different sodaDynamicEntities, false otherwise
      *
      * \note If you want to compare the values of two obEntityTransformRecords on the
-     * same obEntityWrapper, you may use this != other || this.transform != other.transform.
+     * same sodaDynamicEntity, you may use this != other || this.transform != other.transform.
      */
     inline bool operator!=(const obEntityTransformRecord &other) const
     {

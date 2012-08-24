@@ -18,11 +18,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#include "btlocalgridbroadphase.h"
-#include "physicsworld.h"
+#include "sodaLocalGridBroadphase.h"
+#include "sodaLogicWorld.h"
 #include <QVector>
 
-btLocalGridBroadphase::btLocalGridBroadphase(PhysicsWorld *world, btOverlappingPairCache* overlappingPairCache) :
+sodaLocalGridBroadphase::sodaLocalGridBroadphase(sodaLogicWorld *world, btOverlappingPairCache* overlappingPairCache) :
     world(world),
     m_pairCache(overlappingPairCache),
     m_ownsPairCache(false)
@@ -38,7 +38,7 @@ btLocalGridBroadphase::btLocalGridBroadphase(PhysicsWorld *world, btOverlappingP
     m_borderCache = new (mem)btSortedOverlappingPairCache();
 }
 
-btLocalGridBroadphase::~btLocalGridBroadphase()
+sodaLocalGridBroadphase::~sodaLocalGridBroadphase()
 {
     if (m_ownsPairCache)
     {
@@ -50,14 +50,14 @@ btLocalGridBroadphase::~btLocalGridBroadphase()
     btAlignedFree(m_borderCache);
 }
 
-btBroadphaseProxy *btLocalGridBroadphase::createProxy(const btVector3 &aabbMin, const btVector3 &aabbMax, int /*shapetype*/, void *userPtr, short collisionFilterGroup, short collisionFilterMask, btDispatcher */*dispatcher*/, void *multiSapProxy)
+btBroadphaseProxy *sodaLocalGridBroadphase::createProxy(const btVector3 &aabbMin, const btVector3 &aabbMax, int /*shapetype*/, void *userPtr, short collisionFilterGroup, short collisionFilterMask, btDispatcher */*dispatcher*/, void *multiSapProxy)
 {
     btAssert(aabbMin[0]<= aabbMax[0] && aabbMin[1]<= aabbMax[1] && aabbMin[2]<= aabbMax[2]);
 
     return new btBroadphaseProxy(aabbMin, aabbMax, userPtr, collisionFilterGroup, collisionFilterMask, multiSapProxy);
 }
 
-void btLocalGridBroadphase::destroyProxy(btBroadphaseProxy *proxy, btDispatcher *dispatcher)
+void sodaLocalGridBroadphase::destroyProxy(btBroadphaseProxy *proxy, btDispatcher *dispatcher)
 {
     proxy->m_clientObject = 0;
 
@@ -65,32 +65,24 @@ void btLocalGridBroadphase::destroyProxy(btBroadphaseProxy *proxy, btDispatcher 
     m_borderCache->removeOverlappingPairsContainingProxy(proxy, dispatcher);
 }
 
-//FIXME: wrong conditions
-bool btLocalGridBroadphase::aabbOverlap(btBroadphaseProxy *proxy0, btBroadphaseProxy *proxy1)
+bool sodaLocalGridBroadphase::aabbOverlap(btBroadphaseProxy *proxy0, btBroadphaseProxy *proxy1)
 {
-//    return true;
-
-//    return (proxy0->m_aabbMin[0] <= proxy1->m_aabbMax[0] || proxy1->m_aabbMin[0] <= proxy0->m_aabbMax[0]) &&
-//           (proxy0->m_aabbMin[1] <= proxy1->m_aabbMax[1] || proxy1->m_aabbMin[1] <= proxy0->m_aabbMax[1]) &&
-//           (proxy0->m_aabbMin[2] <= proxy1->m_aabbMax[2] || proxy1->m_aabbMin[2] <= proxy0->m_aabbMax[2]);
-
     return (proxy0->m_aabbMin[0] <= proxy1->m_aabbMax[0] && proxy1->m_aabbMin[0] <= proxy0->m_aabbMax[0]) &&
            (proxy0->m_aabbMin[1] <= proxy1->m_aabbMax[1] && proxy1->m_aabbMin[1] <= proxy0->m_aabbMax[1]) &&
            (proxy0->m_aabbMin[2] <= proxy1->m_aabbMax[2] && proxy1->m_aabbMin[2] <= proxy0->m_aabbMax[2]);
 }
 
-//FIXME: wrong conditions
-bool btLocalGridBroadphase::aabbOverlap(const btVector3 &aabb0Min, const btVector3 &aabb0Max, const btVector3 &aabb1Min, const btVector3 &aabb1Max)
+bool sodaLocalGridBroadphase::aabbOverlap(const btVector3 &aabb0Min, const btVector3 &aabb0Max, const btVector3 &aabb1Min, const btVector3 &aabb1Max)
 {
     return (aabb0Min[0] <= aabb1Max[0] && aabb1Min[0] <= aabb0Max[0]) &&
            (aabb0Min[1] <= aabb1Max[1] && aabb1Min[1] <= aabb0Max[1]) &&
            (aabb0Min[2] <= aabb1Max[2] && aabb1Min[2] <= aabb0Max[2]);
 }
 
-void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
+void sodaLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
 {
 #ifndef NDEBUG
-    qDebug() << "btLocalGridBroadphase(" << world->getId() << ")::calculateOverlappingPairs(" << world->getCurrentTime() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+    qDebug() << "sodaLocalGridBroadphase(" << world->getId() << ")::calculateOverlappingPairs(" << world->getCurrentTime() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
 //    m_pairCache->getOverlappingPairArray().clear();
@@ -100,11 +92,11 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
     if(!world->getLocalGrid())
         return;
 
-    LocalGrid *grid = world->getLocalGrid();
+    sodaLocalGrid *grid = world->getLocalGrid();
 //    const btVector3 &nbCells = grid->getGridInformation()->getGridAtResolution(grid->getResolution())->getNbCells();
 
     // A table that stores pointers to lists of entities that possibly overlap with those of the current Cell. 0,0,0 is not set
-    const QVector<obEntityWrapper *> *entityVectors[2][2][2];
+    const QVector<sodaDynamicEntity *> *entityVectors[2][2][2];
     entityVectors[0][0][0] = 0;
 
     // A table that stores pointers to lists of borders that possibly overlap with entities of the current Cell. 0,0,0 is not set
@@ -112,7 +104,7 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
     borderVectors[0][0][0] = 0;
 
     // Pointers to the current Cell's entities and borders
-    const QVector<obEntityWrapper *> *entities = 0;
+    const QVector<sodaDynamicEntity *> *entities = 0;
     const QVector<CellBorderEntity *> *borders = 0;
 
     // Grid size information used to browse the grid
@@ -256,19 +248,17 @@ void btLocalGridBroadphase::calculateOverlappingPairs(btDispatcher *dispatcher)
             }
         }
     }
-
-//    qDebug() << "calculateOverlappingPairs("<<world->getId()<<") END:  " << m_pairCache->getNumOverlappingPairs() << "E-E \t&" << m_borderCache->getNumOverlappingPairs() << "E-B";
 }
 
-void btLocalGridBroadphase::aabbTest(const btVector3 &aabbMin, const btVector3 &aabbMax, btBroadphaseAabbCallback &callback)
+void sodaLocalGridBroadphase::aabbTest(const btVector3 &aabbMin, const btVector3 &aabbMax, btBroadphaseAabbCallback &callback)
 {
     // Don't do anything until a grid has been set
     if(!world->getLocalGrid())
         return;
 
-    LocalGrid *grid = world->getLocalGrid();
+    sodaLocalGrid *grid = world->getLocalGrid();
     const btVector3 &nbCells = grid->getGridInformation()->getGridAtResolution(grid->getResolution())->getNbCells();
-    const QVector<obEntityWrapper *> *entities;
+    const QVector<sodaDynamicEntity *> *entities;
 
     for(int x=0; x<nbCells.x(); ++x)
         for(int y=0; y<nbCells.y(); ++y)

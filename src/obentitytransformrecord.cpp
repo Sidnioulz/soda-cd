@@ -19,24 +19,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 #include "obentitytransformrecord.h"
-#include "obentity.h"
+#include "sodaEntity.h"
 
 obEntityTransformRecord::obEntityTransformRecord() :
-//    obEnt(0),
     entityName(),
-    status(obEntity::NonExistant)
+    status(sodaEntity::NonExistant)
 {
 }
 
-//obEntityTransformRecord::obEntityTransformRecord(obEntityWrapper *obEnt, const btTransform &transform) :
-//    obEnt(obEnt),
-//    transform(transform),
-//    status(obEnt? obEnt->getStatus() : obEntity::NonExistant)
-//{
-//}
-
-
-obEntityTransformRecord::obEntityTransformRecord(Ogre::String entityName, const obEntity::EntityStatus &status, const btTransform &transform) :
+obEntityTransformRecord::obEntityTransformRecord(Ogre::String entityName, const sodaEntity::EntityStatus &status, const btTransform &transform) :
     entityName(entityName),
     transform(transform),
     status(status)

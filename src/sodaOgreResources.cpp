@@ -18,14 +18,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#include "ogreresources.h"
+#include "sodaOgreResources.h"
 
-QMutex              OgreResources::sceneManagerMutex;
-QMutex              OgreResources::materialMutex;
-Ogre::Root         *OgreResources::ogreRoot = 0;
-Ogre::SceneManager *OgreResources::ogreSceneManager = 0;
+QMutex              sodaOgreResources::sceneManagerMutex;
+QMutex              sodaOgreResources::materialMutex;
+Ogre::Root         *sodaOgreResources::ogreRoot = 0;
+Ogre::SceneManager *sodaOgreResources::ogreSceneManager = 0;
 
-Ogre::MaterialPtr OgreResources::createMaterialFromParent(const Ogre::String &materialName, const Ogre::String &parentName)
+Ogre::MaterialPtr sodaOgreResources::createMaterialFromParent(const Ogre::String &materialName, const Ogre::String &parentName)
 {
     // Lock the mutex to avoid race conditions between getting and creating the material
     materialMutex.lock();
@@ -56,7 +56,7 @@ Ogre::MaterialPtr OgreResources::createMaterialFromParent(const Ogre::String &ma
     return mat;
 }
 
-Ogre::MaterialPtr OgreResources::createColoredMaterial(const float &r, const float &g, const float &b, const float &f)
+Ogre::MaterialPtr sodaOgreResources::createColoredMaterial(const float &r, const float &g, const float &b, const float &f)
 {
     // Lock the mutex to avoid race conditions between getting and creating the material
     materialMutex.lock();

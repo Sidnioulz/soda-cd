@@ -18,34 +18,34 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#include "obdynamicrigidbody.h"
-#include "obEntityWrapper.h"
-#include "obMotionState.h"
-#include "obRigidBody.h"
+#include "sodaDynamicRigidBody.h"
+#include "sodaDynamicEntity.h"
+#include "sodaMotionState.h"
+#include "sodaRigidBody.h"
 
-obDynamicRigidBody::obDynamicRigidBody(obEntityWrapper *parent,
+sodaDynamicRigidBody::sodaDynamicRigidBody(sodaDynamicEntity *parent,
                                        const btVector3 &pos,
                                        const btQuaternion &quat,
                                        const btVector3 &scale,
                                        int mass) :
-    obRigidBody(parent, pos, quat, scale, mass),
+    sodaRigidBody(parent, pos, quat, scale, mass),
     parent(parent),
     mState(0)
 {
 }
 
-obDynamicRigidBody::obDynamicRigidBody(obEntityWrapper *parent, const obDynamicRigidBody &other) :
-    obRigidBody(parent, other),
+sodaDynamicRigidBody::sodaDynamicRigidBody(sodaDynamicEntity *parent, const sodaDynamicRigidBody &other) :
+    sodaRigidBody(parent, other),
     parent(parent),
-    mState(new obMotionState(parent, *other.mState))
+    mState(new sodaMotionState(parent, *other.mState))
 {
     //TODO: copy shape, create body, stuff.
 }
 
-btMotionState *obDynamicRigidBody::_createMotionState()
+btMotionState *sodaDynamicRigidBody::_createMotionState()
 {
     if(!mState)
-        mState = new obMotionState(parent);
+        mState = new sodaMotionState(parent);
 
     return mState;
 }

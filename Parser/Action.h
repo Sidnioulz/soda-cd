@@ -1,7 +1,7 @@
 #ifndef ACTION_H
 #define ACTION_H
 
-#include "obRigidBody.h"
+#include "sodaRigidBody.h"
 #include <QtCore>
 
 //  -------------------------------------------------  //

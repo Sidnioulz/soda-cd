@@ -21,7 +21,7 @@
 #include <QMapIterator>
 #include <QVectorIterator>
 #include "cell.h"
-#include "physicsworld.h"
+#include "sodaLogicWorld.h"
 
 
 namespace {
@@ -38,7 +38,7 @@ namespace {
 Cell::Cell() :
     entities(0),
     borders(0),
-    ownerId(PhysicsWorld::NullWorldId)
+    ownerId(sodaLogicWorld::NullWorldId)
 {
 }
 
@@ -61,12 +61,12 @@ Cell::~Cell()
 }
 
 
-void Cell::addEntity(obEntityWrapper *entity)
+void Cell::addEntity(sodaDynamicEntity *entity)
 {
     Q_ASSERT(entity != NULL);
 
     if(entities.isNull())
-        entities = QSharedPointer<QVector<obEntityWrapper *> >(new QVector<obEntityWrapper *>(1, entity));
+        entities = QSharedPointer<QVector<sodaDynamicEntity *> >(new QVector<sodaDynamicEntity *>(1, entity));
     else
     {
         Q_ASSERT(!entities->contains(entity));
@@ -87,7 +87,7 @@ void Cell::addCellBorder(CellBorderEntity *entity)
     }
 }
 
-bool Cell::removeEntity(obEntityWrapper *entity)
+bool Cell::removeEntity(sodaDynamicEntity *entity)
 {
     if(!entities.isNull())
         for(int i=0; i<entities->size(); ++i)

@@ -21,15 +21,14 @@
 #include "robustnessevalsimulation.h"
 
 #include <limits>
-#include "physicsworld.h"
-#include "utils.h"
-#include "ogreresources.h"
+#include "sodaLogicWorld.h"
+#include "sodaUtils.h"
+#include "sodaOgreResources.h"
 
 RobustnessEvalSimulation::RobustnessEvalSimulation(const btScalar &targetTimeStep, const int &numEntities) :
     Simulation(targetTimeStep, 1, btVector3(10000,10000,10000), numEntities)
 {
 }
-
 
 RobustnessEvalSimulation::~RobustnessEvalSimulation()
 {
@@ -44,36 +43,36 @@ void RobustnessEvalSimulation::setupBasic3DEnvironment()
                                                   Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                                                   p, sceneSize.x(), sceneSize.z(), 64, 64, true, 1, 1, 1, Ogre::Vector3::UNIT_Z);
 //                                                  p, sceneSize.x()*8, sceneSize.z()*8, 32, 32, true, 1, 16, 16, Ogre::Vector3::UNIT_Z);
-    ent = OgreResources::getSceneManager()->createEntity("sceneFloor", "sceneFloor");
+    ent = sodaOgreResources::getSceneManager()->createEntity("sceneFloor", "sceneFloor");
     ent->setMaterialName("Surfaces/Lava"); //Surfaces/Lava
-    Ogre::SceneNode *node = OgreResources::getSceneManager()->getRootSceneNode()->createChildSceneNode();
+    Ogre::SceneNode *node = sodaOgreResources::getSceneManager()->getRootSceneNode()->createChildSceneNode();
     node->attachObject(ent);
     node->setPosition(0, 0, 0);
 
     // Setup some sky
     Ogre::Plane plane;
     plane.d = 1000; plane.normal = Ogre::Vector3::NEGATIVE_UNIT_Y;
-    OgreResources::getSceneManager()->setSkyPlane(true, plane, "Examples/EveningSkyBox", 1500, 10, true, 1.5f, 150, 150);
+    sodaOgreResources::getSceneManager()->setSkyPlane(true, plane, "Examples/EveningSkyBox", 1500, 10, true, 1.5f, 150, 150);
 
     // Setup some fog
     Ogre::ColourValue fadeColour(0.5, 0.3, 0.3);
-    OgreResources::getSceneManager()->setFog(Ogre::FOG_EXP2, fadeColour, 0.0001f, 0, 0);
+    sodaOgreResources::getSceneManager()->setFog(Ogre::FOG_EXP2, fadeColour, 0.0001f, 0, 0);
 
     // Add some light
-    OgreResources::getSceneManager()->setAmbientLight(Ogre::ColourValue(1, 0.8, 0.8, 1));
+    sodaOgreResources::getSceneManager()->setAmbientLight(Ogre::ColourValue(1, 0.8, 0.8, 1));
 }
 
-void RobustnessEvalSimulation::setupBasicPhysicsEnvironment(PhysicsWorld *world)
+void RobustnessEvalSimulation::setupBasicPhysicsEnvironment(sodaLogicWorld *world)
 {
     world->createScene();
 }
 
-void RobustnessEvalSimulation::tickCallback(PhysicsWorld *world, const btScalar &timeStep)
+void RobustnessEvalSimulation::tickCallback(sodaLogicWorld *world, const btScalar &/*timeStep*/)
 {
     //static float addRatio = 0.25f;
     static bool init = false;
 
-    QVector<obEntityWrapper*> &ents = world->getEntities(0);
+    QVector<sodaDynamicEntity*> &ents = world->getEntities(0);
 
     for(int i=0; i<ents.size(); ++i)
         ents[i]->getRigidBody()->getBulletBody()->setWorldTransform(btTransform(btQuaternion::getIdentity(), btVector3(0,0,0)));
@@ -103,17 +102,17 @@ void RobustnessEvalSimulation::loadEntities()
 }
 
 
-obEntityWrapper *RobustnessEvalSimulation::_createNinja(const btVector3 &position, const btVector3 &scale, const btScalar &mass)
+sodaDynamicEntity *RobustnessEvalSimulation::_createNinja(const btVector3 &position, const btVector3 &scale, const btScalar &mass)
 {
     Ogre::String entityName = "ninja" + Ogre::StringConverter::toString(++entityIdCounter);
 
-    Ogre::Vector3 ogrePos = Utils::vectorFromBullet(position);
-    Ogre::Vector3 ogreScale = Utils::vectorFromBullet(scale);
+    Ogre::Vector3 ogrePos = sodaUtils::vectorFromBullet(position);
+    Ogre::Vector3 ogreScale = sodaUtils::vectorFromBullet(scale);
 
-    static obEntityWrapper *modelNinja = new obEntityWrapper("MODELNINJA!", "cube.mesh", Ogre::Vector3(1000, 1000, 1000), Ogre::Quaternion::IDENTITY, false, ogreScale, mass);
+    static sodaDynamicEntity *modelNinja = new sodaDynamicEntity("MODELNINJA!", "cube.mesh", Ogre::Vector3(1000, 1000, 1000), Ogre::Quaternion::IDENTITY, false, ogreScale, mass);
     static btCollisionShape *ninjaShape = modelNinja->getRigidBody()->getBulletBody()->getCollisionShape();
 
 
 
-    return new obEntityWrapper(entityName, "cube.mesh", ogrePos, Ogre::Quaternion::IDENTITY, false, ogreScale, mass, ninjaShape);
+    return new sodaDynamicEntity(entityName, "cube.mesh", ogrePos, Ogre::Quaternion::IDENTITY, false, ogreScale, mass, ninjaShape);
 }

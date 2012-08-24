@@ -93,7 +93,7 @@ public:
         NB_DIRECTIONS=6                                     /*!< Do not use in production code. */
     } Directions;                                           /*!< These enums allow represent a one-dimensional move in the 3D array */
 
-    /*! \enum __WorldType
+    /*!
       * \brief The type of world that this grid refers to.
       * \warning At the moment, no management is made of simulation space bound collisions. Objects are just removed of all worlds and abandoned.
       */
@@ -312,8 +312,6 @@ private:
     btVector3 cellLen;                  //!< Length of cells on each axis for this GridInformation
 
     static GridInformation *grid;       //!< Pointer to a static GridInformation that represents the current simulation
-
-    //WARNING: storage overhead is big with little cells on grid, but big with big cells for margins
 };
 
 #endif // SPATIALSUBDIVISION_GRID_H

@@ -20,16 +20,16 @@
  */
 #include <QtAlgorithms>
 #include <QtCore>
-#include "obMotionState.h"
-#include "localgrid.h"
-#include "utils.h"
-#include "physicsworld.h"
+#include "sodaMotionState.h"
+#include "sodaLocalGrid.h"
+#include "sodaUtils.h"
+#include "sodaLogicWorld.h"
 
 
 using namespace blitz;
 
 
-LocalGrid::LocalGrid(GridInformation *gridInfo, const short &ownerId, const QVector<int> &margin, const btVector3 &length, const btVector3 &offset) :
+sodaLocalGrid::sodaLocalGrid(GridInformation *gridInfo, const short &ownerId, const QVector<int> &margin, const btVector3 &length, const btVector3 &offset) :
     resolution(gridInfo->getBestTerritoryResolution()),
     parent(0),
     child(0),
@@ -42,7 +42,7 @@ LocalGrid::LocalGrid(GridInformation *gridInfo, const short &ownerId, const QVec
     Array::resize(Range(offset.x(), length.x()+offset.x()-1+margin[GridInformation::Left]+margin[GridInformation::Right]),
            Range(offset.y(), length.y()+offset.y()-1+margin[GridInformation::Bottom]+margin[GridInformation::Top]),
            Range(offset.z(), length.z()+offset.z()-1+margin[GridInformation::Front]+margin[GridInformation::Back]));
-    Array::operator = (Cell(PhysicsWorld::UnknownWorldId));
+    Array::operator = (Cell(sodaLogicWorld::UnknownWorldId));
 
     qDebug() << offset.x() << offset.y() << offset.z();
     qDebug() << length.x() << length.y() << length.z();
@@ -55,14 +55,14 @@ LocalGrid::LocalGrid(GridInformation *gridInfo, const short &ownerId, const QVec
     qDebug() << " ";
 }
 
-LocalGrid::~LocalGrid()
+sodaLocalGrid::~sodaLocalGrid()
 {
     if(child)
         delete child;
     child = 0;
 }
 
-void LocalGrid::resize(const QVector<int> &newMargin, const btVector3 &newLength, const btVector3 &newOffset)
+void sodaLocalGrid::resize(const QVector<int> &newMargin, const btVector3 &newLength, const btVector3 &newOffset)
 {
     //TODO: _fixMargin function that makes a new margin adapted to the global world borders.
     QVector<int> nmargin = newMargin.size() == GridInformation::NB_DIRECTIONS ? newMargin : QVector<int>(GridInformation::NB_DIRECTIONS, 0);
@@ -78,12 +78,14 @@ void LocalGrid::resize(const QVector<int> &newMargin, const btVector3 &newLength
 
     for(Array<Cell, 3>::const_iterator it = tmp.begin(); it != tmp.end(); it++)
     {
-        if(Array::isInRange(it.position()) && !cellIsMargin(Utils::btVectorFromBlitz(it.position())))
+        if(Array::isInRange(it.position()) && !cellIsMargin(sodaUtils::btVectorFromBlitz(it.position())))
             Array::operator ()(it.position()) = *it;
     }
+
+    tmp.free();
 }
 
-QString LocalGrid::displayBoundsInfo() const
+QString sodaLocalGrid::displayBoundsInfo() const
 {
     QString str = QString("lb: %1;%2;%3\tub: %4;%5;%6")
             .arg(offset.x()).arg(offset.y()).arg(offset.z())
@@ -92,7 +94,7 @@ QString LocalGrid::displayBoundsInfo() const
     return str;
 }
 
-void LocalGrid::addEntity(obEntityWrapper *obEnt)
+void sodaLocalGrid::addEntity(sodaDynamicEntity *obEnt)
 {
     // Get the Cell coordinates in which to add the entity
     btVector3 cellCoords = gridInfo->toCellCoordinates(resolution, obEnt->getCenteredPosition());
@@ -102,7 +104,7 @@ void LocalGrid::addEntity(obEntityWrapper *obEnt)
     Cell &cell = at(cellCoords);
 
 #ifndef NDEBUG
-    qDebug() << "LocalGrid(" << ownerId << ")::addEntity(" << obEnt->getDisplayName() << "); in (" << cellCoords.x() << cellCoords.y() << cellCoords.z() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+    qDebug() << "sodaLocalGrid(" << ownerId << ")::addEntity(" << obEnt->getDisplayName() << "); in (" << cellCoords.x() << cellCoords.y() << cellCoords.z() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
     // Add the entity
@@ -110,21 +112,21 @@ void LocalGrid::addEntity(obEntityWrapper *obEnt)
     obEnt->getRigidBody()->getMotionState()->setLocalGrid(this);
 }
 
-void LocalGrid::addCellBorder(CellBorderEntity *cbEnt)
+void sodaLocalGrid::addCellBorder(CellBorderEntity *cbEnt)
 {
     // Get the Cell in which to add the entity
     Cell &cell = at(cbEnt->getCoordinates());
     cell.addCellBorder(cbEnt);
 }
 
-void LocalGrid::removeEntity(obEntityWrapper *obEnt)
+void sodaLocalGrid::removeEntity(sodaDynamicEntity *obEnt)
 {
 	// Get the Cell in which the entity should be
     btVector3 cellCoords = gridInfo->toCellCoordinates(gridInfo->getBestTerritoryResolution(), obEnt->getCenteredPosition());
     Cell &cell = at(cellCoords);
 
 #ifndef NDEBUG
-    qDebug() << "LocalGrid(" << ownerId << ")::removeEntity(" << obEnt->getDisplayName() << "); from (" << cellCoords.x() << cellCoords.y() << cellCoords.z() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+    qDebug() << "sodaLocalGrid(" << ownerId << ")::removeEntity(" << obEnt->getDisplayName() << "); from (" << cellCoords.x() << cellCoords.y() << cellCoords.z() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
 	// Remove the entity from the Cell, if it was actually inside it
@@ -136,13 +138,13 @@ void LocalGrid::removeEntity(obEntityWrapper *obEnt)
 
 #ifndef NDEBUG
     else
-        qDebug() << "LocalGrid(" << ownerId << ")::removeEntity(" << obEnt->getDisplayName() << "); Successfully removed from (" << cellCoords.x() << cellCoords.y() << cellCoords.z() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+        qDebug() << "sodaLocalGrid(" << ownerId << ")::removeEntity(" << obEnt->getDisplayName() << "); Successfully removed from (" << cellCoords.x() << cellCoords.y() << cellCoords.z() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
     obEnt->getRigidBody()->getMotionState()->unsetLocalGrid();
 }
 
-void LocalGrid::getUnownedNeighbors(const btVector3 &position, QMap<btVector3, Cell> &neighbors)
+void sodaLocalGrid::getUnownedNeighbors(const btVector3 &position, QMap<btVector3, Cell> &neighbors)
 {
     for(int i=-1; i<2; ++i)
         for(int j=-1; j<2; ++j)
@@ -150,14 +152,14 @@ void LocalGrid::getUnownedNeighbors(const btVector3 &position, QMap<btVector3, C
                 if((i!=0 || j!=0 || k!=0) && !cellOutOfBounds(btVector3(i, j, k) + position))
                 {
                     Cell &nCell = at(position);
-                    if(nCell.getOwnerId() != PhysicsWorld::IdBeingProcessed &&  nCell.getOwnerId() != ownerId && !neighbors.contains(position))
+                    if(nCell.getOwnerId() != sodaLogicWorld::IdBeingProcessed &&  nCell.getOwnerId() != ownerId && !neighbors.contains(position))
                     {
                         neighbors.insert(btVector3(i, j, k) + position, nCell);
                     }
                 }
 }
 
-short LocalGrid::resolveOwnership(Cell &cell, const btVector3 &position)
+short sodaLocalGrid::resolveOwnership(Cell &cell, const btVector3 &position)
 {
     short finalId = ownerId;
     QMap<btVector3, Cell> neighbors;
@@ -165,7 +167,6 @@ short LocalGrid::resolveOwnership(Cell &cell, const btVector3 &position)
 
     getUnownedNeighbors(position, neighbors);
 
-    //FIXME: should not work, but it does.
     while(it.hasNext())
     {
         it.next();
@@ -176,12 +177,12 @@ short LocalGrid::resolveOwnership(Cell &cell, const btVector3 &position)
         // We found a neighbor owned by another world, so the currentConnectedCells must be
         // marked to NullWorlId for further negotiation with neighbors.
         if(cellAdjacentToOrIsUnownedCell(neighborPos))
-            finalId = PhysicsWorld::NullWorldId;
+            finalId = sodaLogicWorld::NullWorldId;
 
         // There is another Cell that needs to be given a WorldId, let's explore its neighbors
-        else if(neighbor.getOwnerId() == PhysicsWorld::UnknownWorldId)
+        else if(neighbor.getOwnerId() == sodaLogicWorld::UnknownWorldId)
         {
-            cell.setOwnerId(PhysicsWorld::IdBeingProcessed);
+            cell.setOwnerId(sodaLogicWorld::IdBeingProcessed);
             getUnownedNeighbors(neighborPos, neighbors);
         }
     }
@@ -191,24 +192,24 @@ short LocalGrid::resolveOwnership(Cell &cell, const btVector3 &position)
     return finalId;
 }
 
-void LocalGrid::getEmptyCellCoordinates(QVector<QPair<btVector3, short> > &output) const
+void sodaLocalGrid::getEmptyCellCoordinates(QVector<QPair<btVector3, short> > &output) const
 {
     for(Array<Cell, 3>::const_iterator it = begin(); it != end(); it++)
     {
         const Cell &cell = *it;
 
-        if(cell.getOwnerId() == PhysicsWorld::NullWorldId)
-            output.append(QPair<btVector3, short>(Utils::btVectorFromBlitz(it.position()), this->ownerId));
+        if(cell.getOwnerId() == sodaLogicWorld::NullWorldId)
+            output.append(QPair<btVector3, short>(sodaUtils::btVectorFromBlitz(it.position()), this->ownerId));
     }
 }
 
-void LocalGrid::setCellOwnedBy(const btVector3 &coords, const short id)
+void sodaLocalGrid::setCellOwnedBy(const btVector3 &coords, const short id)
 {
     if(!cellOutOfBounds(coords))
     {
         Cell &c = at(coords);
 
-//        if(c.getOwnerId() != PhysicsWorld::NullWorldId && c.getOwnerId() != PhysicsWorld::UnknownWorldId)
+//        if(c.getOwnerId() != sodaLogicWorld::NullWorldId && c.getOwnerId() != sodaLogicWorld::UnknownWorldId)
 //        {
 //            qWarning() << "Warning, changed owner of Cell " << coords.x() << coords.y() << coords.z() << " while it already had one (" << c.getOwnerId() << ")" << " to " << id;
 //            if(c.getEntities() != 0 && c.getEntities()->size() != 0)
@@ -226,22 +227,21 @@ void LocalGrid::setCellOwnedBy(const btVector3 &coords, const short id)
 }
 
 //FIXME: fix this story of nowAssigned vector containing weird stuff. Maybe the problem comes from resolveOwnership().
-QVector<btVector3> LocalGrid::resolveEmptyCellOwnerships()
+QVector<btVector3> sodaLocalGrid::resolveEmptyCellOwnerships()
 {
     QVector<btVector3> nowAssigned;
 
-    // For each cell of the LocalGrid's data, try to find an owner if it doesn't have one
+    // For each cell of the sodaLocalGrid's data, try to find an owner if it doesn't have one
     for(Array<Cell, 3>::iterator it = begin(); it != end(); it++)
     {
         Cell &cell = *it;
 
         // If cell ID is unknown, check if Cell is part of a closed block
-        if(cell.getOwnerId() == PhysicsWorld::UnknownWorldId)
+        if(cell.getOwnerId() == sodaLogicWorld::UnknownWorldId)
         {
-            //NOTE: the good version might be it.position() + offset
-            /*short finalId = */resolveOwnership(cell, Utils::btVectorFromBlitz(it.position()));
+            /*short finalId = */resolveOwnership(cell, sodaUtils::btVectorFromBlitz(it.position()));
 
-//            if(finalId != PhysicsWorld::NullWorldId)
+//            if(finalId != sodaLogicWorld::NullWorldId)
 //                nowAssigned.append(Utils::btVectorFromBlitz(it.position()));
         }
     }
@@ -249,14 +249,14 @@ QVector<btVector3> LocalGrid::resolveEmptyCellOwnerships()
     return nowAssigned;
 }
 
-bool LocalGrid::cellIsMargin(const btVector3 &coord) const
+bool sodaLocalGrid::cellIsMargin(const btVector3 &coord) const
 {
     return !(coord.x()>=lbound(0)+margin[GridInformation::Left] && coord.x()<=ubound(0)+margin[GridInformation::Right] &&
              coord.y()>=lbound(1)+margin[GridInformation::Bottom] && coord.y()<=ubound(1)+margin[GridInformation::Top] &&
              coord.z()>=lbound(2)+margin[GridInformation::Back] && coord.z()<=ubound(2)+margin[GridInformation::Front]);
 }
 
-bool LocalGrid::cellAdjacentToOrIsUnownedCell(const btVector3 &coord) const
+bool sodaLocalGrid::cellAdjacentToOrIsUnownedCell(const btVector3 &coord) const
 {
     // Possible adjacent foreigner on the left
     if(coord.x() <= lbound(0))
@@ -307,10 +307,10 @@ bool LocalGrid::cellAdjacentToOrIsUnownedCell(const btVector3 &coord) const
     }
 
     short id = at(coord).getOwnerId();
-    return (id != ownerId && id != PhysicsWorld::UnknownWorldId && id != PhysicsWorld::IdBeingProcessed);
+    return (id != ownerId && id != sodaLogicWorld::UnknownWorldId && id != sodaLogicWorld::IdBeingProcessed);
 }
 
-QVector<bool> LocalGrid::getCellBorders(const btVector3 &coord) const
+QVector<bool> sodaLocalGrid::getCellBorders(const btVector3 &coord) const
 {
     // Don't report connections to other worlds for Cells that are not owned
     if(cellNotOwnedBySelf(coord))
@@ -337,20 +337,33 @@ QVector<bool> LocalGrid::getCellBorders(const btVector3 &coord) const
     return borders;
 }
 
-bool LocalGrid::cellNotOwnedBySelf(const btVector3 &coord) const
+bool sodaLocalGrid::cellNotOwnedBySelf(const btVector3 &coord) const
 {
     if(cellOutOfBounds(coord))
         return true;
 
     short id = at(coord).getOwnerId();
-    return (id != ownerId && id != PhysicsWorld::IdBeingProcessed);
+    return (id != ownerId && id != sodaLogicWorld::IdBeingProcessed);
 }
 
-bool LocalGrid::cellNotOwnedBySelf(const int &x, const int &y, const int &z) const
+bool sodaLocalGrid::cellNotOwnedBySelf(const int &x, const int &y, const int &z) const
 {
     if(cellOutOfBounds(x, y, z))
         return true;
 
     short id = at(x, y, z).getOwnerId();
-    return (id != ownerId && id != PhysicsWorld::IdBeingProcessed);
+    return (id != ownerId && id != sodaLogicWorld::IdBeingProcessed);
+}
+
+int sodaLocalGrid::getNbBorders() const
+{
+    int sum = 0;
+
+    for(Array<Cell, 3>::const_iterator it = begin(); it != end(); it++)
+    {
+        const Cell &c = *it;
+        sum += c.getBorders() ? c.getBorders()->size(): 0;
+    }
+
+    return sum;
 }

@@ -43,15 +43,9 @@ CONFIG(release, debug|release) {
 TEMPLATE = app
 
 HEADERS += \
-    src/ogrewidget.h \
     src/bulletmanager.h \
     src/main.h \
-    src/utils.h \
     src/grid.h \
-    src/obRigidBody.h \
-    src/obMotionState.h \
-    src/physicsworld.h \
-    src/obEntityWrapper.h \
     Parser/Action.h \
     Parser/Animation.h \
     Parser/AnimationLibrary.h \
@@ -70,30 +64,37 @@ HEADERS += \
     EKMeans/EKMeans_global.h \
     EKMeans/libekmeans.h \
     src/cell.h \
-	src/localgrid.h \
-    src/ogreresources.h \
     src/obentitytransformrecord.h \
     src/obentitytransformrecordlist.h \
     src/cellborderentity.h \
-    src/obdynamicrigidbody.h \
     src/simulation.h \
-    src/randomcubesimulation.h \
-    src/obghostentity.h \
-    src/obentity.h \
-    src/btlocalgridbroadphase.h \
-    src/garbageworld.h \
     src/experimenttrackinginterface.h \
-    src/robustnessevalsimulation.h
+    src/robustnessevalsimulation.h \
+    src/typedefs.h \
+    src/sodaSimulationIslandForeignerCache.h \
+    src/sodaLocalGridBroadphase.h \
+    src/sodaDynamicsWorld.h \
+    src/sodaSimulationIslandManager.h \
+    src/sodaContactResultCallback.h \
+    src/sodaRigidBody.h \
+    src/sodaDynamicRigidBody.h \
+    src/sodaPersistentForeignerManifold.h \
+    src/sodaPersistentForeignerManifoldArray.h \
+    src/sodaMeshShapeCache.h \
+    src/sodaMotionState.h \
+    src/sodaLocalGrid.h \
+    src/sodaEntity.h \
+    src/sodaOgreResources.h \
+    src/sodaOgreWidget.h \
+    src/sodaUtils.h \
+    src/sodaDynamicEntity.h \
+    src/randomcubesimulation.h \
+    src/sodaLogicWorld.h
 
 SOURCES += \
-    src/ogrewidget.cpp \
     src/bulletmanager.cpp \
     src/main.cpp \
     src/grid.cpp \
-    src/physicsworld.cpp \
-    src/obEntityWrapper.cpp \
-    src/obMotionState.cpp \
-    src/obRigidBody.cpp \
     Parser/Action.cpp \
     Parser/Animation.cpp \
     Parser/AnimationLibrary.cpp \
@@ -110,20 +111,29 @@ SOURCES += \
     src/circulartransformbufferinterface.cpp \
     EKMeans/libekmeans.cpp \
     src/cell.cpp \
-    src/localgrid.cpp \
-    src/ogreresources.cpp \
     src/obentitytransformrecord.cpp \
     src/obentitytransformrecordlist.cpp \
     src/cellborderentity.cpp \
-    src/obdynamicrigidbody.cpp \
     src/simulation.cpp \
     src/randomcubesimulation.cpp \
-    src/obghostentity.cpp \
-    src/obentity.cpp \
-    src/btlocalgridbroadphase.cpp \
-    src/garbageworld.cpp \
     src/experimenttrackinginterface.cpp \
-    src/robustnessevalsimulation.cpp
+    src/robustnessevalsimulation.cpp \
+    src/sodaSimulationIslandManager.cpp \
+    src/sodaSimulationIslandForeignerCache.cpp \
+    src/sodaDynamicsWorld.cpp \
+    src/sodaContactResultCallback.cpp \
+    src/sodaLocalGridBroadphase.cpp \
+    src/sodaRigidBody.cpp \
+    src/sodaDynamicRigidBody.cpp \
+    src/sodaPersistentForeignerManifoldArray.cpp \
+    src/sodaMeshShapeCache.cpp \
+    src/sodaMotionState.cpp \
+    src/sodaLocalGrid.cpp \
+    src/sodaEntity.cpp \
+    src/sodaOgreWidget.cpp \
+    src/sodaOgreResources.cpp \
+    src/sodaDynamicEntity.cpp \
+    src/sodaLogicWorld.cpp
 
 LIBS += -lOgreMain \
     -lOgreTerrain \

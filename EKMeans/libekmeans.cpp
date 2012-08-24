@@ -12,8 +12,7 @@ EKMeans::EKMeans(const QVector<btVector3> &centroids, const QVector<btVector3> &
     points(points),
     equal(false),
     fixed(false),
-    iteration(12),
-    listener(0)
+    iteration(12)
 {
     if(centroids.size() > 0)
         idealCount=points.size() / centroids.size();
@@ -33,44 +32,14 @@ QVector<btVector3> EKMeans::getCentroids() const
     return centroids;
 }
 
-int EKMeans::getCentroidCount() const
-{
-    return centroids.size();
-}
-
 QVector<btVector3> EKMeans::getPoints() const
 {
     return points;
 }
 
-QHash<QPair<int, int>, btScalar> EKMeans::getDistances() const
-{
-    return distances;
-}
-
 QVector<int> EKMeans::getAssignments() const
 {
     return assignments;
-}
-
-QVector<bool> EKMeans::getChanges() const
-{
-    return changes;
-}
-
-QVector<int> EKMeans::getCounts() const
-{
-    return counts;
-}
-
-int EKMeans::getIteration() const
-{
-    return iteration;
-}
-
-void EKMeans::setIteration(int iteration)
-{
-    this->iteration=iteration;
 }
 
 bool EKMeans::isEqual() const
@@ -93,16 +62,6 @@ void EKMeans::setFixedCentroids(bool fixed)
     this->fixed=fixed;
 }
 
-EKMeans::Listener *EKMeans::getListener() const
-{
-    return listener;
-}
-
-void EKMeans::setListener(Listener *listener)
-{
-    this->listener=listener;
-}
-
 void EKMeans::run()
 {
     calculateDistances();
@@ -115,10 +74,6 @@ void EKMeans::run()
 
         calculateDistances();
         move=makeAssignments();
-        if(listener != 0)
-        {
-            listener->iteration(i, move);
-        }
     }
 
     // Final cleanup step for equal-sized clusters

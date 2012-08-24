@@ -20,7 +20,7 @@
  */
 #include <QtDebug>
 #include "circulartransformbufferinterface.h"
-#include "physicsworld.h"
+#include "sodaLogicWorld.h"
 
 CircularTransformBufferInterface::CircularTransformBufferInterface() :
     QVector<CircularTransformBuffer *>()

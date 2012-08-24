@@ -21,10 +21,10 @@
 #ifndef CELLBORDERENTITY_H
 #define CELLBORDERENTITY_H
 
-#include "obEntityWrapper.h" // class EntityAlreadyExistsException
+#include "sodaDynamicEntity.h" // class EntityAlreadyExistsException
 
 // Forward declaration
-class LocalGrid;
+class sodaLocalGrid;
 
 /*! \class CellBorderCoordinates
   * \brief A class that indicates the coordinates of a Cell and the direction of a border of this Cell.
@@ -104,9 +104,9 @@ public:
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
   *
   * This class implements special static rigid bodies that are used to detect when
-  * an obEntityWrapper crosses a Cell's border.
+  * a sodaDynamicEntity crosses a Cell's border.
   */
-class CellBorderEntity : public obEntity
+class CellBorderEntity : public sodaEntity
 {
 public:
     /*!
@@ -115,7 +115,7 @@ public:
      * \param coords the coordinates in the LocalGrid associated with a direction
      * \return a new CellBorderEntity
      */
-    CellBorderEntity(LocalGrid *grid,
+    CellBorderEntity(sodaLocalGrid *grid,
                      const CellBorderCoordinates &coords) throw(EntityAlreadyExistsException);
 
     /*! \brief Default destructor.
@@ -132,15 +132,15 @@ public:
     }
 
     /*! \brief Gets the rigid body of the entity.
-      * \return the obRigidBody of the entity
+      * \return the sodaRigidBody of the entity
       */
-    inline obRigidBody* getRigidBody() const
+    inline sodaRigidBody* getRigidBody() const
     {
-        return obBody;
+        return rigidBody;
     }
 
     /*! \brief Gets the display name of this object's Ogre entity.
-      * \return the display name of this obEntityWrapper
+      * \return the display name of this sodaDynamicEntity
       */
     inline const char *getDisplayName() const
     {
@@ -157,6 +157,15 @@ public:
     }
 
     /*!
+     * \brief Gets the LocalGrid of the CellBorderEntity.
+     * \return a pointer to this object's LocalGrid
+     */
+    inline sodaLocalGrid *getLocalGrid() const
+    {
+        return grid;
+    }
+
+    /*!
      * \brief Returns the Broadphase proxy to use in btLocalGridBroadphase.
      * \return a pointer to the btBroadphaseProxy of this entity
      *
@@ -164,7 +173,7 @@ public:
      */
     inline btBroadphaseProxy *getBroadphaseHandle() const
     {
-        return obBody->getBulletBody()->getBroadphaseProxy();
+        return rigidBody->getBulletBody()->getBroadphaseProxy();
     }
 
     /*! \brief Sets a color for the entity.
@@ -187,10 +196,10 @@ protected:
     void updateColor();
 
 private:
-    obRigidBody                     *obBody;			 /*!< The Ogre-Bullet rigid body of this Cell border */
+    sodaRigidBody                   *rigidBody;			 /*!< The Ogre-Bullet rigid body of this Cell border */
     Ogre::Entity                    *ogreEntity;         /*!< Ogre entity */
     Ogre::SceneNode                 *ogreNode;           /*!< Ogre scene node */
-    LocalGrid                       *grid;               /*!< The grid of which this CellBorderEntity is a border */
+    sodaLocalGrid                       *grid;               /*!< The grid of which this CellBorderEntity is a border */
 
     CellBorderCoordinates           coords;		         /*!< Cell coordinates of the border entity, with a direction parameter */
     short                           direction;			 /*!< Direction of the border entity on the Cell */

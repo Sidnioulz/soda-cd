@@ -23,19 +23,19 @@
 
 #include <QSharedPointer>
 #include <QVector>
-#include "obEntityWrapper.h"
+#include "sodaDynamicEntity.h"
 #include "cellborderentity.h"
 
 /*! \class Cell
   * \brief Represents the cell of a 3D grid, containing entities and owned by a physics world.
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
   *
-  * This class represents a cell in the LocalGrid class. It is owned by a PhysicsWorld,
-  * and contains a list of obEntityWrapper instances. The size and location of the cell are
-  * defined in the LocalGrid of the PhysicsWorld that owns it.
+  * This class represents a cell in the sodaLocalGrid class. It is owned by a sodaLogicWorld,
+  * and contains a list of sodaDynamicEntity instances. The size and location of the cell are
+  * defined in the sodaLocalGrid of the sodaLogicWorld that owns it.
   *
   * The pointer to the structure of the Cell can be set to NULL, in which case the Cell
-  * represents a neighbour Cell for whose content the owner LocalGrid has no information.
+  * represents a neighbour Cell for whose content the owner sodaLocalGrid has no information.
   */
 class Cell
 {
@@ -80,20 +80,20 @@ public:
     }
 
     /*! \brief Adds an entity to this Cell.
-      * \param entity the obEntityWrapper to add to the Cell
+      * \param entity the sodaDynamicEntity to add to the Cell
       */
-    void addEntity(obEntityWrapper *entity);
+    void addEntity(sodaDynamicEntity *entity);
 
     /*! \brief Adds an entity to this Cell.
-      * \param entity the obEntityWrapper to add to the Cell
+      * \param entity the sodaDynamicEntity to add to the Cell
       */
     void addCellBorder(CellBorderEntity *entity);
 
     /*! \brief Tells when an entity is within this Cell.
-      * \param entity the obEntityWrapper to check
+      * \param entity the sodaDynamicEntity to check
       * \return whether this entity is within the Cell
       */
-    inline bool containsEntity(obEntityWrapper *entity)
+    inline bool containsEntity(sodaDynamicEntity *entity)
     {
         if(entities.isNull())
             return false;
@@ -102,23 +102,23 @@ public:
     }
 
     /*! \brief Remove an entity from this Cell.
-	  * \param entity the obEntityWrapper to remove from the Cell
+      * \param entity the sodaDynamicEntity to remove from the Cell
 	  * \return whether the entity could be removed or not
 	  */
-    bool removeEntity(obEntityWrapper *entity);
+    bool removeEntity(sodaDynamicEntity *entity);
 
     /*! \brief Returns the entities of the Cell.
-      * \return a pointer to the write-protected obEntityWrapper vector
+      * \return a pointer to the write-protected sodaDynamicEntity vector
       */
-    inline const QVector<obEntityWrapper *> *getEntities() const
+    inline const QVector<sodaDynamicEntity *> *getEntities() const
     {
         return entities.data();
     }
 
     /*! \brief Returns the entities of the Cell. The dummy parameter indicates the returned vector can be modified.
-      * \return a pointer to the obEntityWrapper vector for modification
+      * \return a pointer to the sodaDynamicEntity vector for modification
       */
-    inline QVector<obEntityWrapper *> *getEntities(int)
+    inline QVector<sodaDynamicEntity *> *getEntities(int)
     {
         return entities.data();
     }
@@ -140,8 +140,8 @@ public:
     }
 
 private:
-    QSharedPointer<QVector<obEntityWrapper *> >    entities; //!< A container for the entities whose center point is within the Cell.
+    QSharedPointer<QVector<sodaDynamicEntity *> >    entities; //!< A container for the entities whose center point is within the Cell.
     QSharedPointer<QVector<CellBorderEntity *> >   borders;  //!< A container for entities that simulate a physics border for a Cell.
-    short                                          ownerId;  //!< Id of the PhysicsWorld that owns entities within this Cell.
+    short                                          ownerId;  //!< Id of the sodaLogicWorld that owns entities within this Cell.
 };
 #endif // CELL_H

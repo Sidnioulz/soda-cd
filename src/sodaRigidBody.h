@@ -39,24 +39,22 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef OGRERIGIDOBJECT_H
-#define OGRERIGIDOBJECT_H
+#ifndef SODARIGIDBODY_H
+#define SODARIGIDBODY_H
 
 #include <Ogre.h>
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
-#include "obentity.h"
+#include "sodaEntity.h"
 
-/*! \class obRigidBody
+/*! \class sodaRigidBody
   * \brief A Bullet rigid body
   * \author Quentin Avril <quentin.avril@irisa.fr>
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
   *
   * This class is an overlay to btRigidBody, that can be used to create a btRigidBody with various methods.
-  *
-  * \note For historical reasons, this class is named obRigidBody. It could be named sodaRigidBody.
   */
-class obRigidBody
+class sodaRigidBody
 {
 public:
     /*!
@@ -66,9 +64,9 @@ public:
       * \param quat the initial rotation of the body
       * \param scale the scale of the body with regard to the mesh default size
       * \param mass the mass of the body
-      * \return a new obRigidBody
+      * \return a new sodaRigidBody
       */
-    obRigidBody(obEntity *parent,
+    sodaRigidBody(sodaEntity *parent,
                 const btVector3 &pos,
                 const btQuaternion &quat,
                 const btVector3 &scale = btVector3(1,1,1),
@@ -76,19 +74,19 @@ public:
     /*!
       * \brief Shallow copy constructor.
       * \param parent the parent obEntity of this instance
-      * \param other the obRigidBody whose parameters to copy
-      * \return a new obRigidBody
+      * \param other the sodaRigidBody whose parameters to copy
+      * \return a new sodaRigidBody
       *
-      * \warning This constructor does not copy the other obRigidBody's btRigidBody.
+      * \warning This constructor does not copy the other sodaRigidBody's btRigidBody.
       * Clients still have to create the btRigidBody themselves after constructing the
       * obDynamicRigidBody.
       */
-    obRigidBody(obEntity *parent, const obRigidBody &other);
+    sodaRigidBody(sodaEntity *parent, const sodaRigidBody &other);
 
     /*!
       * \brief Default destructor.
       */
-    virtual ~obRigidBody();
+    virtual ~sodaRigidBody();
     /*!
       * \brief Gets the Bullet version of the rigid body.
       * \return the btRigidBody of the body
@@ -177,7 +175,7 @@ public:
       * \brief Returns the parent obEntity of this rigid body
       * \return the parent obEntity of this object
       */
-    inline obEntity *getParent() const
+    inline sodaEntity *getParent() const
     {
         return parent;
     }
@@ -193,7 +191,7 @@ public:
 private:
 	/*!
 	  * \brief Creates a motion state for the Bullet rigid body.
-	  * \return a pointer to a new obMotionState for this obRigidBody
+      * \return a pointer to a new obMotionState for this sodaRigidBody
 	  */
 	virtual btMotionState *_createMotionState();
 
@@ -203,7 +201,7 @@ private:
     const static float DynamicBodyRestitution;  /*!< Dynamic body restitution (see Bullet documentation) */
     const static float DynamicBodyFriction;     /*!< Dynamic body friction (see Bullet documentation) */
 
-    obEntity            *parent;        /**< Parent entity of this rigid body */
+    sodaEntity          *parent;        /**< Parent entity of this rigid body */
     btRigidBody         *btBody;        /**< Bullet rigid body */
     btTriangleMesh      *triangleMesh;  /**< Bullet polygonal mesh */
     btCollisionShape    *btShape;       /**< Bullet shape for collisions */
@@ -213,4 +211,4 @@ private:
     btQuaternion        quaternion;     /**< Object rotation at creation time */
 };
 
-#endif // OGRERIGIDBODY_H
+#endif // SODARIGIDBODY_H

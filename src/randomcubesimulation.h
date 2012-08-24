@@ -22,8 +22,7 @@
 #define RANDOMCUBESIMULATION_H
 
 #include "simulation.h"
-#include "obEntityWrapper.h"
-#include "obghostentity.h"
+#include "sodaDynamicEntity.h"
 
 /*! \class RandomCubeSimulation
   * \brief A class for the simulation of randomly placed cubes.
@@ -42,6 +41,7 @@ public:
      * \param declNumWorlds the number of physics worlds to launch (0 = automatic)
      * \param sceneSize the dimensions of the simulation scene
      * \param numEntities the number of simulated entities
+     * \param randomScale if true, cubes in the Simulation have different scales
      * \return a new RandomCubeSimulation
      */
 //    RandomCubeSimulation(const btScalar &targetTimeStep = 1.0f/60,
@@ -55,7 +55,7 @@ public:
                          const int &declNumWorlds = 2,
                          const btVector3 &sceneSize = btVector3(1000, 200, 1000),
                          const int &numEntities = 10,
-    const bool &randomScale = true);
+                         const bool &randomScale = true);
 
 
     /*!
@@ -71,7 +71,7 @@ public:
     /*!
      * \overload
      */
-    void setupBasicPhysicsEnvironment(PhysicsWorld *world);
+    void setupBasicPhysicsEnvironment(sodaLogicWorld *world);
 
     /*!
      * \overload
@@ -86,13 +86,18 @@ public:
          return GridInformation::ClosedWorld;
      }
 
-     //TODO: doc
+     /*!
+      * \overload
+      */
      inline bool hasTickCallback() const
      {
          return false;
      }
 
-     inline void tickCallback(PhysicsWorld *world, const btScalar &timeStep)
+     /*!
+      * \overload
+      */
+     inline void tickCallback(sodaLogicWorld *world, const btScalar &timeStep)
      {}
 
     /*!
@@ -102,7 +107,7 @@ public:
      * \param mass the mass of the object (default 1)
      * \return a pointer to the newly created entity
      */
-    obEntityWrapper *_createBox(const btVector3 &position, const btVector3 &scale, const btScalar &mass);
+    sodaDynamicEntity *_createBox(const btVector3 &position, const btVector3 &scale, const btScalar &mass);
 
     /*!
      * \brief Creates a Ninja. Use with caution.
@@ -111,11 +116,10 @@ public:
      * \param mass the mass of the object (default 1)
      * \return a pointer to the newly created entity
      */
-    obGhostEntity *_createNinja(const btVector3 &position, const btVector3 &scale, const btScalar &mass);
+    sodaDynamicEntity *_createNinja(const btVector3 &position, const btVector3 &scale, const btScalar &mass);
 
 private:
-    bool randomScale;      /*! Whether cubes have a random scale */
-
+    bool randomScale;      /*!< Whether cubes have a random scale or a fixed one */
 };
 
 

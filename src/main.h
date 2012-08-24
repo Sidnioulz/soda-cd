@@ -22,14 +22,15 @@
 #define MAIN_H
 
 #define APP_NAME    "PEPSI's"
-#define VERSION     "0.3.2"
+#define VERSION     "0.3.9"
 
 #include <QMainWindow>
 #include <QxtCore/QxtCommandOptions>
-#include "ogrewidget.h"
+#include "sodaOgreWidget.h"
 #include "simulation.h"
-#include "obEntityWrapper.h"
+#include "sodaDynamicEntity.h"
 #include "cellborderentity.h"
+#include "typedefs.h"
 
 // Doxygen documentation main page, do not remove
 /*! \mainpage Welcome to the documentation for PEPSI's.
@@ -49,18 +50,7 @@
  * Please email either <a href="mailto:steve.dodier-lazaro@inria.fr">Steve</a> or <a href="mailto:quentin.avril@irisa.fr">Quentin</a>.
  */
 
-//TODO: inlining
-//TODO: assertions on all function headers
 //TODO: when objects and cells too big to populate several worlds, don't!
-
-// IPC type declarations
-Q_DECLARE_METATYPE(PhysicsWorld *)
-Q_DECLARE_METATYPE(EntityOverlappedCellsMap)
-Q_DECLARE_METATYPE(obEntityWrapper *)
-Q_DECLARE_METATYPE(btScalar)
-Q_DECLARE_METATYPE(Ogre::Entity *)
-Q_DECLARE_METATYPE(Ogre::SceneNode *)
-Q_DECLARE_METATYPE(QList<short>)
 
 namespace Ui {
     class MainPepsiWindow;
@@ -81,6 +71,7 @@ class MainPepsiWindow : public QMainWindow
 protected:
 /*!
   * \brief Default constructor.
+  * \param opt the object containing user's command-line options
   * \param parent the parent widget if it exists
   * \return a new MainPepsiWindow
   */
@@ -93,10 +84,10 @@ public:
     ~MainPepsiWindow();
 
     /*!
-     * \brief Permits access to the OgreWidget.
-     * \return a pointer to the MainPepsiWindow's OgreWidget
+     * \brief Permits access to the sodaOgreWidget.
+     * \return a pointer to the MainPepsiWindow's sodaOgreWidget
      */
-    inline OgreWidget *getOgreWidget() const
+    inline sodaOgreWidget *getOgreWidget() const
     {
         return ogreWidget;
     }
@@ -133,14 +124,14 @@ private:
     btScalar                            paramTimeLimit;               //!< Time limit for the simulation (used to automate shutdown)
     bool                                paramAutomatedSimulation;     //!< Whether simulations are automated
     btVector3                           paramSpaceLen;                //!< Length of the simulation space, if applicable to chosen Simulation
-    int                                 paramNbWorlds;                //!< Number of PhysicsWorlds to use
+    int                                 paramNbWorlds;                //!< Number of sodaLogicWorlds to use
     int                                 paramNbEntities;              //!< Number of entities, if applicable to chosen Simulation
     QString                             paramSimulationName;          //!< Simulation name
 
     static MainPepsiWindow              *instance;          //!< The unique instance of MainPepsiWindow
 
     Ui::MainPepsiWindow                 *ui;                //!< Pointer to file-defined Qt GUI widgets
-    OgreWidget                          *ogreWidget;        //!< Pointer to the Ogre rendering widget
+    sodaOgreWidget                      *ogreWidget;        //!< Pointer to the Ogre rendering widget
     Simulation                          *simulation;        //!< A Simulation object
 
     int                                 targetFPS;          //!< target FPS of the simulation

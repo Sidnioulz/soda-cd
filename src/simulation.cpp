@@ -35,9 +35,9 @@ Simulation::Simulation(const btScalar &targetTimeStep, const int &declNumWorlds,
     entityIdCounter(0)
 {
     createBufferInterface();
-    createPhysicsWorlds();
+    createsodaLogicWorlds();
 
-    ExperimentTrackingInterface::getInterface()->clearStats();
+    ExperimentTrackingInterface::getInstance()->clearStats();
 }
 
 Simulation::~Simulation()
@@ -50,7 +50,7 @@ Simulation::~Simulation()
 
 void Simulation::printStats(QTextStream &out) const
 {
-    ExperimentTrackingInterface::getInterface()->printSynchronizationTimeStats(*this, out);
+    ExperimentTrackingInterface::getInstance()->printSynchronizationTimeStats(*this, out);
 }
 
 void Simulation::start()
@@ -61,11 +61,11 @@ void Simulation::start()
         status = PAUSED;
     }
 
-    // Resume the Simulation by telling the PhysicsWorlds to run
+    // Resume the Simulation by telling the sodaLogicWorlds to run
     if(status == PAUSED)
     {
         // Start the simulations
-        //TODO: knowing that Marcel lightthreads will later be used, just unlock a WaitCondition that all threads will be waiting for.
+        //TODO: just unlock a WaitCondition that all threads will be waiting for.
         for(int i=0; i<numWorlds; ++i)
         {
             worlds[i]->startSimulation();
@@ -79,7 +79,7 @@ void Simulation::pause()
 {
     if(status == RUNNING)
     {
-        //TODO: pause the PhysicsWorlds and tell the rendering thread to ask for the latest available past
+        //TODO: pause the sodaLogicWorlds and tell the rendering thread to ask for the latest available past
 
         status = PAUSED;
     }
@@ -117,12 +117,12 @@ void Simulation::createBufferInterface()
     bufferInterface = new CircularTransformBufferInterface();
 }
 
-void Simulation::createPhysicsWorlds()
+void Simulation::createsodaLogicWorlds()
 {
     // Create the physics worlds
     for(int i=0; i<numWorlds; ++i)
     {
-        worlds[i] = new PhysicsWorld(*this, targetTimeStep);
+        worlds[i] = new sodaLogicWorld(*this, targetTimeStep);
     }
 
     // Have the CircularTransformBuffer interfaces watch the worlds' buffers.
@@ -236,7 +236,7 @@ void Simulation::setupLocalGrids(const int &resolution, const QVector<btVector3>
 //            qDebug() << maxCoord.x() << maxCoord.y() << maxCoord.z();
 
             QVector<int> margin = computeMargin(resolution, minCoord, maxCoord);
-            grids[i] = new LocalGrid(grid->getGridAtResolution(resolution), worlds[i]->getId(), margin, (maxCoord+btVector3(1,1,1)-minCoord), minCoord);
+            grids[i] = new sodaLocalGrid(grid->getGridAtResolution(resolution), worlds[i]->getId(), margin, (maxCoord+btVector3(1,1,1)-minCoord), minCoord);
         }
         catch (exception& e)
         {
@@ -271,12 +271,12 @@ void Simulation::sortEntitiesPerCellCoordinates(const int &resolution)
     qSort(entitiesWithAssignments.begin(), entitiesWithAssignments.end(), lt);
 }
 
-void Simulation::_setCellOwner(const QMap<short, int> &cellOwnerCounter, QVector<btVector3> &emptyCells, const btVector3 &currentCoords, const QVector<obEntityWrapper *> &cellEnts)
+void Simulation::_setCellOwner(const QHash<short, int> &cellOwnerCounter, QVector<btVector3> &emptyCells, const btVector3 &currentCoords, const QVector<sodaDynamicEntity *> &cellEnts)
 {
-    // Find in the owner count for the current Cell which PhysicsWorld owns most entities
-    short maxIndex = PhysicsWorld::NullWorldId;
+    // Find in the owner count for the current Cell which sodaLogicWorld owns most entities
+    short maxIndex = sodaLogicWorld::NullWorldId;
     int maxCount = 0;
-    QMapIterator<short, int> it(cellOwnerCounter);
+    QHashIterator<short, int> it(cellOwnerCounter);
     while(it.hasNext())
     {
         it.next();
@@ -288,12 +288,12 @@ void Simulation::_setCellOwner(const QMap<short, int> &cellOwnerCounter, QVector
     }
 
     // If the Cell was empty, add it to the list of empty Cells for later assignment
-    if(maxIndex == PhysicsWorld::NullWorldId)
+    if(maxIndex == sodaLogicWorld::NullWorldId)
     {
 //        qDebug() << "\tEmpty " << currentCoords.x() << currentCoords.y() << currentCoords.z();
         emptyCells.append(currentCoords);
     }
-    // Else, notify all PhysicsWorlds which one the Cell was assigned to
+    // Else, notify all sodaLogicWorlds which one the Cell was assigned to
     else
     {
 //        qDebug() << "_setCellOwner decision:" << currentCoords.x() << currentCoords.y() << currentCoords.z() << " owned by ID " << worlds[maxIndex]->getId() << " with" << cellEnts.size() << "entities";
@@ -337,12 +337,12 @@ QVector<btVector3> Simulation::computeCellOwnersAndLocateEmptyCells(const int &r
     QVector<btVector3> emptyCells;
 
     // Browse through all entities, to process ownership Cell after Cell
-    QMap<short, int> cellOwnerCounter;
-    QVector<obEntityWrapper *> cellEnts;
+    QHash<short, int> cellOwnerCounter;
+    QVector<sodaDynamicEntity *> cellEnts;
     btVector3 currentCoords(grid->toCellCoordinates(resolution, btVector3(-sceneSize.x()/2, 0, -sceneSize.z()/2)));
     for(int i=0; i<entitiesWithAssignments.size(); ++i)
     {
-        obEntityWrapper *obEnt = entitiesWithAssignments[i].first;
+        sodaDynamicEntity *obEnt = entitiesWithAssignments[i].first;
         const btVector3 &coords = grid->toCellCoordinates(resolution, obEnt->getCenteredPosition());
 
 //        qDebug() << "JCoordinates " << coords.x() << coords.y() << coords.z();
@@ -438,13 +438,13 @@ void Simulation::assignEmptyCells(const int &resolution, const QVector<btVector3
 	QVector<int> assignments = emptyCellsEKM.getAssignments();
 	extendLocalGrids(resolution, points, assignments);
 
-	// Finally, notify Cell assignments to all LocalGrids
+    // Finally, notify Cell assignments to all sodaLocalGrids
 	for(int i=0; i<assignments.size(); ++i)
 		for(int w=0; w<numWorlds; ++w)
 			notifyCellAssignment(grids[w], emptyCells[i], worlds[assignments[i]]->getId());
 }
 
-void Simulation::notifyCellAssignment(LocalGrid *local, const btVector3 &coords, const short &owner, const QVector<obEntityWrapper *> *entities)
+void Simulation::notifyCellAssignment(sodaLocalGrid *local, const btVector3 &coords, const short &owner, const QVector<sodaDynamicEntity *> *entities)
 {
     local->setCellOwnedBy(coords, owner);
 
@@ -505,7 +505,7 @@ void Simulation::extendLocalGrids(const int &resolution, const QVector<btVector3
             qDebug() << minCoord.x() << minCoord.y() << minCoord.z();
             qDebug() << maxCoord.x() << maxCoord.y() << maxCoord.z();
 
-            //FIXME:
+            //FIXME: here we resize to a full size because margins are not properly taken into account on all sides of territories
             QVector<int> margin = computeMargin(resolution, minCoord, maxCoord);
 //            grids[i]->resize(margin, (maxCoord+btVector3(1,1,1)-minCoord), minCoord);
             grids[i]->resize(margin, nbCells, btVector3(0, 0, 0));
@@ -546,19 +546,19 @@ void Simulation::_init()
     // Compute the best resolution for territories
     int resolution = getBestTerritoryResolution();
 
-    // Create worlds and local grids, using a global assignments vector for obEntityWrapper instances
+    // Create worlds and local grids, using a global assignments vector for sodaDynamicEntity instances
     setupLocalGrids(resolution, points);
 
     // Browse all sorted entities to assign Cell owners to non-empty Cells, and return the list of empty ones
     QVector<btVector3> emptyCells = computeCellOwnersAndLocateEmptyCells(resolution);
 
-    // Make sure that whenever a Cell is surrounded by Cells from the same LocalGrid, that LocalGrid owns it
+    // Make sure that whenever a Cell is surrounded by Cells from the same sodaLocalGrid, that sodaLocalGrid owns it
 //    assignSurroundedCellsToOwners(emptyCells);
 
     // Assign the Cells that are still empty, using a Clustering algorithm
     assignEmptyCells(resolution, emptyCells);
 
-	// Assign LocalGrids to their respective PhysicsWorlds, and setup LocalGrid borders if wanted
+    // Assign sodaLocalGrids to their respective sodaLogicWorlds, and setup sodaLocalGrid borders if wanted
     for(int i=0; i<numWorlds; ++i)
     {
         worlds[i]->assignLocalGrid(grids[i]);

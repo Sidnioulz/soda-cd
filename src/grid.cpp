@@ -231,7 +231,7 @@ int GridInformation::getBestTerritoryResolution() const
 {
     if(bestTerritoryResolution == 0)
     {
-        //TODO: implement getBestTerritoryResolution, think of inlining the return part
+        //TODO: implement getBestTerritoryResolution
 		return 1;
     }
     else

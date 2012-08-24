@@ -19,9 +19,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 #include "cellborderentity.h"
-#include "utils.h"
-#include "localgrid.h"
-#include "ogreresources.h"
+#include "sodaUtils.h"
+#include "sodaLocalGrid.h"
+#include "sodaOgreResources.h"
 
 void CellBorderCoordinates::getOtherSide(CellBorderCoordinates &otherSideCoords) const
 {
@@ -71,8 +71,9 @@ void CellBorderCoordinates::getOtherSide(CellBorderCoordinates &otherSideCoords)
     }
 }
 
-CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates &coords) throw(EntityAlreadyExistsException) :
-	obBody(0),
+CellBorderEntity::CellBorderEntity(sodaLocalGrid *grid, const CellBorderCoordinates &coords) throw(EntityAlreadyExistsException) :
+    sodaEntity(),
+	rigidBody(0),
     ogreEntity(0),
     ogreNode(0),
     grid(grid),
@@ -89,7 +90,7 @@ CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates 
             "d:" + Ogre::StringConverter::toString(coords.direction());
 
 	// If the scene manager doesn't already have an entity with this name
-    if(!OgreResources::getSceneManager()->hasEntity(name))
+    if(!sodaOgreResources::getSceneManager()->hasEntity(name))
     {
         // Compute the world coordinates of the object according to Cell coordinates and direction
         btVector3 worldCoords = grid->getGridInformation()->toDirectedWorldCoordinates(grid->getResolution(), coords);
@@ -104,12 +105,12 @@ CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates 
             bodyLen.setZ(0.001);
 
         // Create the rigid body
-        obBody = new obRigidBody(this, worldCoords, btQuaternion::getIdentity());
-        ogreNode = OgreResources::getSceneManager()->getRootSceneNode()->createChildSceneNode(name, Utils::vectorFromBullet(worldCoords), Ogre::Quaternion::IDENTITY);
+        rigidBody = new sodaRigidBody(this, worldCoords, btQuaternion::getIdentity());
+        ogreNode = sodaOgreResources::getSceneManager()->getRootSceneNode()->createChildSceneNode(name, sodaUtils::vectorFromBullet(worldCoords), Ogre::Quaternion::IDENTITY);
 //        ogreNode->showBoundingBox(true);
-        obBody->createBorder(bodyLen, true);
+        rigidBody->createBorder(bodyLen, true);
 
-        //TODO: create a OgreResources method to get a plane for a given direction and bodyLen.
+        //TODO: create a sodaOgreResources method to get a plane for a given direction and bodyLen.
 
         // Create an Ogre plane for the entity
         Ogre::Plane p;
@@ -152,13 +153,13 @@ CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates 
                                                           p, bodyLen.y(), bodyLen.x(), 1, 1, true, 1, 1, 1, Ogre::Vector3::UNIT_X);
         }
 
-        ogreEntity = OgreResources::getSceneManager()->createEntity(name, name);
+        ogreEntity = sodaOgreResources::getSceneManager()->createEntity(name, name);
         updateColor();
         ogreNode->attachObject(ogreEntity);
 
         // Setup a user pointer for later use within the Bullet manager
         // This step is compulsory to be able to retrieve the entity from the broad-phase algorithm.
-        obBody->getBulletBody()->getCollisionShape()->setUserPointer(this);
+        rigidBody->getBulletBody()->getCollisionShape()->setUserPointer(this);
 	}
     else
     {
@@ -168,18 +169,13 @@ CellBorderEntity::CellBorderEntity(LocalGrid *grid, const CellBorderCoordinates 
 
 CellBorderEntity::~CellBorderEntity()
 {
-    //FIXME: manage this
-//    ogreNode->removeAndDestroyAllChildren();
-//    delete ogreNode;
-//    delete ogreEntity;
-
-	delete obBody;
+	delete rigidBody;
 }
 
 void CellBorderEntity::updateColor()
 {
     // Get (or create) the colored version of the default CellBorderEntity material
-    ogreEntity->setMaterial(OgreResources::createColoredMaterial(red, green, blue, alpha));
+    ogreEntity->setMaterial(sodaOgreResources::createColoredMaterial(red, green, blue, alpha));
 }
 
 void CellBorderEntity::setColor(const float &r, const float &g, const float &b)

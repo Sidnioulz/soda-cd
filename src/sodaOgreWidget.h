@@ -41,7 +41,7 @@
 
 //TODO: replace ogre root by OgreResources::root, same for scene manager
 
-/*! \class OgreWidget
+/*! \class sodaOgreWidget
   * \brief Displays an Ogre 3D scene within a QGL Widget for Qt GUI applications.
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
   *
@@ -49,8 +49,8 @@
   * It is not actively animated, and the scene is not to be populated within this class. Instead,
   * this class can be used as a passive display scene for a SimulationWorld.
   */
-class OgreWidget : public QGLWidget,
-                public Ogre::FrameListener, public Ogre::WindowEventListener,
+class sodaOgreWidget : public QGLWidget,
+        public Ogre::FrameListener, public Ogre::WindowEventListener,
 		public OgreBites::SdkTrayListener
 {
     Q_OBJECT
@@ -60,14 +60,14 @@ public:
       * \brief Default constructor.
       * \param targetFPS the wanted max FPS for the simulation
       * \param parent the parent widget, if known
-      * \return a new OgreWidget
+      * \return a new sodaOgreWidget
       */
-        OgreWidget(/*CircularTransformBufferInterface *bufferInterface, */int targetFPS, QWidget *parent = 0);
+        sodaOgreWidget(/*CircularTransformBufferInterface *bufferInterface, */int targetFPS, QWidget *parent = 0);
 
     /*!
       * \brief Destructor.
       */
-    ~OgreWidget();
+    ~sodaOgreWidget();
 
     /*!
       * \brief Changes the position of the camera, and updates.
@@ -113,8 +113,8 @@ public:
     void setupBaseScene(const int xLimit, const int zLimit);
 
     /*!
-     * \brief Registers a new CircularTransformBufferInterface for this OgreWidget to read.
-     * \param inter the CircularTransformBufferInterface that this OgreWidget should now use
+     * \brief Registers a new CircularTransformBufferInterface for this sodaOgreWidget to read.
+     * \param inter the CircularTransformBufferInterface that this sodaOgreWidget should now use
      */
     inline void registerBufferInterface(CircularTransformBufferInterface *inter)
     {
@@ -122,7 +122,7 @@ public:
     }
 
     /*!
-     * \brief Removes any registered CircularTransformBufferInterface for this OgreWidget.
+     * \brief Removes any registered CircularTransformBufferInterface for this sodaOgreWidget.
      */
     inline void clearBufferInterface()
     {
@@ -130,8 +130,8 @@ public:
     }
 
     /*!
-     * \brief Tells whether a CircularTransformBufferInterface was registered for this OgreWidget.
-     * \return true if the OgreWidget has a CircularTransformBufferInterface to read, false otherwise
+     * \brief Tells whether a CircularTransformBufferInterface was registered for this sodaOgreWidget.
+     * \return true if the sodaOgreWidget has a CircularTransformBufferInterface to read, false otherwise
      */
     inline bool hasBufferInterface() const
     {
@@ -227,7 +227,16 @@ protected slots:
       */
     void onTimerTick();
 
+    /*!
+      * \brief Actually removes an Ogre::Entity from the Ogre::SceneManager once it is referenced no more.
+      * \param ent the Entity to remove
+      */
     void onEntityDeletion(const Ogre::Entity *&ent);
+
+    /*!
+      * \brief Actually removes an Ogre::SceneNode from the Ogre::SceneManager once it is referenced no more.
+      * \param node the SceneNode to remove
+      */
     void onSceneNodeDeletion(const Ogre::SceneNode *&node);
 };
 

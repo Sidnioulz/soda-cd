@@ -23,24 +23,24 @@
 
 #include <QtDebug>
 #include <btBulletCollisionCommon.h>
-#include "obentity.h"
+#include "sodaEntity.h"
 
 // Forward declaration
-class PhysicsWorld;
+class sodaLogicWorld;
 
-/*! \class btLocalGridBroadphase
+/*! \class sodaLocalGridBroadphase
   * \brief A broadphase implementation making use of LocalGrid.
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
   *
   * This class is a spatial subdivision uniform grid broadphase, based
-  * on the LocalGrid that already exists within PhysicsWorlds.
+  * on the LocalGrid that already exists within sodaLogicWorlds.
   *
   * btBroadphaseProxy objects are manipulated instead of direct entities. These objects
   * are created by the Bullet world (in our case, BulletManagerWorld), directly from the
   * btCollisionShapes. A method exists to retrieve obEntity instances from these:
   * BulletManagerWorld::getEntityFromProxy().
   */
-class btLocalGridBroadphase : public btBroadphaseInterface
+class sodaLocalGridBroadphase : public btBroadphaseInterface
 {
 public:
     /*!
@@ -49,12 +49,12 @@ public:
      * \param overlappingPairCache pointer to an already allocated pair cache that can be used
      * \return a new btLocalGridBroadphase
      */
-    btLocalGridBroadphase(PhysicsWorld *world = 0, btOverlappingPairCache *overlappingPairCache = 0);
+    sodaLocalGridBroadphase(sodaLogicWorld *world = 0, btOverlappingPairCache *overlappingPairCache = 0);
 
     /*!
      * \brief Default destructor.
      */
-    ~btLocalGridBroadphase();
+    ~sodaLocalGridBroadphase();
 
     /*!
      * \brief Creates a btBroadphaseProxy for an entity of this object's world.
@@ -204,16 +204,16 @@ public:
     }
 
     /*!
-     * \brief Sets a PhysicsWorld to use for the spatial subdivision broadphase.
+     * \brief Sets a sodaLogicWorld to use for the spatial subdivision broadphase.
      * \param newWorld the world to use
      */
-    inline void setWorld(PhysicsWorld *newWorld)
+    inline void setWorld(sodaLogicWorld *newWorld)
     {
         world = newWorld;
     }
 
     /*!
-     * \brief Removes any previously set PhysicsWorld for the broadphase, which will not return any collision anymore
+     * \brief Removes any previously set sodaLogicWorld for the broadphase, which will not return any collision anymore
      */
     inline void unsetWorld()
     {
@@ -221,18 +221,18 @@ public:
     }
 
     /*!
-     * \brief Returns a pointer to this broadphase's PhysicsWorld.
-     * \return a pointer to this btLocalGridBroadphase's PhysicsWorld
+     * \brief Returns a pointer to this broadphase's sodaLogicWorld.
+     * \return a pointer to this btLocalGridBroadphase's sodaLogicWorld
      */
-    inline PhysicsWorld *getWorld() const
+    inline sodaLogicWorld *getWorld() const
     {
         return world;
     }
 
 private:
-    PhysicsWorld            *world;             /*!< Pointer to the PhysicsWorld containing the grid used within this broadphase */
-    btOverlappingPairCache  *m_pairCache;       /*!< Pointer to the cache used for obEntityWrapper-obEntityWrapper overlaps */
-    btOverlappingPairCache  *m_borderCache;     /*!< Pointer to the cache used for obEntityWrapper-CellBorderEntity overlaps (always owned by self) */
+    sodaLogicWorld            *world;             /*!< Pointer to the sodaLogicWorld containing the grid used within this broadphase */
+    btOverlappingPairCache  *m_pairCache;       /*!< Pointer to the cache used for sodaDynamicEntity-sodaDynamicEntity overlaps */
+    btOverlappingPairCache  *m_borderCache;     /*!< Pointer to the cache used for sodaDynamicEntity-CellBorderEntity overlaps (always owned by self) */
     bool                    m_ownsPairCache;    /*!< Whether the object pointed to by m_pairCache belongs to this object */
 
 };

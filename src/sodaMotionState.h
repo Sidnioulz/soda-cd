@@ -27,17 +27,17 @@
 #include <btBulletDynamicsCommon.h>
 
 // Forward declarations
-class obEntityWrapper;
-class obDynamicRigidBody;
-class LocalGrid;
+class sodaDynamicEntity;
+class sodaDynamicRigidBody;
+class sodaLocalGrid;
 
-/*! \class obMotionState
-  * \brief A class for managing the position and orientation of a obRigidBody.
+/*! \class sodaMotionState
+  * \brief A class for managing the position and orientation of a sodaRigidBody.
   * \author Quentin Avril <quentin.avril@irisa.fr>
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
   *
   * This class contains the getWorldTransform and setWorldTransform methods of the motionState
-  * corresponding to dual Ogre-Bullet implementations of rigid bodies from the obRigidBody class.
+  * corresponding to dual Ogre-Bullet implementations of rigid bodies from the sodaRigidBody class.
   *
   * It is used to match Bullet object coordinate changes (expressed as btMotionState objects) to
   * the Ogre versions of these objects, by overriding the methods of this class to use Ogre object
@@ -45,7 +45,7 @@ class LocalGrid;
   *
   * \note For historical reasons, this class is named obMotionState. It could be named sodaMotionState.
   */
-class obMotionState : public btMotionState
+class sodaMotionState : public btMotionState
 {
 public:
     /*!
@@ -53,7 +53,7 @@ public:
       * \param parent the rigid body that this motion state belongs to
       * \return a new obMotionState
       */
-    obMotionState(obEntityWrapper *parent);
+    sodaMotionState(sodaDynamicEntity *parent);
 
 
     /*!
@@ -66,13 +66,13 @@ public:
       * cell coordinates, but uses another btMotionState's information instead of
       * being empty.
       */
-    obMotionState(obEntityWrapper *parent, const btMotionState &other);
+    sodaMotionState(sodaDynamicEntity *parent, const btMotionState &other);
 
     /*!
-      * \brief Returns the LocalGrid this object is within, or NULL if the object is outside its previous LocalGrid.
-      * \return the LocalGrid that owns the obMotionState's parent, or NULL if the parent is already out of the grid
+      * \brief Returns the sodaLocalGrid this object is within, or NULL if the object is outside its previous sodaLocalGrid.
+      * \return the sodaLocalGrid that owns the obMotionState's parent, or NULL if the parent is already out of the grid
       */
-    inline LocalGrid *getLocalGrid() const
+    inline sodaLocalGrid *getLocalGrid() const
     {
         return grid;
     }
@@ -81,7 +81,7 @@ public:
       * \brief Sets the LocalGrid this object is associated with (it must be within the grid).
       * \param newGrid the LocalGrid that owns the obMotionState's parent
       */
-    void setLocalGrid(LocalGrid *newGrid);
+    void setLocalGrid(sodaLocalGrid *newGrid);
 
     /*!
       * \brief Sets the LocalGrid this object is associated with to NULL (use to detach object from a grid).
@@ -110,8 +110,8 @@ public:
     }
 
 private:
-	obEntityWrapper *parentBody;      //!< The rigid body that uses this motion state implementation
-	LocalGrid       *grid;            //!< The grid that owns the object
+    sodaDynamicEntity *parentBody;      //!< The rigid body that uses this motion state implementation
+    sodaLocalGrid   *grid;            //!< The grid that owns the object
 	btVector3       lastCellCoords;   //!< Last known cell coordinates of the object
 };
 

@@ -28,7 +28,7 @@
 #include "obentitytransformrecordlist.h"
 
 // Forward declaration
-class PhysicsWorld;
+class sodaLogicWorld;
 
 /*! \class CircularTransformBuffer
   * \brief Implements a circular buffer containing information on transforms for all objects at given time steps.
@@ -52,10 +52,10 @@ class CircularTransformBuffer : protected QVector<QSharedPointer<obEntityTransfo
 public:
     /*!
       * \brief Default constructor.
-      * \param world the parent PhysicsWorld of this CircularTransformBuffer
+      * \param world the parent sodaLogicWorld of this CircularTransformBuffer
       * \return a new CircularTransformBuffer
       */
-    CircularTransformBuffer(PhysicsWorld *world);
+    CircularTransformBuffer(sodaLogicWorld *world);
 
     /*!
       * \brief Default destructor.
@@ -169,7 +169,7 @@ private:
     QMutex writeMutex;                      //!< A mutex for write operations
     bool writeAborted;                      //!< A boolean flag to abort all write operations on the buffer (prevents appending time steps)
 
-    PhysicsWorld *world;                    //!< Parent PhysicsWorld of this CircularTransformBuffer, used to retrieve world status on wait condition interrupt
+    sodaLogicWorld *world;                    //!< Parent sodaLogicWorld of this CircularTransformBuffer, used to retrieve world status on wait condition interrupt
 };
 
 #endif // CIRCULARTRANSFORMBUFFER_H

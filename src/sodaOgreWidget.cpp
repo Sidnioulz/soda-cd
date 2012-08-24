@@ -20,14 +20,14 @@
  */
 #include <QX11Info>
 #include <QtDebug>
-#include "ogrewidget.h"
-#include "ogreresources.h"
-#include "utils.h"
-#include "physicsworld.h"
+#include "sodaOgreWidget.h"
+#include "sodaOgreResources.h"
+#include "sodaUtils.h"
+#include "sodaLogicWorld.h"
 #include "experimenttrackinginterface.h"
 
 
-OgreWidget::OgreWidget(int targetFPS, QWidget *parent) :
+sodaOgreWidget::sodaOgreWidget(int targetFPS, QWidget *parent) :
     QGLWidget(parent),
     ogreRoot(0),
     ogreSceneManager(0),
@@ -42,7 +42,7 @@ OgreWidget::OgreWidget(int targetFPS, QWidget *parent) :
     renderingPassQueued(false)
 {
 #ifndef NDEBUG
-        qDebug() << "OgreWidget::OgreWidget(); Thread " << QString().sprintf("%p", QThread::currentThread());
+        qDebug() << "sodaOgreWidget::sodaOgreWidget(); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
     setAttribute(Qt::WA_OpaquePaintEvent);
     setAttribute(Qt::WA_PaintOnScreen);
@@ -55,14 +55,14 @@ OgreWidget::OgreWidget(int targetFPS, QWidget *parent) :
     globalTimer.start();
 
 #ifndef NDEBUG
-        qDebug() << "OgreWidget::OgreWidget(); Constructed; Thread " << QString().sprintf("%p", QThread::currentThread());
+        qDebug() << "sodaOgreWidget::sodaOgreWidget(); Constructed; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 }
 
-OgreWidget::~OgreWidget()
+sodaOgreWidget::~sodaOgreWidget()
 {
 #ifndef NDEBUG
-        qDebug() << "OgreWidget::~OgreWidget(); Thread " << QString().sprintf("%p", QThread::currentThread());
+        qDebug() << "sodaOgreWidget::~sodaOgreWidget(); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
     // Get rid of frame listener
@@ -85,47 +85,50 @@ OgreWidget::~OgreWidget()
     // Destroy render window
     ogreRoot->destroyRenderTarget(ogreRenderWindow);
 
-    //TODO: for each resource group in rgs = Ogre::ResourceGroupManager::getSingleton().getResourceGroups();
-    //      Ogre::ResourceGroupManager::getSingleton().destroyResourceGroup(rgs[i]);
+    // Delete all resource groups
+    Ogre::StringVector groups = Ogre::ResourceGroupManager::getSingleton().getResourceGroups();
+    int sz = groups.size();
+    for(int i=0; i<sz; ++i)
+        Ogre::ResourceGroupManager::getSingleton().destroyResourceGroup(groups[i]);
 
     // Destroy scene manager
-    ogreRoot->destroySceneManager(ogreSceneManager); //FIXME: crashes on SceneManager::destroyAllMovableObjects
+    ogreRoot->destroySceneManager(ogreSceneManager);
 
     // Destroy root
-    OgreResources::deleteRoot(); //FIXME: crashes on SceneManager::destroyAllMovableObjects
+    sodaOgreResources::deleteRoot();
 
 #ifndef NDEBUG
-        qDebug() << "OgreWidget::OgreWidget(); Destroyed; Thread " << QString().sprintf("%p", QThread::currentThread());
+        qDebug() << "sodaOgreWidget::sodaOgreWidget(); Destroyed; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 }
 
-Ogre::SceneManager* OgreWidget::getSceneManager() const
+Ogre::SceneManager* sodaOgreWidget::getSceneManager() const
 {
     return ogreSceneManager;
 }
 
-Ogre::Root* OgreWidget::getRoot() const
+Ogre::Root* sodaOgreWidget::getRoot() const
 {
     return ogreRoot;
 }
 
-btScalar OgreWidget::getTargetTimeStep() const
+btScalar sodaOgreWidget::getTargetTimeStep() const
 {
     return 1.0f/targetFPS;
 }
 
-int OgreWidget::getTargetFPS() const
+int sodaOgreWidget::getTargetFPS() const
 {
     return targetFPS;
 }
 
-void OgreWidget::setTargetFPS(const int newFPS)
+void sodaOgreWidget::setTargetFPS(const int newFPS)
 {
     qWarning() << "Changing the FPS of the application has not been tested yet.";
     targetFPS = newFPS;
 }
 
-void OgreWidget::showEvent(QShowEvent *e)
+void sodaOgreWidget::showEvent(QShowEvent *e)
 {
 if(!ogreRoot)
     {
@@ -135,7 +138,7 @@ if(!ogreRoot)
 QWidget::showEvent(e);
 }
 
-void OgreWidget::paintEvent(QPaintEvent *e)
+void sodaOgreWidget::paintEvent(QPaintEvent *e)
 {
 //    ogreRoot->_fireFrameStarted();
 //    OgreResources::lockSceneManagerMutex();
@@ -146,7 +149,7 @@ void OgreWidget::paintEvent(QPaintEvent *e)
     e->accept();
 }
 
-void OgreWidget::moveEvent(QMoveEvent *e)
+void sodaOgreWidget::moveEvent(QMoveEvent *e)
 {
     QWidget::moveEvent(e);
 
@@ -157,7 +160,7 @@ void OgreWidget::moveEvent(QMoveEvent *e)
     }
 }
 
-void OgreWidget::resizeEvent(QResizeEvent *e)
+void sodaOgreWidget::resizeEvent(QResizeEvent *e)
 {
     QWidget::resizeEvent(e);
 
@@ -177,7 +180,7 @@ void OgreWidget::resizeEvent(QResizeEvent *e)
     }
 }
 
-void OgreWidget::keyPressEvent(QKeyEvent *e)
+void sodaOgreWidget::keyPressEvent(QKeyEvent *e)
 {
     if(e->key() == Qt::Key_Print)
     {
@@ -328,10 +331,10 @@ void OgreWidget::keyPressEvent(QKeyEvent *e)
     }
 }
 
-void OgreWidget::initOgreSystem()
+void sodaOgreWidget::initOgreSystem()
 {
     // Create the Ogre root object
-    ogreRoot = OgreResources::createRoot();
+    ogreRoot = sodaOgreResources::createRoot();
 
     // A list of required plugins
     Ogre::StringVector required_plugins;
@@ -390,7 +393,7 @@ void OgreWidget::initOgreSystem()
     ogreRoot->setFrameSmoothingPeriod(0.05);
 
     // Create the Scene Manager
-    ogreSceneManager = OgreResources::createSceneManager();
+    ogreSceneManager = sodaOgreResources::createSceneManager();
 
     // Try to get the right widget handle config - this code works at least under Linux
     Ogre::NameValuePairList viewConfig;
@@ -466,7 +469,7 @@ void OgreWidget::initOgreSystem()
     emit(ogreInitialized());
 }
 
-void OgreWidget::setupLoadResources()
+void sodaOgreWidget::setupLoadResources()
 {
     // Load resource paths from config file
     Ogre::ConfigFile cf;
@@ -506,7 +509,7 @@ void OgreWidget::setupLoadResources()
     Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 }
 
-bool OgreWidget::frameRenderingQueued(const Ogre::FrameEvent &evt)
+bool sodaOgreWidget::frameRenderingQueued(const Ogre::FrameEvent &evt)
 {
     if(ogreRenderWindow->isClosed())
         return false;
@@ -529,7 +532,7 @@ bool OgreWidget::frameRenderingQueued(const Ogre::FrameEvent &evt)
     return true;
 }
 
-void OgreWidget::render()
+void sodaOgreWidget::render()
 {
     // Internal clock of the rendering loop
     static btScalar simulationRunTime = 0;
@@ -537,13 +540,10 @@ void OgreWidget::render()
     // Indicates that rendering started
     currentlyRendering = true;
 
-    //FIXME: this still not working!
-    // Variable used to store the time that is queried, and actually retrieved
-
     btScalar currentTimeStep = simulationRunTime + getTargetTimeStep();
 //    qDebug() << "Runtime is now (" << simulationRunTime <<") and time step to be asked is ("<< currentTimeStep<<");";
 
-    OgreResources::lockSceneManagerMutex();
+    sodaOgreResources::lockSceneManagerMutex();
     // If there is no buffer interface, directly skip to rendering
     if(hasBufferInterface())
     {
@@ -572,14 +572,14 @@ void OgreWidget::render()
     //                }
     //                else if(record.status == obEntity::NormalStatus)
     //                {
-    //                    record.obEnt->setColor(PhysicsWorld::EntityColors[record.obEnt->getOwnerId()%PhysicsWorld::NbColors][0]/255.f,
-    //                                           PhysicsWorld::EntityColors[record.obEnt->getOwnerId()%PhysicsWorld::NbColors][1]/255.f,
-    //                                           PhysicsWorld::EntityColors[record.obEnt->getOwnerId()%PhysicsWorld::NbColors][2]/255.f);
+    //                    record.obEnt->setColor(sodaLogicWorld::EntityColors[record.obEnt->getOwnerId()%sodaLogicWorld::NbColors][0]/255.f,
+    //                                           sodaLogicWorld::EntityColors[record.obEnt->getOwnerId()%sodaLogicWorld::NbColors][1]/255.f,
+    //                                           sodaLogicWorld::EntityColors[record.obEnt->getOwnerId()%sodaLogicWorld::NbColors][2]/255.f);
     //                }
 
                     // Set position and orientation
-                    node->setPosition(Utils::vectorFromBullet(record.transform.getOrigin()));
-                    node->setOrientation(Utils::quaternionFromBullet(record.transform.getRotation()));
+                    node->setPosition(sodaUtils::vectorFromBullet(record.transform.getOrigin()));
+                    node->setOrientation(sodaUtils::quaternionFromBullet(record.transform.getRotation()));
                 }
             }
         }
@@ -588,11 +588,11 @@ void OgreWidget::render()
     // Render
     ogreRoot->renderOneFrame();
 #ifndef NDEBUG
-//    qDebug() << "OgreWidget::render(); Simulation runtime " << simulationRunTime * 1000 << " / Actual time spent" << globalTimer.elapsed() << "; Thread " << QString().sprintf("%p", QThread::currentThread());
+//    qDebug() << "sodaOgreWidget::render(); Simulation runtime " << simulationRunTime * 1000 << " / Actual time spent" << globalTimer.elapsed() << "; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
     update();
-    ExperimentTrackingInterface::getInterface()->onTimestampRendered(simulationRunTime);
-    OgreResources::unlockSceneManagerMutex();
+    ExperimentTrackingInterface::getInstance()->onTimestampRendered(simulationRunTime);
+    sodaOgreResources::unlockSceneManagerMutex();
 
     // Render again if we missed a tick. This may cause stack overflow in extreme cases.
     if(renderingPassQueued)
@@ -605,13 +605,13 @@ void OgreWidget::render()
 }
 
 
-void OgreWidget::setCameraPosition(const Ogre::Vector3 &pos)
+void sodaOgreWidget::setCameraPosition(const Ogre::Vector3 &pos)
 {
     ogreCamera->setPosition(pos);
     update();
 }
 
-void OgreWidget::onTimerTick()
+void sodaOgreWidget::onTimerTick()
 {
     if(currentlyRendering)
         renderingPassQueued = true;
@@ -619,18 +619,18 @@ void OgreWidget::onTimerTick()
         render();
 }
 
-void OgreWidget::onEntityDeletion(const Ogre::Entity *&ent)
+void sodaOgreWidget::onEntityDeletion(const Ogre::Entity *&ent)
 {
 #ifndef NDEBUG
     qDebug() << "Utils::deleteOgreEntity(" << ent->getName().c_str() << "; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
-    OgreResources::getSceneManager()->destroyEntity(ent->getName());
+    sodaOgreResources::getSceneManager()->destroyEntity(ent->getName());
 }
 
-void OgreWidget::onSceneNodeDeletion(const Ogre::SceneNode *&node)
+void sodaOgreWidget::onSceneNodeDeletion(const Ogre::SceneNode *&node)
 {
 #ifndef NDEBUG
     qDebug() << "Utils::deleteSceneNode(" << node->getName().c_str() << "; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
-    OgreResources::getSceneManager()->getRootSceneNode()->removeAndDestroyChild(node->getName());
+    sodaOgreResources::getSceneManager()->getRootSceneNode()->removeAndDestroyChild(node->getName());
 }

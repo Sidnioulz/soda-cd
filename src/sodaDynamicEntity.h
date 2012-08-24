@@ -26,19 +26,17 @@
 #include <exception>
 #include <OgreString.h>
 
-#include "utils.h"
-#include "obdynamicrigidbody.h"
-#include "obentity.h"
+#include "sodaUtils.h"
+#include "sodaDynamicRigidBody.h"
+#include "sodaEntity.h"
 #include "Parser/Animation.h"
 #include "Parser/Action.h"
-//TODO: make a btShape index that stores and reuses btShapes per name and scale, in order to save memory
-//TODO: same for materials
 
 // Forward declaration
-class PhysicsWorld;
+class sodaLogicWorld;
 
 /*! \class EntityAlreadyExistsException
-  * \brief An exception that occurs when a obEntityWrapper is created using the name of an already existing one.
+  * \brief An exception that occurs when a sodaDynamicEntity is created using the name of an already existing one.
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
   */
 class EntityAlreadyExistsException : public std::exception
@@ -57,7 +55,7 @@ public:
 
     /*! \brief Default constructor.
       * \param name name of the already defined entity
-      * \return a new obEntityWrapper
+      * \return a new sodaDynamicEntity
       */
     EntityAlreadyExistsException(const Ogre::String &name)
     {
@@ -84,26 +82,26 @@ private:
     std::string msg; //!< Holder for the message string of this exception
 };
 
-/*! \class obEntityWrapper
+/*! \class sodaDynamicEntity
   * \brief A wrapper to manipulate entities both for Ogre and Bullet at the same time
   * \author Quentin Avril <quentin.avril@irisa.fr>
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
   *
-  * This class implements entities that are both Ogre::Entity and obDynamicRigidBody.
+  * This class implements entities that are both Ogre::Entity and sodaDynamicRigidBody.
   * It allows synchronous manipulation of object representations in Ogre and Bullet.
   *
-  * \note For historical reasons, this class is named obEntityWrapper. A more suitable
+  * \note For historical reasons, this class is named sodaDynamicEntity. A more suitable
   * name for it would be sodaDynamicEntity.
   *
-  * \attention Ownership of an obEntityWrapper is not transferable from world to world.
-  * Any obEntityWrapper that is created within a world should be deleted within this world.
-  * The general practice when messaging an obEntityWrapper is to make a deep copy of it,
+  * \attention Ownership of an sodaDynamicEntity is not transferable from world to world.
+  * Any sodaDynamicEntity that is created within a world should be deleted within this world.
+  * The general practice when messaging an sodaDynamicEntity is to make a deep copy of it,
   * and to let the recipient world decide what to do with it.
   */
-class obEntityWrapper : public obEntity
+class sodaDynamicEntity : public sodaEntity
 {
 public:
-    //TODO: manage default status for obEntityWrapper (should be detached until added to a world, then normal)
+    //TODO: manage default status for sodaDynamicEntity (should be detached until added to a world, then normal)
 
     /*! \brief Default constructor.
       * \param name unique name of the entity in the world
@@ -114,11 +112,10 @@ public:
       * \param scale the scale of the entity with regard to the mesh default size
       * \param mass the mass of the entity
       * \param shape bullet shape of the entity
-      * \param randomColor if the object is not static, whether to give it a random color
-      * \return a new obEntityWrapper
+      * \return a new sodaDynamicEntity
       * \throw EntityAlreadyExistsException if the specified name is already taken by another entity
       */
-    obEntityWrapper(const Ogre::String &name,
+    sodaDynamicEntity(const Ogre::String &name,
                     const Ogre::String &meshName,
                     const Ogre::Vector3 &pos = Ogre::Vector3(0,0,0),
                     const Ogre::Quaternion &quat = Ogre::Quaternion::IDENTITY,
@@ -130,41 +127,41 @@ public:
 
 
 
-    /*! \brief Copy constructor. Creates a worldless obEntityWrapper.
-      * \param other the obEntityWrapper to copy
-      * \return a new obEntityWrapper
+    /*! \brief Copy constructor. Creates a worldless sodaDynamicEntity.
+      * \param other the sodaDynamicEntity to copy
+      * \return a new sodaDynamicEntity
       * \throw EntityAlreadyExistsException if the specified name is already taken by another entity
       *
-      * This constructor copies an obEntityWrapper from another PhysicsWorld, but leaves it
-      * unattached to any PhysicsWorld. Both worlds also share a pointer to their Ogre::Entity.
+      * This constructor copies an sodaDynamicEntity from another sodaLogicWorld, but leaves it
+      * unattached to any sodaLogicWorld. Both worlds also share a pointer to their Ogre::Entity.
       */
-    obEntityWrapper(const obEntityWrapper &other) throw(EntityAlreadyExistsException);
+    sodaDynamicEntity(const sodaDynamicEntity &other) throw(EntityAlreadyExistsException);
 
     /*! \brief Default destructor.
       */
-    ~obEntityWrapper();
+    ~sodaDynamicEntity();
 
     /*!
      * \brief Returns the type of Entity this object is
-     * \return obEntityWrapperType
+     * \return sodaDynamicEntityType
      */
     inline short getType() const
     {
-        return obEntityWrapperType;
+        return DynamicEntityType;
     }
 
     /*! \brief Partially copies the current entity.
-      * \return a new obEntityWrapper with the same mesh name.
+      * \return a new sodaDynamicEntity with the same mesh name.
       * \throw EntityAlreadyExistsException if the generated name is already taken by another entity
       * \deprecated This method makes a very partial copy of the current instance, and
       * it is heavily recommanded not to use it unless you know what you're doig. Please
       * check if the copy constructor fits your needs before using this method.
       *
-      * This method creates a new instance of obEntityWrapper using the mesh name
+      * This method creates a new instance of sodaDynamicEntity using the mesh name
       * of the current one, and setting it as a dynamic mesh, with default origin,
       * rotation and scale parameters.
       */
-    obEntityWrapper* clone() const throw(EntityAlreadyExistsException);
+    sodaDynamicEntity* clone() const throw(EntityAlreadyExistsException);
 
     /*! \brief Tells whether the entity has a static mesh.
       * \return whether the object's mesh is static
@@ -183,41 +180,41 @@ public:
     }
 
     /*! \brief Gets the id of the physics world in which the entity exists and is managed.
-      * \return the id of the PhysicsWorld that owns the entity
+      * \return the id of the sodaLogicWorld that owns the entity
       */
 	short getOwnerId() const;
 
     /*! \brief Gets the physics world in which the entity exists and is managed.
-      * \return the PhysicsWorld of the entity
+      * \return the sodaLogicWorld of the entity
       */
-	inline PhysicsWorld* getOwnerWorld() const
+    inline sodaLogicWorld* getOwnerWorld() const
 	{
 		return world;
 	}
 
     /*! \brief Modifies the physics world in which the entity exists and is managed.
       * \param newWorld the new primary physics world
-      * \return a pointer to the previous PhysicsWorld (which may be null)
+      * \return a pointer to the previous sodaLogicWorld (which may be null)
       */
-    PhysicsWorld* setOwnerWorld(PhysicsWorld *newWorld);
+    sodaLogicWorld* setOwnerWorld(sodaLogicWorld *newWorld);
 
 
     /*! \brief Removes to the pointer to the world in which the entity exists (means that it is not attached to any world at the moment).
-      * \return a pointer to the previous PhysicsWorld (which may be null)
+      * \return a pointer to the previous sodaLogicWorld (which may be null)
       */
-    PhysicsWorld* unsetOwnerWorld();
+    sodaLogicWorld* unsetOwnerWorld();
 
     /*! \brief Returns a list of worlds in which the entity exists, but that do not manage its collisions.
 	  * \return a const pointer to the vector of worlds in which this object exists
       */
-	const QVector<PhysicsWorld*> *getSecondaryWorlds() const;
+    const QVector<sodaLogicWorld*> *getSecondaryWorlds() const;
 
       /*! \brief Gets the size of the entity's bounding box.
-      * \return the size of the Ogre::Entity's bounding box scaled with the scale of the obEntityWrapper
+      * \return the size of the Ogre::Entity's bounding box scaled with the scale of the sodaDynamicEntity
       */
     inline btVector3 getSize() const
 	{
-        return Utils::btVectorFromOgre(getScale() * ogreEntity->getBoundingBox().getSize());
+        return sodaUtils::btVectorFromOgre(getScale() * ogreEntity->getBoundingBox().getSize());
 	}
 
     /*! \brief Gets the animation of the mesh.
@@ -256,7 +253,7 @@ public:
       */
 	inline Ogre::Quaternion getOrientation() const
 	{
-		return Utils::quaternionFromBullet(obBody->getBulletBody()->getOrientation());
+        return sodaUtils::quaternionFromBullet(obBody->getBulletBody()->getOrientation());
 	}
 
     /*! \brief Changes the frame start number of the entity.
@@ -274,7 +271,7 @@ public:
       */
 	inline void setMaterialName(const Ogre::String &newName)
 	{
-		materialName = newName;
+        materialName.append(newName);
 		ogreEntity->setMaterialName(newName);
 	}
 
@@ -287,9 +284,9 @@ public:
 	}
 
     /*! \brief Gets the rigid body of the entity.
-	  * \return the obDynamicRigidBody of the entity
+      * \return the sodaDynamicRigidBody of the entity
       */
-    inline obDynamicRigidBody *getRigidBody() const
+    inline sodaDynamicRigidBody *getRigidBody() const
 	{
 		return obBody;
 	}
@@ -314,7 +311,7 @@ public:
     }
 
     /*! \brief Gets the name of this object's Ogre entity.
-      * \return the name of the Ogre::Entity associated to this obEntityWrapper
+      * \return the name of the Ogre::Entity associated to this sodaDynamicEntity
       */
     inline Ogre::String getName() const
     {
@@ -322,7 +319,7 @@ public:
     }
 
     /*! \brief Gets the display name of this object's Ogre entity.
-      * \return the display name of this obEntityWrapper
+      * \return the display name of this sodaDynamicEntity
       */
     inline const char *getDisplayName() const
     {
@@ -368,22 +365,22 @@ protected:
 private:
     static unsigned int nextInLine;              //!< A number used to generate unique names for objects
 
-    // Reference parameters, do not need to be copied over when an obEntityWrapper exists in several worlds
-    QSharedPointer<Ogre::Entity>    ogreEntity;          //!< Shared pointer to the Ogre entity of this obEntityWrapper
-    QSharedPointer<Ogre::SceneNode> ogreNode;            //!< Shared pointer to the Ogre Scene Node of this obEntityWrapper's rigid body
+    // Reference parameters, do not need to be copied over when an sodaDynamicEntity exists in several worlds
+    QSharedPointer<Ogre::Entity>    ogreEntity;          //!< Shared pointer to the Ogre entity of this sodaDynamicEntity
+    QSharedPointer<Ogre::SceneNode> ogreNode;            //!< Shared pointer to the Ogre Scene Node of this sodaDynamicEntity's rigid body
     Ogre::String                    meshName;            //!< Name of the entity's mesh
     Ogre::String                    materialName;        //!< Name of the entity's material
 
-    // PhysicsWorld specific parameters
-    btCollisionShape                *shape;              //!< Bullet collision shape given to the obEntityWrapper's constructor
-    obDynamicRigidBody              *obBody;             //!< Bullet rigid body of the entity
-    PhysicsWorld                    *world;              //!< Bullet physics world that manages the entity's collisions
+    // sodaLogicWorld specific parameters
+    btCollisionShape                *shape;              //!< Bullet collision shape given to the sodaDynamicEntity's constructor
+    sodaDynamicRigidBody            *obBody;             //!< Bullet rigid body of the entity
+    sodaLogicWorld                    *world;              //!< Bullet physics world that manages the entity's collisions
 
-    float                           red;                 /*!< Red component of the obEntityWrapper's color */
-    float                           green;               /*!< Green component of the obEntityWrapper's color */
-    float                           blue;                /*!< Blue component of the obEntityWrapper's color */
+    float                           red;                 /*!< Red component of the sodaDynamicEntity's color */
+    float                           green;               /*!< Green component of the sodaDynamicEntity's color */
+    float                           blue;                /*!< Blue component of the sodaDynamicEntity's color */
 
-    // PhysicsWorld specific parameters, not used yet
+    // sodaLogicWorld specific parameters, not used yet
     bool                            staticMesh;          //!< Tells whether the entity is static or dynamic
     Animation                       *animation;          //!< Current animation of the entity wrapper (not used yet)
     int                             frameStart;          //!< Starting frame number of the entity (not used yet)

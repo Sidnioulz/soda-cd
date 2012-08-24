@@ -22,15 +22,15 @@
 
 #include <QSharedPointer>
 #include <OgreString.h>
-#include "obEntityWrapper.h"
-#include "physicsworld.h"
+#include "sodaDynamicEntity.h"
+#include "sodaLogicWorld.h"
 #include "Parser/Animation.h"
 #include "Parser/Action.h"
-#include "utils.h"
+#include "sodaUtils.h"
 #include "main.h"
-#include "ogreresources.h"
+#include "sodaOgreResources.h"
 
-unsigned int obEntityWrapper::nextInLine = 0;
+unsigned int sodaDynamicEntity::nextInLine = 0;
 
 namespace {
     //! Deletes an Ogre::Entity properly
@@ -55,7 +55,7 @@ namespace {
 
 
 
-obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &meshName, const Ogre::Vector3 &pos, const Ogre::Quaternion &quat, const bool staticMesh, const Ogre::Vector3 &scale, const int mass, btCollisionShape *shape)  throw(EntityAlreadyExistsException) :
+sodaDynamicEntity::sodaDynamicEntity(const Ogre::String &name, const Ogre::String &meshName, const Ogre::Vector3 &pos, const Ogre::Quaternion &quat, const bool staticMesh, const Ogre::Vector3 &scale, const int mass, btCollisionShape *shape)  throw(EntityAlreadyExistsException) :
     ogreEntity(0),
     ogreNode(0),
     meshName(meshName),
@@ -70,19 +70,19 @@ obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &m
     frameStart(0)
 {
     // If the scene manager doesn't already have an entity with this name
-    if (!OgreResources::getSceneManager()->hasEntity(name))
+    if (!sodaOgreResources::getSceneManager()->hasEntity(name))
     {
         // Create the rigid body
-        obBody = new obDynamicRigidBody(this,
-                                        Utils::btVectorFromOgre(pos),
-                                        Utils::btQuaternionFromOgre(quat),
-                                        Utils::btVectorFromOgre(scale),
+        obBody = new sodaDynamicRigidBody(this,
+                                        sodaUtils::btVectorFromOgre(pos),
+                                        sodaUtils::btQuaternionFromOgre(quat),
+                                        sodaUtils::btVectorFromOgre(scale),
                                         mass);
 
-        ogreEntity = QSharedPointer<Ogre::Entity>(OgreResources::getSceneManager()->createEntity(name, meshName), deleteOgreEntity);
+        ogreEntity = QSharedPointer<Ogre::Entity>(sodaOgreResources::getSceneManager()->createEntity(name, meshName), deleteOgreEntity);
         ogreEntity->setCastShadows(true);
 
-        ogreNode = QSharedPointer<Ogre::SceneNode>(OgreResources::getSceneManager()->getRootSceneNode()->createChildSceneNode(name, pos, quat), deleteSceneNode);
+        ogreNode = QSharedPointer<Ogre::SceneNode>(sodaOgreResources::getSceneManager()->getRootSceneNode()->createChildSceneNode(name, pos, quat), deleteSceneNode);
         ogreNode->scale(scale);
         getSceneNode()->attachObject(ogreEntity.data());
 
@@ -112,8 +112,8 @@ obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &m
         // This step is compulsory to be able to retrieve the entity from the broad-phase algorithm.
         obBody->getBulletBody()->getCollisionShape()->setUserPointer(this);
 
-        obBody->getBulletBody()->getWorldTransform().setOrigin(Utils::btVectorFromOgre(pos));
-        obBody->getBulletBody()->getWorldTransform().setRotation(Utils::btQuaternionFromOgre(quat));
+        obBody->getBulletBody()->getWorldTransform().setOrigin(sodaUtils::btVectorFromOgre(pos));
+        obBody->getBulletBody()->getWorldTransform().setRotation(sodaUtils::btQuaternionFromOgre(quat));
     }
     else
     {
@@ -121,11 +121,12 @@ obEntityWrapper::obEntityWrapper(const Ogre::String &name, const Ogre::String &m
     }
 }
 
-obEntityWrapper::obEntityWrapper(const obEntityWrapper &other) throw(EntityAlreadyExistsException) :
-    obEntity(),
+sodaDynamicEntity::sodaDynamicEntity(const sodaDynamicEntity &other) throw(EntityAlreadyExistsException) :
+    sodaEntity(),
     ogreEntity(other.ogreEntity),
     ogreNode(other.ogreNode),
     meshName(other.getMeshName()),
+    materialName(other.getMaterialName()),
     shape(other.shape),
     obBody(0),
     world(0),
@@ -134,54 +135,49 @@ obEntityWrapper::obEntityWrapper(const obEntityWrapper &other) throw(EntityAlrea
     frameStart(other.getFrameStart())
 {
     // Create the rigid body using a copy constructor
-    obBody = new obDynamicRigidBody(this, *other.obBody);
+    obBody = new sodaDynamicRigidBody(this, *other.obBody);
 }
 
-obEntityWrapper::~obEntityWrapper()
+sodaDynamicEntity::~sodaDynamicEntity()
 {
-    //FIXME: manage this
-//    ogreNode->removeAndDestroyAllChildren();
-//    delete ogreNode;
-//    delete ogreEntity;
-
     delete obBody;
 	delete animation;
 }
 
-obEntityWrapper* obEntityWrapper::clone() const throw(EntityAlreadyExistsException)
+sodaDynamicEntity* sodaDynamicEntity::clone() const throw(EntityAlreadyExistsException)
 {
-   return new obEntityWrapper(ogreEntity->getName()+Ogre::StringConverter::toString(nextInLine++),
+   return new sodaDynamicEntity(ogreEntity->getName()+Ogre::StringConverter::toString(nextInLine++),
                               meshName,
                               Ogre::Vector3::ZERO,
                               Ogre::Quaternion::IDENTITY,
                               false);
 }
 
-short obEntityWrapper::getOwnerId() const
+short sodaDynamicEntity::getOwnerId() const
 {
 	if(world)
 		return world->getId();
 	else
-		return PhysicsWorld::NullWorldId;
+        return sodaLogicWorld::NullWorldId;
 }
 
-PhysicsWorld* obEntityWrapper::setOwnerWorld(PhysicsWorld *newWorld)
+sodaLogicWorld* sodaDynamicEntity::setOwnerWorld(sodaLogicWorld *newWorld)
 {
-    PhysicsWorld *oldWorld=world;
+    sodaLogicWorld *oldWorld=world;
     world = newWorld;
 
     return oldWorld;
 }
 
-PhysicsWorld* obEntityWrapper::unsetOwnerWorld()
+sodaLogicWorld* sodaDynamicEntity::unsetOwnerWorld()
 {
-    PhysicsWorld *oldWorld=world;
+    sodaLogicWorld *oldWorld=world;
     world = NULL;
 
     return oldWorld;
 }
 
-Animation* obEntityWrapper::getAnimation() const
+Animation* sodaDynamicEntity::getAnimation() const
 {
 	qDebug("TODO");
     if(isStatic())
@@ -190,31 +186,31 @@ Animation* obEntityWrapper::getAnimation() const
         return NULL;
 }
 
-bool obEntityWrapper::hasAnimation() const
+bool sodaDynamicEntity::hasAnimation() const
 {
 	qDebug("TODO");
     return animation!=NULL;
 }
 
-void obEntityWrapper::setAnimation(Animation* anim)
+void sodaDynamicEntity::setAnimation(Animation* anim)
 {
 	qDebug("TODO");
     animation = anim;
 }
 
-void obEntityWrapper::setFrameStart(const int newFrameStart)
+void sodaDynamicEntity::setFrameStart(const int newFrameStart)
 {
 	qDebug("TODO");
 	frameStart = newFrameStart;
 }
 
-int obEntityWrapper::getFrameStart() const
+int sodaDynamicEntity::getFrameStart() const
 {
 	qDebug("TODO");
 	return frameStart;
 }
 
-void obEntityWrapper::setColor(const float r, const float g, const float b)
+void sodaDynamicEntity::setColor(const float r, const float g, const float b)
 {
     // Don't re-set an already set color
     if(r == red && g == green && b == blue)
@@ -229,23 +225,24 @@ void obEntityWrapper::setColor(const float r, const float g, const float b)
     Ogre::String prefix;
     prefix.append(QString(materialName.c_str()).split(":").first().toAscii());
 
-    materialName = prefix;
-    materialName.append(QString("color#%1#%2#%3").arg(r).arg(g).arg(b).toAscii());
+    materialName.clear();
+    materialName.append(prefix);
+    materialName.append(QString(":color#%1#%2#%3").arg(r).arg(g).arg(b).toAscii());
 
     // Get (or create) the corresponding material
-    Ogre::MaterialPtr mat = OgreResources::createOrRetrieveMaterial(materialName);
+    Ogre::MaterialPtr mat = sodaOgreResources::createMaterialFromParent(materialName, prefix);
 
     // Set lighting according to the color
     //FIXME: more efficient to just do this if material did NOT exist before (i.e. make a createOrRetrieveColoredFromParent())
     mat->setAmbient(r,g,b);
     mat->setDiffuse(r,g,b,1);
-    mat->setSpecular(0,0,0,1);
+    mat->setSpecular(r,g,b,1);
 
     // Have the entity use the new material
     ogreEntity->setMaterial(mat);
 }
 
-void obEntityWrapper::setRandomColor()
+void sodaDynamicEntity::setRandomColor()
 {
     // Random color selection
     float r = (float)((float)rand() / ((float)RAND_MAX + 1));

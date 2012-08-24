@@ -70,7 +70,7 @@ public:
       * \param obEnt the entity for which to add a obEntityTransformRecord
       * \param transform the btTransform of the body
       */
-    inline void addTransform(obEntityWrapper *obEnt, const btTransform &transform)
+    inline void addTransform(sodaDynamicEntity *obEnt, const btTransform &transform)
     {
         QList::append(obEntityTransformRecord(obEnt->getName(), obEnt->getStatus(), transform));
     }
@@ -84,21 +84,21 @@ public:
     }
 
     /*!
-      * \brief Tells whether an obEntityWrapper has an associated value in the list.
-      * \param key the obEntityWrapper for which a record is wanted
+      * \brief Tells whether a sodaDynamicEntity has an associated value in the list.
+      * \param key the sodaDynamicEntity for which a record is wanted
       * \return true if the key exists in the list, false otherwise
       */
-    inline bool contains(obEntityWrapper *key) const
+    inline bool contains(sodaDynamicEntity *key) const
     {
         return QList::contains(obEntityTransformRecord(key->getName(), key->getStatus()));
     }
 
     /*!
-      * \brief Returns the record associated to a given obEntityWrapper, or a NULL one if it doesn't exist.
-      * \param key the obEntityWrapper for which the value must be returned
+      * \brief Returns the record associated to a given sodaDynamicEntity, or a NULL one if it doesn't exist.
+      * \param key the sodaDynamicEntity for which the value must be returned
       * \return the value if it was found, or an empty obEntityTransformRecord otherwise
       */
-    const obEntityTransformRecord find(obEntityWrapper *key) const;
+    const obEntityTransformRecord find(sodaDynamicEntity *key) const;
 
     /*!
       * \brief Gets the reference time step of this list.

@@ -19,64 +19,62 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef OBDYNAMICRIGIDBODY_H
-#define OBDYNAMICRIGIDBODY_H
+#ifndef SODADYNAMICRIGIDBODY_H
+#define SODADYNAMICRIGIDBODY_H
 
 #include <Ogre.h>
 #include <OgreVector3.h>
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
-#include "obMotionState.h"
-#include "obRigidBody.h"
+#include "sodaMotionState.h"
+#include "sodaRigidBody.h"
 
 // Forward declaration
-class obEntityWrapper;
+class sodaDynamicEntity;
 
-/*! \class obDynamicRigidBody
+/*! \class sodaDynamicRigidBody
   * \brief A dynamic rigid body
   * \author Quentin Avril <quentin.avril@irisa.fr>
   * \author Steve Dodier-Lazaro <steve.dodier-lazaro@inria.fr, sidnioulz@gmail.com>
   *
-  * The dynamic version of obRigidBody includes a special implementation of motion
+  * The dynamic version of sodaRigidBody includes a special implementation of motion
   * states (obMotionState).
-  *
-  * \note For historical reasons, this class is named obDynamicRigidBody. It could be named sodaDynamicRigidBody.
   */
-class obDynamicRigidBody : public obRigidBody
+class sodaDynamicRigidBody : public sodaRigidBody
 {
 public:
     /*!
       * \brief Default constructor.
-      * \param parent the parent obEntityWrapper
+      * \param parent the parent sodaDynamicEntity
       * \param pos the initial position of the body
       * \param quat the initial rotation of the body
       * \param scale the scale of the body with regard to the mesh default size
       * \param mass the mass of the body
-      * \return a new obDynamicRigidBody
+      * \return a new sodaDynamicRigidBody
       */
-    obDynamicRigidBody(obEntityWrapper *parent,
+    sodaDynamicRigidBody(sodaDynamicEntity *parent,
                        const btVector3 &pos,
                        const btQuaternion &quat,
                        const btVector3 &scale = btVector3(1,1,1),
                        const int mass = 0);
     /*!
       * \brief Special copy constructor.
-      * \param parent the parent obEntityWrapper of this instance
-      * \param other the obDynamicRigidBody whose parameters to copy
-      * \return a new obDynamicRigidBody
+      * \param parent the parent sodaDynamicEntity of this instance
+      * \param other the sodaDynamicRigidBody whose parameters to copy
+      * \return a new sodaDynamicRigidBody
       *
-      * \warning This constructor does not copy the other obDynamicRigidBody's btRigidBody.
+      * \warning This constructor does not copy the other sodaDynamicRigidBody's btRigidBody.
       * Clients still have to create the btRigidBody themselves after constructing the
-      * obDynamicRigidBody.
+      * sodaDynamicRigidBody.
       */
-    obDynamicRigidBody(obEntityWrapper *parent,
-                       const obDynamicRigidBody &other);
+    sodaDynamicRigidBody(sodaDynamicEntity *parent,
+                       const sodaDynamicRigidBody &other);
 
 	/*!
-	  * \brief Returns the parent obEntityWrapper of this rigid body
-	  * \return the parent obEntityWrapper of this object
+	  * \brief Returns the parent sodaDynamicEntity of this rigid body
+	  * \return the parent sodaDynamicEntity of this object
 	  */
-	inline obEntityWrapper *getParent() const
+	inline sodaDynamicEntity *getParent() const
 	{
 		return parent;
 	}
@@ -85,7 +83,7 @@ public:
 	  * \brief Gets the motion state of this rigid body.
 	  * \return the obMotionState of this object's btRigidBody
 	  */
-	inline obMotionState *getMotionState() const
+	inline sodaMotionState *getMotionState() const
 	{
 		return mState;
 	}
@@ -97,8 +95,8 @@ private:
       */
     virtual btMotionState *_createMotionState();
 
-    obEntityWrapper     *parent;        /**< Parent entity of this rigid body */
-    obMotionState       *mState;        /**< Custom Bullet motion state */
+    sodaDynamicEntity     *parent;        /**< Parent entity of this rigid body */
+    sodaMotionState       *mState;        /**< Custom Bullet motion state */
 };
 
-#endif // OBDYNAMICRIGIDBODY_H
+#endif // SODADYNAMICRIGIDBODY_H

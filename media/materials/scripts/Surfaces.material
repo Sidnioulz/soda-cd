@@ -68,3 +68,28 @@ material Surfaces/RockDirt
 		}
 	}
 }
+
+
+material Surfaces/ColoredCube
+{
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture terr_rock6.jpg
+			}
+			texture_unit
+			{
+				texture Material_alpha_cube.png             
+				colour_op alpha_blend
+			}
+			texture_unit
+			{
+				texture terr_rock-dirt.jpg
+				colour_op_ex blend_current_alpha src_texture src_current
+			}
+		}
+	}
+}

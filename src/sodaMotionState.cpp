@@ -19,20 +19,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#include "obMotionState.h"
-#include "obdynamicrigidbody.h"
-#include "physicsworld.h"
-#include "localgrid.h"
-#include "utils.h"
+#include "sodaMotionState.h"
+#include "sodaDynamicRigidBody.h"
+#include "sodaLogicWorld.h"
+#include "sodaLocalGrid.h"
+#include "sodaUtils.h"
 
-obMotionState::obMotionState(obEntityWrapper *parent) :
+sodaMotionState::sodaMotionState(sodaDynamicEntity *parent) :
     parentBody(parent),
     grid(0),
     lastCellCoords()
 {
 }
 
-obMotionState::obMotionState(obEntityWrapper *parent, const btMotionState &other) :
+sodaMotionState::sodaMotionState(sodaDynamicEntity *parent, const btMotionState &other) :
     btMotionState(other),
     parentBody(parent),
     grid(0),
@@ -40,14 +40,14 @@ obMotionState::obMotionState(obEntityWrapper *parent, const btMotionState &other
 {
 }
 
-void obMotionState::setLocalGrid(LocalGrid *newGrid)
+void sodaMotionState::setLocalGrid(sodaLocalGrid *newGrid)
 {
 
     grid = newGrid;
     btVector3 coords = grid->getGridInformation()->toCellCoordinates(grid->getResolution(), parentBody->getCenteredPosition());
 
 #ifndef NDEBUG
-    qDebug() << "obMotionState(" << parentBody->getDisplayName() << ")::setLocalGrid(" << (newGrid? newGrid->getOwnerId(): PhysicsWorld::NullWorldId) << "); in (" << coords.x() << coords.y() << coords.z() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+    qDebug() << "obMotionState(" << parentBody->getDisplayName() << ")::setLocalGrid(" << (newGrid? newGrid->getOwnerId(): sodaLogicWorld::NullWorldId) << "); in (" << coords.x() << coords.y() << coords.z() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
 	if(grid->at(coords).containsEntity(parentBody))
@@ -55,28 +55,28 @@ void obMotionState::setLocalGrid(LocalGrid *newGrid)
     else
     {
 #ifndef NDEBUG
-    qWarning() << "obMotionState(" << parentBody->getDisplayName() << ")::setLocalGrid(" << (newGrid? newGrid->getOwnerId(): PhysicsWorld::NullWorldId) << "); in (" << coords.x() << coords.y() << coords.z() << "); Coordinates did not contain entity, set random last cell coordinates; Thread " << QString().sprintf("%p", QThread::currentThread());
+    qWarning() << "obMotionState(" << parentBody->getDisplayName() << ")::setLocalGrid(" << (newGrid? newGrid->getOwnerId(): sodaLogicWorld::NullWorldId) << "); in (" << coords.x() << coords.y() << coords.z() << "); Coordinates did not contain entity, set random last cell coordinates; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
         lastCellCoords = btVector3(INFINITY, INFINITY, INFINITY);
     }
 }
 
-void obMotionState::unsetLocalGrid()
+void sodaMotionState::unsetLocalGrid()
 {
     grid = 0;
 }
 
-void obMotionState::getWorldTransform(btTransform &/*worldTrans*/) const
+void sodaMotionState::getWorldTransform(btTransform &/*worldTrans*/) const
 {
 #ifndef NDEBUG
-//    qDebug() << "setWorldTransform(" << (parentBody? parentBody->getOwnerId() : PhysicsWorld::NullWorldId) << ")::getWorldTransform(...); Thread " << QString().sprintf("%p", QThread::currentThread());
+//    qDebug() << "setWorldTransform(" << (parentBody? parentBody->getOwnerId() : sodaLogicWorld::NullWorldId) << ")::getWorldTransform(...); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 }
 
-void obMotionState::setWorldTransform(const btTransform &worldTrans)
+void sodaMotionState::setWorldTransform(const btTransform &worldTrans)
 {
 #ifndef NDEBUG
-//    qDebug() << "setWorldTransform(" << (parentBody? parentBody->getOwnerId() : PhysicsWorld::NullWorldId) << ")::setWorldTransform(" << worldTrans.getOrigin().x() << worldTrans.getOrigin().y() << worldTrans.getOrigin().z() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
+//    qDebug() << "setWorldTransform(" << (parentBody? parentBody->getOwnerId() : sodaLogicWorld::NullWorldId) << ")::setWorldTransform(" << worldTrans.getOrigin().x() << worldTrans.getOrigin().y() << worldTrans.getOrigin().z() << "); Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
     if(grid && parentBody)
@@ -89,7 +89,7 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
                 // Cell coordinates are outside of the simulation scene boundaries (because margin ensures we don't run out of bounds when there is a neighbor)
 				if(!grid->getGridInformation()->isWithinWorldCellBounds(coords))
                 {
-                    qDebug() << "setWorldTransform(" << (parentBody? parentBody->getOwnerId() : PhysicsWorld::NullWorldId) << ")::setWorldTransform(" << worldTrans.getOrigin().x() << worldTrans.getOrigin().y() << worldTrans.getOrigin().z() << ");" <<
+                    qDebug() << "setWorldTransform(" << (parentBody? parentBody->getOwnerId() : sodaLogicWorld::NullWorldId) << ")::setWorldTransform(" << worldTrans.getOrigin().x() << worldTrans.getOrigin().y() << worldTrans.getOrigin().z() << ");" <<
                           "Entity '" << parentBody->getDisplayName() <<
                           "' owned by '" << parentBody->getOwnerWorld() <<
                           "' in Grid '" << grid->getOwnerId() <<
@@ -98,9 +98,9 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
                           "; Thread " << QString().sprintf("%p", QThread::currentThread());
 
                     // Update status
-                    parentBody->setStatus(obEntity::Removed);
+                    parentBody->setStatus(sodaEntity::Removed);
 
-                    // Remove entity from Cell, remove pointer to LocalGrid
+                    // Remove entity from Cell, remove pointer to sodaLocalGrid
                     grid->at(lastCellCoords).removeEntity(parentBody);
                     unsetLocalGrid();
 
@@ -110,15 +110,15 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
                     //TODO: manage object's future
                 }
 
-                // Cell coordinates correspond to another PhysicsWorld: transfer object
+                // Cell coordinates correspond to another sodaLogicWorld: transfer object
                 else
                 {
-                    PhysicsWorld *newParent = parentBody->getOwnerWorld()->getNeighbor(grid->at(coords).getOwnerId());
+                    sodaLogicWorld *newParent = parentBody->getOwnerWorld()->getNeighbor(grid->at(coords).getOwnerId());
 
                     if(newParent)
                     {
 #ifndef NDEBUG
-                        qDebug() << "setWorldTransform(" << (parentBody? parentBody->getOwnerId() : PhysicsWorld::NullWorldId) << ")::setWorldTransform(" << worldTrans.getOrigin().x() << worldTrans.getOrigin().y() << worldTrans.getOrigin().z() << ");" <<
+                        qDebug() << "setWorldTransform(" << (parentBody? parentBody->getOwnerId() : sodaLogicWorld::NullWorldId) << ")::setWorldTransform(" << worldTrans.getOrigin().x() << worldTrans.getOrigin().y() << worldTrans.getOrigin().z() << ");" <<
                               "Entity '" << parentBody->getDisplayName() <<
                               "' owned by '" << parentBody->getOwnerWorld() <<
                               "' in Grid '" << grid->getOwnerId() <<
@@ -128,29 +128,26 @@ void obMotionState::setWorldTransform(const btTransform &worldTrans)
 #endif
 
                         // Update status
-                        parentBody->setStatus(obEntity::OutOfWorld);
+                        parentBody->setStatus(sodaEntity::OutOfWorld);
                         const btScalar &eventTime = parentBody->getOwnerWorld()->getCurrentTime();
 
-                        // Remove entity from Cell, remove pointer to LocalGrid
+                        // Remove entity from Cell, remove pointer to sodaLocalGrid
                         grid->at(lastCellCoords).removeEntity(parentBody);
                         unsetLocalGrid();
 
                         // Detach from current world and send to new world
-                        PhysicsWorld *oldOwner = parentBody->getOwnerWorld();
-                        oldOwner->removeEntity(parentBody, eventTime);
+                        sodaLogicWorld *oldOwner = parentBody->getOwnerWorld();
                         oldOwner->messageNeighbor(newParent,
                                                "onOwnershipTransfer",
-                                               Q_ARG(PhysicsWorld *, oldOwner),
-                                               Q_ARG(obEntityWrapper *, new obEntityWrapper(*parentBody)),
+                                               Q_ARG(sodaLogicWorld *, oldOwner),
+                                               Q_ARG(sodaDynamicEntity *, new sodaDynamicEntity(*parentBody)),
                                                Q_ARG(btScalar, eventTime));
-
-
-
+                        oldOwner->removeEntity(parentBody, eventTime);
                     }
                     else
                     {
-                        //FIXME: should never happen, happens a lot.
-                        qWarning() << "setWorldTransform(" << (parentBody? parentBody->getOwnerId() : PhysicsWorld::NullWorldId) << ")::setWorldTransform(" << worldTrans.getOrigin().x() << worldTrans.getOrigin().y() << worldTrans.getOrigin().z() << ");" <<
+                        //FIXME: should never happen, happens a lot - linked to problems with non-adjacency and grid.resize() that doesn't properly manage margins
+                        qWarning() << "setWorldTransform(" << (parentBody? parentBody->getOwnerId() : sodaLogicWorld::NullWorldId) << ")::setWorldTransform(" << worldTrans.getOrigin().x() << worldTrans.getOrigin().y() << worldTrans.getOrigin().z() << ");" <<
                               "Entity '" << parentBody->getDisplayName() <<
                               "' owned by '" << parentBody->getOwnerWorld() <<
                               "' in Grid '" << grid->getOwnerId() <<

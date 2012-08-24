@@ -20,7 +20,7 @@
  */
 #include "obentitytransformrecordlist.h"
 
-const obEntityTransformRecord obEntityTransformRecordList::find(obEntityWrapper *key) const
+const obEntityTransformRecord obEntityTransformRecordList::find(sodaDynamicEntity *key) const
 {
     obEntityTransformRecordListIterator it(*this);
 

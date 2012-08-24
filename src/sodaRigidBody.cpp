@@ -39,19 +39,18 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#include "obRigidBody.h"
+#include "sodaRigidBody.h"
 
 #include <QtDebug>
 #include <btBulletDynamicsCommon.h>
 #include <bullet/LinearMath/btSerializer.h>
-#include "ogreresources.h"
 
-const float obRigidBody::StaticBodyRestitution  = 0.1f;
-const float obRigidBody::StaticBodyFriction     = 0.8f;
-const float obRigidBody::DynamicBodyRestitution = 0.6f;
-const float obRigidBody::DynamicBodyFriction    = 0.6f;
+const float sodaRigidBody::StaticBodyRestitution  = 0.1f;
+const float sodaRigidBody::StaticBodyFriction     = 0.8f;
+const float sodaRigidBody::DynamicBodyRestitution = 0.6f;
+const float sodaRigidBody::DynamicBodyFriction    = 0.6f;
 
-obRigidBody::obRigidBody(obEntity *parent, const btVector3 &pos, const btQuaternion &quat, const btVector3 &scale, const int mass) :
+sodaRigidBody::sodaRigidBody(sodaEntity *parent, const btVector3 &pos, const btQuaternion &quat, const btVector3 &scale, const int mass) :
     parent(parent),
     btBody(0),
 	triangleMesh(0),
@@ -63,7 +62,7 @@ obRigidBody::obRigidBody(obEntity *parent, const btVector3 &pos, const btQuatern
 {
 }
 
-obRigidBody::obRigidBody(obEntity *parent, const obRigidBody &other) :
+sodaRigidBody::sodaRigidBody(sodaEntity *parent, const sodaRigidBody &other) :
     parent(parent),
     btBody(0),
     triangleMesh(0),
@@ -93,7 +92,7 @@ obRigidBody::obRigidBody(obEntity *parent, const obRigidBody &other) :
     btBody->setWorldTransform(other.btBody->getWorldTransform());
 }
 
-obRigidBody::~obRigidBody()
+sodaRigidBody::~sodaRigidBody()
 {
 //    // Check that the shape isn't compound (it is if created in createBody). If it is, delete child shapes
 //    btCompoundShape *cShape = dynamic_cast<btCompoundShape *>(btShape);
@@ -117,52 +116,52 @@ obRigidBody::~obRigidBody()
     delete btBody;
 }
 
-btCollisionShape* obRigidBody::getShape() const
+btCollisionShape* sodaRigidBody::getShape() const
 {
     return btShape;
 }
 
-const btVector3 &obRigidBody::getPosition() const
+const btVector3 &sodaRigidBody::getPosition() const
 {
     return btBody->getWorldTransform().getOrigin();
 }
 
-const btQuaternion obRigidBody::getRotation() const
+const btQuaternion sodaRigidBody::getRotation() const
 {
     return btBody->getWorldTransform().getRotation();
 }
 
-void obRigidBody::createCube(const bool staticMesh)
+void sodaRigidBody::createCube(const bool staticMesh)
 {
     btShape = new btBoxShape(scale);
     createBodyWithShape(btShape, staticMesh);
 }
 
-void obRigidBody::createSphere(const bool staticMesh)
+void sodaRigidBody::createSphere(const bool staticMesh)
 {
     btShape = new btSphereShape(btScalar(scale.x()));
     createBodyWithShape(btShape, staticMesh);
 }
 
-void obRigidBody::createCylinder(const bool staticMesh)
+void sodaRigidBody::createCylinder(const bool staticMesh)
 {
     btShape = new btCylinderShape(scale);
     createBodyWithShape(btShape, staticMesh);
 }
 
-void obRigidBody::createPlane(const bool staticMesh)
+void sodaRigidBody::createPlane(const bool staticMesh)
 {
     btShape = new btBoxShape(btVector3(450,0.1,450));
     createBodyWithShape(btShape, staticMesh);
 }
 
-void obRigidBody::createBorder(const btVector3 &shapeLen, const bool staticMesh)
+void sodaRigidBody::createBorder(const btVector3 &shapeLen, const bool staticMesh)
 {
     btShape = new btBoxShape(shapeLen);
     createBodyWithShape(btShape, staticMesh);
 }
 
-void obRigidBody::createBody(Ogre::Mesh *ptr)
+void sodaRigidBody::createBody(Ogre::Mesh *ptr)
 {
     btCompoundShape* cShape = new btCompoundShape();
 
@@ -250,7 +249,7 @@ void obRigidBody::createBody(Ogre::Mesh *ptr)
     btBody->setUserPointer(parent);
 }
 
-void obRigidBody::createBodyWithShape(btCollisionShape *shape, const bool staticMesh)
+void sodaRigidBody::createBodyWithShape(btCollisionShape *shape, const bool staticMesh)
 {
     btShape = shape;
 
@@ -267,7 +266,7 @@ void obRigidBody::createBodyWithShape(btCollisionShape *shape, const bool static
 }
 
 
-void obRigidBody::createMeshCollider(Ogre::Mesh *ptr)
+void sodaRigidBody::createMeshCollider(Ogre::Mesh *ptr)
 {
     btTriangleMesh* triMesh = new btTriangleMesh();
 
@@ -346,7 +345,7 @@ void obRigidBody::createMeshCollider(Ogre::Mesh *ptr)
     btBody->setUserPointer(parent);
 }
 
-btMotionState *obRigidBody::_createMotionState()
+btMotionState *sodaRigidBody::_createMotionState()
 {
     return new btDefaultMotionState(btTransform(quaternion, position));
 }

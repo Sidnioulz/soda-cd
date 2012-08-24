@@ -1,7 +1,7 @@
 #ifndef DOTSCENEELEMENT_H
 #define DOTSCENEELEMENT_H
 
-#include "obRigidBody.h"
+#include "sodaRigidBody.h"
 #include <QtCore>
 
 //  -------------------------------------------------  //

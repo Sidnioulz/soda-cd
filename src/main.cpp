@@ -58,16 +58,17 @@ MainPepsiWindow::MainPepsiWindow(QxtCommandOptions &opt, QWidget *parent) :
     ui->widget->layout()->setMargin(0);
 
     // IPC setup
-    qRegisterMetaType<PhysicsWorld *>("PhysicsWorld *");
+    qRegisterMetaType<sodaLogicWorld *>("sodaLogicWorld *");
     qRegisterMetaType<EntityOverlappedCellsMap>("EntityOverlappedCellsMap");
-    qRegisterMetaType<obEntityWrapper *>("obEntityWrapper *");
+    qRegisterMetaType<EntityOverlappedCellsPerWorld>("EntityOverlappedCellsPerWorld");
+    qRegisterMetaType<sodaDynamicEntity *>("sodaDynamicEntity *");
     qRegisterMetaType<btScalar>("btScalar");
     qRegisterMetaType<Ogre::Entity *>("Ogre::Entity *");
     qRegisterMetaType<Ogre::SceneNode *>("Ogre::SceneNode *");
     qRegisterMetaType<QList<short> >("QList<short>");
 
     // Create the Ogre Widget
-    ogreWidget = new OgreWidget(targetFPS);
+    ogreWidget = new sodaOgreWidget(targetFPS);
     ui->widget->layout()->addWidget(ogreWidget);
 
     // Connect the Ogre Widget's slots to this interface's signals
@@ -96,8 +97,8 @@ MainPepsiWindow::MainPepsiWindow(QxtCommandOptions &opt, QWidget *parent) :
     // Set a time limit for the simulation, if required
     if(paramAutomatedSimulation)
     {
-        ExperimentTrackingInterface::getInterface()->setSimulationTimeLimit(paramTimeLimit);
-        connect(ExperimentTrackingInterface::getInterface(), SIGNAL(simulationTimeLimitReached(btScalar)), this, SLOT(close()));
+        ExperimentTrackingInterface::getInstance()->setSimulationTimeLimit(paramTimeLimit);
+        connect(ExperimentTrackingInterface::getInstance(), SIGNAL(simulationTimeLimitReached(btScalar)), this, SLOT(close()));
     }
 }
 

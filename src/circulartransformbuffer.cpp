@@ -20,9 +20,9 @@
  */
 #include <QtDebug>
 #include "circulartransformbuffer.h"
-#include "physicsworld.h"
+#include "sodaLogicWorld.h"
 
-CircularTransformBuffer::CircularTransformBuffer(PhysicsWorld *world) :
+CircularTransformBuffer::CircularTransformBuffer(sodaLogicWorld *world) :
     QVector<QSharedPointer<obEntityTransformRecordList> >(CircularTransformBuffer::BufferSize),
     latestPastIndex(0),
     currentPhysicsIndex(0),
@@ -60,7 +60,7 @@ void CircularTransformBuffer::appendTimeStep(obEntityTransformRecordList *simul)
     while(getEntryState(nextIndex(currentPhysicsIndex)) != CT_STATE_EMPTY && !writeAborted)
     {
 #ifndef NDEBUG
-        //qDebug() << "CircularTransformBuffer()::appendTimeStep(" << simul->getTimeStep() << "); About to wait; Thread " << QString().sprintf("%p", QThread::currentThread());
+        qDebug() << "CircularTransformBuffer()::appendTimeStep(" << simul->getTimeStep() << "); About to wait; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
         bufferNotFull.wait(&fullBufferMutex);
     }
@@ -70,7 +70,7 @@ void CircularTransformBuffer::appendTimeStep(obEntityTransformRecordList *simul)
     if(!writeAborted)
     {
 #ifndef NDEBUG
-        //qDebug() << "CircularTransformBuffer()::appendTimeStep(" << simul->getTimeStep() << "); Writing time step; Thread " << QString().sprintf("%p", QThread::currentThread());
+        qDebug() << "CircularTransformBuffer()::appendTimeStep(" << simul->getTimeStep() << "); Writing time step; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
         this->operator [](currentPhysicsIndex) = QSharedPointer<obEntityTransformRecordList>(simul);
 
@@ -79,7 +79,7 @@ void CircularTransformBuffer::appendTimeStep(obEntityTransformRecordList *simul)
     }
 #ifndef NDEBUG
     else
-        //qDebug() << "CircularTransformBuffer()::appendTimeStep(" << simul->getTimeStep() << "); Writes are aborted; Thread " << QString().sprintf("%p", QThread::currentThread());
+        qDebug() << "CircularTransformBuffer()::appendTimeStep(" << simul->getTimeStep() << "); Writes are aborted; Thread " << QString().sprintf("%p", QThread::currentThread());
 #endif
 
     writeMutex.unlock();
