@@ -37,7 +37,7 @@
  *
  * \section intro_sec About this application.
  *
- * PEPSI's has been developed as part of a research internship in the <a href="http://www.inria.fr/equipes/vr4i">IRISA-Inria VR4i</a> project team in Rennes, France. The main developer is Steve Dodier-Lazaro, who worked under the supervision of Valérie Gouranton and Quentin Avril. It is currently not available for download and is the exclusive property of Inria Rennes, but a release of a final prototype will be made if given the occasion.
+ * PEPSI's, the first implementation of the SODA framework, has been developed as part of a research internship in the <a href="http://www.inria.fr/equipes/vr4i">IRISA-Inria VR4i</a> project team in Rennes, France. The main developer is Steve Dodier-Lazaro, who worked under the supervision of Valérie Gouranton and Quentin Avril. It is currently not available for download and is the exclusive property of Inria Rennes, but a release of a final prototype will be made if given the occasion.
  *
  * \section install_sec Building PEPSI's
  *
