@@ -269,8 +269,9 @@ public:
       * \brief Computes the best resolution to define territories on, given a GridInformation hierarchy which this object is part of.
       * \return the best resolution to define territories on for this GridInformation hierarchy
       *
-      * \todo implement this function, think of inlining the return part
+      * \warning Not implemented yet. Returns 1.
       */
+    //TODO: implement getBestTerritoryResolution(), preferrably with a single-time computation and inlining afterwards.
     int getBestTerritoryResolution() const;
 
     /*!

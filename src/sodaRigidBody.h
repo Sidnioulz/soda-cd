@@ -130,11 +130,11 @@ public:
       * \brief Creates a rigid body with a plan shape.
       * \param staticMesh whether the object shall be static
       *
-      * \todo Rewrite this function
       * \deprecated This function does not create an actual plan and must be
-      * entirely rewritten using SimulationWorld's floor initialization as
-      * a base.
+      * entirely rewritten, bearing in mind that finite plans don't exist in
+      * Bullet Physics.
       */
+    //TODO: rewrite createPlane() in a proper way (knowing Bullet planes cannot be finite, though)
     void createPlane(const bool staticMesh);
 
     /*!

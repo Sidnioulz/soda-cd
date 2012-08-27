@@ -191,9 +191,8 @@ protected:
 
     /*!
       * \brief Performs one rendering pass.
-      *
-      * \todo optimize
       */
+    //TODO: optimize 3D Rendering, especially the OpenGL drawing part in the Qt widget (not located here though)
     virtual void render();
 
     // Ogre variables

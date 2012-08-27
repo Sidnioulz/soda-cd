@@ -522,7 +522,7 @@ void sodaSimulationIslandManager::buildIslands(btDispatcher *dispatcher, sodaDyn
          btCollisionObject *colObj0 = static_cast<btCollisionObject*>(manifold->getBody0());
          btCollisionObject *colObj1 = static_cast<btCollisionObject*>(manifold->getBody1());
 
-         ///@todo: check sleeping conditions!
+         //TODO: (note from Bullet 2.8 in buildIslands()) check sleeping conditions!
          if (((colObj0) && colObj0->getActivationState() != ISLAND_SLEEPING) ||
             ((colObj1) && colObj1->getActivationState() != ISLAND_SLEEPING))
         {
@@ -560,7 +560,7 @@ void sodaSimulationIslandManager::buildIslands(btDispatcher *dispatcher, sodaDyn
             btCollisionObject *local = (btCollisionObject*) foreignManifold->getLocalBody();
             btCollisionObject *foreigner = (btCollisionObject*) foreignManifold->getForeignBody();
 
-            ///@todo: check sleeping conditions!
+            //TODO: (note from Bullet 2.8 in buildIslands()) check sleeping conditions!
             if (((local) && local->getActivationState() != ISLAND_SLEEPING) ||
                ((foreigner) && foreignCache->getActivationState(foreigner) != ISLAND_SLEEPING))
             {
@@ -590,7 +590,7 @@ void sodaSimulationIslandManager::buildIslands(btDispatcher *dispatcher, sodaDyn
 
 
 
-///@todo: this is random access, it can be walked 'cache friendly'!
+//TODO: (note from Bullet 2.8 in buildAndProcessIslands()) this is random access, it can be walked 'cache friendly'!
 void sodaSimulationIslandManager::buildAndProcessIslands(btDispatcher *dispatcher, sodaDynamicsWorld *collisionWorld, IslandCallback *callback)
 {
     btCollisionObjectArray& collisionObjects = collisionWorld->getCollisionObjectArray();

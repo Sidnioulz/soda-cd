@@ -116,8 +116,8 @@ public:
      * \return the corresponding sodaLogicWorld if it exists, or null otherwise
      *
      * \warning This method is temporary and to be supersed. In the future, sodaLogicWorlds should hold pointers to their neighbors.
-     * \todo Implement the neighbor information as a local table in sodaLogicWorlds.
      */
+    //TODO: getWorldFromId(): Implement the neighbor information as a local table in sodaLogicWorlds.
     inline sodaLogicWorld *getWorldFromId(const short id) const
     {
         if(id<=0 || id>worlds.size())

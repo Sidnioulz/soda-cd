@@ -223,9 +223,9 @@ public:
      * \brief Tries to find, for all Cells with an unknown id, whether the id can be deduced already or if it must be negociated later with neighbors.
      * \return the list of coordinates of Cells that are now owned by the sodaLocalGrid
      *
-     * \todo Unit tests for this function.
      * \warning Function very likely broken.
      */
+    //TODO: unit tests for resolveEmptyCellOwnerships()
     QVector<btVector3> resolveEmptyCellOwnerships();
 
     /*!

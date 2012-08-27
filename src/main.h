@@ -49,6 +49,10 @@
  * \section status_sec Current status
  * There are currently no active developers for PEPSI's. It is at the moment capable of detecting collisions in a distributed fashion, but constraint solving between objects managed by different processors has not yet been implemented, and a few bugs remain to be fixed. Parallel/Distributed constraint solving may be more efficient/clever with a different granularity than the one chosen in PEPSI's and version 1 of the SODA framework, and a proposal will be issued for the development of this component.
  *
+ * \section todo_sec Seeing the TODO list
+ * Please browse the code for lines starting with //TODO:, //NOTE:, and //FIXME: for notices of things to do, notes to developers, and things to fix, respectively.
+ * These tags are automatically recognized by recent versions of Qt Creator.
+ *
  * \section report_bugs Reporting a bug
  * If you are in-house, please write a bug report in the Inria GForge page of the project (https://gforge.inria.fr/tracker/?atid=13788&group_id=4142&func=browse), or email <a href="mailto:valerie.gouranton@inria.fr">the project head</a> in last resort for her to dispatch the bug report to current developers (specifying [SODA-BUGS] at the start of the mail subject). Steve has the technical know-how about the project and can be reached at <a href="mailto:steve.dodier@ensi-bourges.fr">his school mail address</a>. Same mail subject rules apply.
  */
